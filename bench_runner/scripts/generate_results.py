@@ -9,15 +9,17 @@ from typing import Dict, Iterable, List, Optional, TextIO, Tuple
 from urllib.parse import unquote
 
 
-sys.path.insert(0, str(Path(__file__).parent))
-
-
-from lib.bases import get_bases
-from lib import plot
-from lib import profiling_plot
-from lib.result import load_all_results, remove_duplicate_results, Comparison, Result
-from lib import table
-from lib import util
+from bench_runner.bases import get_bases
+from bench_runner import plot
+from bench_runner import profiling_plot
+from bench_runner.result import (
+    load_all_results,
+    remove_duplicate_results,
+    Comparison,
+    Result,
+)
+from bench_runner import table
+from bench_runner import util
 
 
 def _tuple_to_nested_dicts(entries: List[Tuple], d: Optional[Dict] = None) -> Dict:

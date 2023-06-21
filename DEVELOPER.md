@@ -1,5 +1,7 @@
 # Benchmarking infrastructure for the Faster CPython project
 
+TODO: Rewrite all of the paths here.
+
 This repository contains a number of GitHub Actions workflows to run benchmarks on a set of private, self-hosted, bare metal machines that we control.
 
 ## The workflows
@@ -17,8 +19,6 @@ This is the main user entry point.  See the [user documentation](README.md) for 
 
 It kicks off one or two benchmarking runs (depending on the value of `benchmark_base`) (`_benchmark.yml`), then generates the derived results (`_generate.yml`), and publishes public results, if any (`_publish.yml`).
 
-This workflow is generated from `scripts/templates/benchmark.src.yml`.
-
 ### _benchmark.yml
 
 This workflow manages building a specific revision of CPython, runs a complete set of benchmarks, and then commits the pyperformance-style `.json` file to this repo.
@@ -32,9 +32,7 @@ There are additional parameters available to save time during debugging, but the
 - `pgo`: Build with PGO and LTO
 - `dry_run`: Don't save the results to the repo
 
-The implementation of this workflow (for everything but the CPython compilation itself) is in `scripts/run_benchmarks.py`.
-
-This workflow is generated from `scripts/templates/_benchmark.src.yml`.
+The implementation of this workflow (for everything but the CPython compilation itself) is in `bench_runner/scripts/run_benchmarks.py`.
 
 ### _pystats.yml
 
@@ -42,7 +40,7 @@ This workflow runs the benchmarks using a build with `--enable-pystats`, and the
 
 Unlike the regular benchmarks, we don't care about timings, so this workflow is run on GitHub's cloud compute, on Linux only.
 
-The implementation of this workflow (for everything but the CPython compilation itself) is in `scripts/run_benchmarks.py`.
+The implementation of this workflow (for everything but the CPython compilation itself) is in `bench_runner/scripts/run_benchmarks.py`.
 
 ### _generate.yml
 
@@ -63,7 +61,7 @@ Each comparison produces two files:
 Additionally, master indices are generated in `README.md` and `results/README.md`.
 The latter only contains the most recent revision of each named Python version.
 
-The implementation of this workflow is in `scripts/generate_results.py`.
+The implementation of this workflow is in `bench_runner/scripts/generate_results.py`.
 
 ### _publish.yml
 

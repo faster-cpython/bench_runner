@@ -2,7 +2,6 @@ import argparse
 import datetime
 from pathlib import Path
 import re
-import sys
 from typing import Any, Dict, Iterable, Optional, Tuple
 
 
@@ -15,11 +14,7 @@ import pyperf
 matplotlib.use("agg")
 
 
-try:
-    from lib import result
-except ImportError:
-    sys.path.insert(0, str(Path(__file__).parents[1]))
-    from lib import result
+from . import result
 
 
 def get_data(result: result.Result) -> Dict[str, Any]:

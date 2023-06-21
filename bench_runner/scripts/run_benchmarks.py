@@ -9,11 +9,8 @@ import textwrap
 from typing import Iterable, List, Optional, Union
 
 
-sys.path.insert(0, str(Path(__file__).parent))
-
-
-from lib import git
-from lib.result import Result
+from bench_runner import git
+from bench_runner.result import Result
 
 
 REPO_ROOT = Path(__file__).parents[1]

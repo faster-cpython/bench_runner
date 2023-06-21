@@ -6,22 +6,26 @@ import argparse
 import copy
 import io
 from pathlib import Path
+import shutil
 import sys
-from typing import Any, List
+from typing import Any
 
 
 from ruamel.yaml import YAML
 
 
-sys.path.insert(0, str(Path(__file__).parent))
+from bench_runner import runners
 
 
-from lib import runners
+ROOT_PATH = Path()
+TEMPLATE_PATH = Path(__file__).parent.parent / "templates"
+WORKFLOW_PATH = Path() / ".github" / "workflows"
 
 
-ROOT_PATH = Path(__file__).parents[1]
-TEMPLATE_PATH = Path(__file__).parent / "templates"
-WORKFLOW_PATH = Path(__file__).parents[1] / ".github" / "workflows"
+def fail_check(dst: Path):
+    print(f"{dst.relative_to(ROOT_PATH)} needs to be regenerated.")
+    print("Run `python -m bench_runner.scripts.install` and commit the result.")
+    sys.exit(1)
 
 
 def write_yaml(dst: Path, contents: Any, check: bool):
@@ -46,9 +50,7 @@ def write_yaml(dst: Path, contents: Any, check: bool):
         do_write(contents, fd)
         new_contents = fd.getvalue()
         if orig_contents != new_contents:
-            print(f"{dst.relative_to(ROOT_PATH)} needs to be regenerated.")
-            print("Run scripts/regenerate_workflows.py and commit the result.")
-            sys.exit(1)
+            fail_check(dst)
     else:
         with open(dst, "w") as fd:
             do_write(contents, fd)
@@ -63,9 +65,7 @@ def load_yaml(src: Path) -> Any:
         return yaml.load(fd)
 
 
-def generate__benchmark(
-    runners: List[runners.Runner], runner_choices: List[str], check: bool
-) -> None:
+def generate__benchmark(input_path: Path, output_path: Path, check: bool) -> None:
     """
     Generates _benchmark.yml from _benchmark.src.yml.
 
@@ -75,11 +75,14 @@ def generate__benchmark(
     Inserts the list of available machines to the drop-down presented to the
     user.
     """
-    src = load_yaml(TEMPLATE_PATH / "_benchmark.src.yml")
+    available_runners = [r for r in runners.get_runners() if r.available]
+    runner_choices = [x.name for x in available_runners] + ["all"]
+
+    src = load_yaml(input_path)
     dst = copy.deepcopy(src)
 
     dst["jobs"] = {}
-    for runner in runners:
+    for runner in available_runners:
         runner_template = copy.deepcopy(src["jobs"][f"benchmark-{runner.os}"])
         runner_template["runs-on"].append(runner.name)
         runner_template[
@@ -89,33 +92,60 @@ def generate__benchmark(
 
     dst["on"]["workflow_dispatch"]["inputs"]["machine"]["options"] = runner_choices
 
-    write_yaml(WORKFLOW_PATH / "_benchmark.yml", dst, check)
+    write_yaml(output_path, dst, check)
 
 
-def generate_benchmark(runner_choices: List[str], check: bool) -> None:
+def generate_benchmark(input_path: Path, output_path: Path, check: bool) -> None:
     """
     Generates benchmark.yml from benchmark.src.yml.
 
     Inserts the list of available machines to the drop-down presented to the
     user.
     """
-    src = load_yaml(TEMPLATE_PATH / "benchmark.src.yml")
-    src["on"]["workflow_dispatch"]["inputs"]["machine"]["options"] = runner_choices
-    write_yaml(WORKFLOW_PATH / "benchmark.yml", src, check)
-
-
-def main(check: bool) -> None:
     available_runners = [r for r in runners.get_runners() if r.available]
     runner_choices = [x.name for x in available_runners] + ["all"]
 
-    generate__benchmark(available_runners, runner_choices, check)
-    generate_benchmark(runner_choices, check)
+    src = load_yaml(input_path)
+    src["on"]["workflow_dispatch"]["inputs"]["machine"]["options"] = runner_choices
+    write_yaml(output_path, src, check)
+
+
+def generate_generic(input_path: Path, output_path: Path, check: bool) -> None:
+    if check:
+        input_content = input_path.read_bytes()
+        output_content = output_path.read_bytes()
+        if input_content != output_content:
+            fail_check(output_path)
+    else:
+        shutil.copyfile(input_path, output_path)
+
+
+GENERATORS = {
+    "benchmark.src.yml": generate_benchmark,
+    "_benchmark.src.yml": generate__benchmark,
+}
+
+
+def main(check: bool) -> None:
+    WORKFLOW_PATH.mkdir(parents=True, exist_ok=True)
+
+    for path in TEMPLATE_PATH.glob("*.src.yml"):
+        generator = GENERATORS.get(path.name, generate_generic)
+        generator(path, WORKFLOW_PATH / (path.name[:-8] + ".yml"), check)
+
+    for path in TEMPLATE_PATH.glob("*"):
+        if path.name.endswith(".src.yml"):
+            continue
+
+        if not (ROOT_PATH / path.name).is_file():
+            if check:
+                fail_check(ROOT_PATH / path.name)
+            else:
+                shutil.copyfile(path, ROOT_PATH / path.name)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        "Regenerate Github Actions workflow files from the templates"
-    )
+    parser = argparse.ArgumentParser("Install the Github Actions and other files")
     parser.add_argument(
         "--check",
         action="store_true",

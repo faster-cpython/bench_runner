@@ -4,7 +4,7 @@ import shutil
 import textwrap
 
 
-from scripts.lib import table
+from bench_runner import table
 
 
 DATA_PATH = Path(__file__).parent / "data"

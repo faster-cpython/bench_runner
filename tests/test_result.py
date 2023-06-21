@@ -6,7 +6,7 @@ import socket
 import sys
 
 
-from scripts.lib import result as mod_result
+from bench_runner import result as mod_result
 
 
 DATA_PATH = Path(__file__).parent / "data"

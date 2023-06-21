@@ -1,7 +1,7 @@
 from pathlib import Path
 
 
-from scripts.lib import bases as mod_bases
+from bench_runner import bases as mod_bases
 
 
 DATA_PATH = Path(__file__).parent / "data"

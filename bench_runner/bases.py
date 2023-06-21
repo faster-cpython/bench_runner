@@ -7,7 +7,7 @@ from typing import List
 
 
 def get_bases(
-    bases_filepath: Path = Path(__file__).parents[2] / "bases.txt",
+    bases_filepath: Path = Path("bases.txt"),
 ) -> List[str]:
     with open(bases_filepath) as fd:
         return list(

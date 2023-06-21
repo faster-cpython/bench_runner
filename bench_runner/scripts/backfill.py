@@ -1,17 +1,13 @@
 import argparse
 import datetime
 from pathlib import Path
-import sys
 from typing import Iterable, List, Optional, Sequence, TypeAlias
 
 
-sys.path.insert(0, str(Path(__file__).parent))
-
-
-from lib import gh
-from lib import git
-from lib import result as mod_result
-from lib import runners
+from bench_runner import gh
+from bench_runner import git
+from bench_runner import result as mod_result
+from bench_runner import runners
 
 
 DEFAULTS = (["v3.11"], ["v3.10"], ["2022-11-20"], [])

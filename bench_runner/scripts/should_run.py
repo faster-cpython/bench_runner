@@ -8,11 +8,8 @@ import subprocess
 import sys
 
 
-sys.path.insert(0, str(Path(__file__).parent))
-
-
-from lib import git
-from lib.result import has_result
+from bench_runner import git
+from bench_runner.result import has_result
 
 
 def main(

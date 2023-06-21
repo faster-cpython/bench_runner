@@ -4,7 +4,7 @@ import subprocess
 import pytest
 
 
-from scripts.lib import gh
+from bench_runner import gh
 
 
 def test_benchmark_arguments():

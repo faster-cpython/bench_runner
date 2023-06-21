@@ -1,3 +1,2 @@
 # The set of versions to compare every benchmark to
-3.10.4
 3.11.0

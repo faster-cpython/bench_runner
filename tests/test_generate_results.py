@@ -7,7 +7,7 @@ import shutil
 import pytest
 
 
-from scripts import generate_results
+from bench_runner.scripts import generate_results
 
 
 DATA_PATH = Path(__file__).parent / "data"
@@ -80,8 +80,10 @@ def _run_for_bases(bases, repo_path, force=False, has_base=[], check_readmes=Tru
         assert contents.count("\n|") == 13
 
 
-def test_main(tmp_path):
+def test_main(tmp_path, monkeypatch):
     repo_path = _copy_repo(tmp_path)
+
+    monkeypatch.chdir(repo_path)
 
     # Hack up so one of the results has an explicit commit_merge_base
     result_with_base = (

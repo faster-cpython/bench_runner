@@ -1,3 +1,4 @@
+from pathlib import Path
 import shutil
 import subprocess
 import textwrap
@@ -6,7 +7,10 @@ import textwrap
 import pytest
 
 
-from scripts import get_merge_base
+from bench_runner.scripts import get_merge_base
+
+
+DATA_PATH = Path(__file__).parent / "data"
 
 
 @pytest.fixture
@@ -30,7 +34,9 @@ def checkout(request):
     return root
 
 
-def test_get_merge_base(tmp_path, capsys, checkout):
+def test_get_merge_base(tmp_path, capsys, checkout, monkeypatch):
+    monkeypatch.chdir(DATA_PATH)
+
     shutil.copytree(checkout / "cpython", tmp_path / "cpython")
 
     get_merge_base.main(True, "linux-x86_64-linux", tmp_path / "cpython")

@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bench_runner"
+authors = [
+    {name = "Michael Droettboom", email = "mdroettboom@microsoft.com"},
+]
+description = "Faster CPython's benchmarking runner utilities"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "BSD-3-Clause"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "ijson==3.2.1",
+    "matplotlib==3.6.3",
+    "pyperf>=2.6.0",
+    "ruamel.yaml==0.17.31",
+    "wheel",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+test = [
+    "black==23.3.0",
+    "flake8==6.0.0",
+    "pyright==1.1.313",
+    "pytest==7.3.1",
+]
+
+[tool.setuptools_scm]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+bench_runner = ["templates/*"]

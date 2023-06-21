@@ -9,9 +9,9 @@ import sys
 import pytest
 
 
-from scripts import generate_results
-from scripts import run_benchmarks
-from scripts import should_run
+from bench_runner.scripts import generate_results
+from bench_runner.scripts import run_benchmarks
+from bench_runner.scripts import should_run
 
 
 DATA_PATH = Path(__file__).parent / "data"
@@ -70,16 +70,18 @@ def benchmarks_checkout(request):
         )
 
     venv_dir = root / "venv"
+    venv_python = venv_dir / "bin" / "python"
     if not venv_dir.is_dir():
-        venv_python = venv_dir / "bin" / "python"
 
         subprocess.check_call([sys.executable, "-m", "venv", venv_dir], cwd=root)
         subprocess.check_call(
-            [venv_python, "-m", "pip", "install", "setuptools", "wheel"], cwd=root
-        )
-        subprocess.check_call(
             [venv_python, "-m", "pip", "install", root / "pyperformance"], cwd=root
         )
+
+    # Always do this step, since it depends on the current codebase
+    subprocess.check_call(
+        [venv_python, "-m", "pip", "install", Path(__file__).parents[1]], cwd=root
+    )
 
     return root
 
@@ -123,12 +125,13 @@ def test_update_metadata(tmp_path, benchmarks_checkout):
 def test_run_benchmarks(tmp_path, benchmarks_checkout):
     for dirname in ["cpython", "pyperformance", "pyston-benchmarks", "venv"]:
         shutil.copytree(benchmarks_checkout / dirname, tmp_path / dirname)
+    shutil.copyfile(DATA_PATH / "runners.ini", tmp_path / "runners.ini")
 
     venv_dir = tmp_path / "venv"
     venv_python = venv_dir / "bin" / "python"
 
     shutil.copy(
-        Path(__file__).parents[1] / "benchmarks.manifest",
+        DATA_PATH / "benchmarks.manifest",
         tmp_path / "benchmarks.manifest",
     )
 

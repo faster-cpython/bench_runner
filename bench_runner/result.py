@@ -9,8 +9,8 @@ import subprocess
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 
-from lib import git
-from lib import runners
+from . import git
+from . import runners
 
 
 def _clean(string: str) -> str:
@@ -147,7 +147,7 @@ class Result:
         commit_datetime: Optional[str] = None,
     ):
         self.nickname = nickname
-        if nickname not in runners.RUNNERS_BY_NICKNAME:
+        if nickname not in runners.get_runners_by_nickname():
             raise ValueError(f"Unknown runner {nickname}")
         self.machine = machine
         self.fork = fork

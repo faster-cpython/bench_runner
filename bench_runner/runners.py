@@ -1,7 +1,9 @@
 import configparser
 import functools
 from pathlib import Path
-from typing import List
+from typing import Dict, List, Optional
+
+from numpy import str_
 
 
 class Runner:
@@ -20,7 +22,7 @@ class Runner:
 
 
 @functools.cache
-def get_runners(path=Path(__file__).parents[2] / "runners.ini") -> List[Runner]:
+def get_runners(path=Path("runners.ini")) -> List[Runner]:
     config = configparser.ConfigParser()
     config.read(path)
     runners = []
@@ -35,16 +37,23 @@ def get_runners(path=Path(__file__).parents[2] / "runners.ini") -> List[Runner]:
                 section.getboolean("available", True),
             )
         )
+
+    assert len(runners)
+
     return runners
 
 
-RUNNERS_BY_HOSTNAME = {x.hostname: x for x in get_runners()}
-RUNNERS_BY_NICKNAME = {x.nickname: x for x in get_runners()}
+def get_runners_by_hostname() -> Dict[str, Runner]:
+    return {x.hostname: x for x in get_runners()}
+
+
+def get_runners_by_nickname() -> Dict[str, Runner]:
+    return {x.nickname: x for x in get_runners()}
 
 
 def get_nickname_for_hostname(hostname: str) -> str:
-    return RUNNERS_BY_HOSTNAME[hostname].nickname
+    return get_runners_by_hostname()[hostname].nickname
 
 
 def get_runner_by_nickname(nickname: str) -> Runner:
-    return RUNNERS_BY_NICKNAME[nickname]
+    return get_runners_by_nickname()[nickname]

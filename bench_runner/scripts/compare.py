@@ -9,11 +9,8 @@ import sys
 from typing import Iterable, List, Set, Tuple
 
 
-sys.path.insert(0, str(Path(__file__).parent))
-
-
-from lib import result as mod_result
-from lib import plot
+from bench_runner import result as mod_result
+from bench_runner import plot
 
 
 def parse_commit(commit: str) -> Tuple[str, str]:
