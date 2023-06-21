@@ -1,9 +1,7 @@
 import configparser
 import functools
 from pathlib import Path
-from typing import Dict, List, Optional
-
-from numpy import str_
+from typing import Dict, List
 
 
 class Runner:
