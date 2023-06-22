@@ -386,7 +386,7 @@ if __name__ == "__main__":
         "repo_dir",
         nargs="?",
         type=Path,
-        default=Path(__file__).parents[1],
+        default=Path(),
         help="The location of the results repository",
     )
     parser.add_argument(
