@@ -18,7 +18,7 @@ from bench_runner import runners
 
 
 ROOT_PATH = Path()
-TEMPLATE_PATH = Path(__file__).parent.parent / "templates"
+TEMPLATE_PATH = Path(__file__).parents[1] / "templates"
 WORKFLOW_PATH = Path() / ".github" / "workflows"
 
 

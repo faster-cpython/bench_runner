@@ -13,7 +13,7 @@ from bench_runner import git
 from bench_runner.result import Result
 
 
-REPO_ROOT = Path(__file__).parents[1]
+REPO_ROOT = Path()
 BENCHMARK_JSON = REPO_ROOT / "benchmark.json"
 PROFILING_RESULTS = REPO_ROOT / "profiling" / "results"
 GITHUB_URL = "https://github.com/faster-cpython/benchmarking"

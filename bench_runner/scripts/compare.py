@@ -93,7 +93,7 @@ def do_many_to_many(
 
 def main(commits: List[str], output_dir: str, comparison_type: str):
     results = mod_result.load_all_results(
-        None, Path(__file__).parents[1] / "results", sorted=False
+        None, Path("results"), sorted=False
     )
 
     if len(commits) < 2:

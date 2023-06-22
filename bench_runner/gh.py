@@ -56,5 +56,4 @@ def benchmark(
 
     subprocess.check_call(
         ["gh", "workflow", "run", "benchmark.yml"] + flags,
-        cwd=Path(__file__).parents[1],
     )
