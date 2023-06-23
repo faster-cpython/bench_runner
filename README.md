@@ -6,13 +6,21 @@ This code lets you set up your own Github repo to run pyperformance benchmarks o
 
 ### Set up the repo
 
-Add bench_runner to your requirements.  Since there are no PyPI releases yet, you can install it from a tag in the git repo:
+Create a new empty repository on Github and clone it locally.
+
+Add bench_runner to your `requirements.txt`.  Since there are no PyPI releases (yet), you can install it from a tag in the git repo:
 
 ```
 git+https://github.com/faster-cpython/bench_runner@v0.2.2#egg=bench_runner
 ```
 
-Create a virtual environment and install your requirements to it.
+Create a virtual environment and install your requirements to it, for example:
+
+```
+$ python -m venv venv
+$ source venv/bin/activate
+$ python -m pip install -r requirements.txt
+```
 
 Run the install script to generate the files to make the Github Actions work (from the root of your repo):
 
@@ -21,11 +29,18 @@ $ python -m bench_runner.scripts.install
 ```
 
 This will create some files in `.github/workflows` as well as some configuration files at the root of your repo.
-Commit them to your repository.
+Commit them to your repository, and push up to Github.
+
+```
+$ git commit -a -m "Initial commit"
+$ git push origin main
+```
 
 ### Add some self-hosted runners
 
-Provision the machine according to the [provisioning instructions](PROVISIONING.md).
+Provision the machine to have the build requirements for CPython and the base
+requirements for Github Actions according to the [provisioning
+instructions](PROVISIONING.md).
 
 Then, add it to the pool of runners by following the instructions on Github's
 `Settings -> Actions -> Runners -> Add New Runner` to add a new runner.
@@ -54,7 +69,12 @@ hostname = pyperf
 
 **TODO**: Describe the special pystats runner
 
-### Configure your repo
+### Try a benchmarking run
+
+There are instructions for running a benchmarking action already in the `README.md` of your repo.
+Look there and give it a try!
+
+### Configuration
 
 #### Set of benchmarks
 
