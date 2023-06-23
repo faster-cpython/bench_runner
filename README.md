@@ -4,6 +4,8 @@
 
 This code lets you set up your own Github repo to run pyperformance benchmarks on your own self-hosted Github Action runners.
 
+For example, you can see [the Faster CPython team's benchmarking results](https://github.com/faster-cpython/benchmarking-public). 
+
 ### Set up the repo
 
 Create a new empty repository on Github and clone it locally.
