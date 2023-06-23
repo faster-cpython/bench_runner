@@ -44,6 +44,9 @@ def write_yaml(dst: Path, contents: Any, check: bool):
         yaml.dump(contents, fd)
 
     if check:
+        if not dst.is_file():
+            fail_check(dst)
+
         with open(dst) as fd:
             orig_contents = fd.read()
         fd = io.StringIO()
@@ -112,6 +115,8 @@ def generate_benchmark(input_path: Path, output_path: Path, check: bool) -> None
 
 def generate_generic(input_path: Path, output_path: Path, check: bool) -> None:
     if check:
+        if not output_path.is_file():
+            fail_check(output_path)
         input_content = input_path.read_bytes()
         output_content = output_path.read_bytes()
         if input_content != output_content:
