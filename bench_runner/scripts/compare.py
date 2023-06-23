@@ -92,9 +92,7 @@ def do_many_to_many(
 
 
 def main(commits: List[str], output_dir: str, comparison_type: str):
-    results = mod_result.load_all_results(
-        None, Path("results"), sorted=False
-    )
+    results = mod_result.load_all_results(None, Path("results"), sorted=False)
 
     if len(commits) < 2:
         raise ValueError("Must provide at least 2 commits")

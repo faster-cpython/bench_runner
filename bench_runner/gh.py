@@ -2,7 +2,6 @@
 Utilities to use the `gh` CLI for workflow automation.
 """
 
-from pathlib import Path
 import subprocess
 from typing import Any, List, Mapping, Optional
 

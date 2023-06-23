@@ -204,14 +204,6 @@ def main(
     weekly_since = weekly_since or []
     bisect = bisect or []
 
-    if (
-        all_with_prefix == []
-        and latest_with_prefix == []
-        and weekly_since == []
-        and bisect == []
-    ):
-        all_with_prefix, latest_with_prefix, weekly_since, bisect = DEFAULTS
-
     tags = git.get_tags(cpython)
 
     commits = get_commits(
