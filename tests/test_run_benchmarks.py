@@ -117,7 +117,7 @@ def test_update_metadata(tmp_path, benchmarks_checkout):
     assert metadata["benchmark_hash"] == "e3b0c4"
     assert (
         metadata["github_action_url"]
-        == "https://github.com/faster-cpython/benchmarking/actions/runs/12345"
+        == "https://github.com/faster-cpython/bench_runner/actions/runs/12345"
     )
 
 
@@ -172,7 +172,7 @@ def test_run_benchmarks(tmp_path, benchmarks_checkout):
     assert metadata["benchmark_hash"] == "9d2e5f"
     assert (
         metadata["github_action_url"]
-        == "https://github.com/faster-cpython/benchmarking/actions/runs/12345"
+        == "https://github.com/faster-cpython/bench_runner/actions/runs/12345"
     )
 
     assert len(benchmarks) == 3
