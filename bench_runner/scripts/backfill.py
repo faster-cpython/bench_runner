@@ -10,9 +10,6 @@ from bench_runner import result as mod_result
 from bench_runner import runners
 
 
-DEFAULTS = (["v3.11"], ["v3.10"], ["2022-11-20"], [])
-
-
 RunnerType: TypeAlias = runners.Runner
 
 
@@ -261,8 +258,6 @@ if __name__ == "__main__":
         repository. Useful for regenerating or catching up with old data. The
         set of tags to run will be displayed for confirmation before actually
         setting up the jobs.
-
-        If no named arguments are provided, a set of defaults will be used.
         """
     )
     parser.add_argument(

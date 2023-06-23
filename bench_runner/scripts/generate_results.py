@@ -219,7 +219,7 @@ def generate_index(
     table.replace_section(filename, "table", content.getvalue())
 
 
-def generate_master_indices(
+def generate_indices(
     bases: List[str], results: Iterable[Result], repo_dir: Path
 ) -> None:
     """
@@ -366,7 +366,7 @@ def main(repo_dir: Path, force: bool = False, bases: Optional[List[str]] = None)
     print("Generating comparison tables")
     save_generated_results(results, force=force)
     print("Generating indices")
-    generate_master_indices(bases, results, repo_dir)
+    generate_indices(bases, results, repo_dir)
     generate_directory_indices(results)
     print("Generating longitudinal plot")
     plot.longitudinal_plot(results, repo_dir / "longitudinal.png")
@@ -378,7 +378,7 @@ def main(repo_dir: Path, force: bool = False, bases: Optional[List[str]] = None)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        "Generate master index tables and comparison plots for all of the results.",
+        "Generate index tables and comparison plots for all of the results.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 

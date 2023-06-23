@@ -1,6 +1,7 @@
 import argparse
 import csv
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -16,7 +17,9 @@ from bench_runner.result import Result
 REPO_ROOT = Path()
 BENCHMARK_JSON = REPO_ROOT / "benchmark.json"
 PROFILING_RESULTS = REPO_ROOT / "profiling" / "results"
-GITHUB_URL = "https://github.com/faster-cpython/benchmarking"
+GITHUB_URL = "https://github.com/" + os.environ.get(
+    "GITHUB_REPOSITORY", "faster-cpython/benchmarking"
+)
 
 
 class NoBenchmarkError(Exception):
@@ -124,7 +127,14 @@ def collect_perf(python: Union[Path, str], benchmarks: str):
             run_benchmarks(
                 python,
                 benchmark,
-                ["perf", "record", "--call-graph=dwarf", "-o", "perf.data", "--"],
+                command_prefix=[
+                    "perf",
+                    "record",
+                    "--call-graph=dwarf",
+                    "-o",
+                    "perf.data",
+                    "--",
+                ],
             )
         except NoBenchmarkError:
             pass

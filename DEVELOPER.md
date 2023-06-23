@@ -1,31 +1,28 @@
 # Benchmarking infrastructure for the Faster CPython project
 
-TODO: Rewrite all of the paths here.
-
-This repository contains a number of GitHub Actions workflows to run benchmarks on a set of private, self-hosted, bare metal machines that we control.
+This repository contains a number of GitHub Actions workflows to run benchmarks on a set of private, self-hosted, bare metal machines.
 
 ## The workflows
 
 There is a single user-facing workflow, `benchmark.yml`, that [reuses](https://docs.github.com/en/actions/using-workflows/reusing-workflows) the other workflows, prefixed with `_`.
 
 Unfortunately, it is not possible to select a self-hosted runner based on an input variable.
-To get around this, some of the workflow files are generated from "templates" by the `regenerate_workflows.py` script to work around limitations in the Github Actions workflow language.
+To get around this, some of the workflow files are generated from "templates" by the `install.py` script to work around limitations in the Github Actions workflow language.
 ("Templates" is probably overstating it -- it's just YAML with some sections repeated and modified.)
-Both the source and generated workflow files need to be committed to the git repo, and CI will confirm that the generated files have been regenerated when the source files change.
 
 ### benchmark.yml
 
-This is the main user entry point.  See the [user documentation](README.md) for information about the parameters it takes.
+This is the main user entry point.  See the [user documentation](bench_runner/templates/README.md) for information about the parameters it takes.
 
-It kicks off one or two benchmarking runs (depending on the value of `benchmark_base`) (`_benchmark.yml`), then generates the derived results (`_generate.yml`), and publishes public results, if any (`_publish.yml`).
+It kicks off one or two sets of benchmarking runs (depending on the value of `benchmark_base`) (`_benchmark.yml`), then generates the derived results (`_generate.yml`), and publishes public results, if any (`_publish.yml`).
 
 ### _benchmark.yml
 
 This workflow manages building a specific revision of CPython, runs a complete set of benchmarks, and then commits the pyperformance-style `.json` file to this repo.
-Both the `pyperformance` and `pyston` benchmarks suites are run, configured by the `benchmark.manifest` file in this repo.
+By default, both the `pyperformance` and `pyston` benchmarks suites are run, configured by the `benchmark.manifest` file.
 
-There are three separate jobs, one for each platform (Windows, Linux and macOS).
-If the user chose to run on all machines, these jobs may run in parallel, but otherwise, each machine only handles one job at a time to get more accurate benchmarks.
+There are separate jobs for each runner.
+If the user chose to run on all runners, these jobs may run in parallel, but otherwise, each runner only handles one job at a time to get more accurate benchmarks.
 
 There are additional parameters available to save time during debugging, but these are not exposed to the user since they create results that aren't useful for full comparisons:
 
@@ -38,13 +35,13 @@ The implementation of this workflow (for everything but the CPython compilation 
 
 This workflow runs the benchmarks using a build with `--enable-pystats`, and then saves the results run through CPython's `Tools/scripts/summarize_stats.py` script.
 
-Unlike the regular benchmarks, we don't care about timings, so this workflow is run on GitHub's cloud compute, on Linux only.
+Unlike the regular benchmarks, we don't care about timings, so this workflow is run in a cloud VM, on Linux only.
 
 The implementation of this workflow (for everything but the CPython compilation itself) is in `bench_runner/scripts/run_benchmarks.py`.
 
 ### _generate.yml
 
-This workflow reads the `.json` files created in the previous step and creates derived tables and plots, as well as master indices of the results.
+This workflow reads the `.json` files created in the previous step and creates derived tables and plots, as well as indices of the results.
 
 This is designed such that all of the derived data can be regenerated from the raw data at any time, so as we refine or add more analyses, we can regenerate these outputs without needing to recapture the raw data.
 To regenerate all derived data, check the `force` checkbox when running this workflow.
@@ -58,20 +55,20 @@ Each comparison produces two files:
 - A markdown table produced by `pyperf compare_to`.
 - A set of violin plots showing the distribution of the difference in timings for each benchmark.
 
-Additionally, master indices are generated in `README.md` and `results/README.md`.
+Additionally, indices are generated in `README.md` and `RESULTS.md`.
 The latter only contains the most recent revision of each named Python version.
 
 The implementation of this workflow is in `bench_runner/scripts/generate_results.py`.
 
 ### _publish.yml
 
-This step mirrors the private `faster-cpython/benchmarking` repo to the public `faster-cpython/benchmarking-public` repo.
+This step mirrors the private `benchmarking` repo to the public `benchmarking-public` repo.
 This needs a token with contents write access and workflow write access to the `benchmarking-public` repo called `BENCHMARK_MIRROR`.
 
 ### _weekly.yml
 
 This does a benchmarking run automatically every Sunday.
-It tests `python/cpython main` on Linux-x86_64 and then publishes the results.
+It tests `python/cpython main` on all runners and then publishes the results.
 
 ## Results naming convention
 
@@ -123,13 +120,3 @@ The following metadata fields are added to the raw results (in addition to those
   Used to confirm that two sets of benchmarks used the same benchmarking code.
 - `github_actions_url`: the URL to the github action that produced the result. Useful for getting a full log of the run to debug issues.
 
-## Adding new runners
-
-Follow the instructions on Github's `Settings -> Actions -> Runners` to add a new runner.
-
-Each runner must have the following labels:
-  - One of `linux`, `macos` or `windows`.
-  - `bare-metal` (to distinguish it from VMs in the cloud).
-  - `$os-$arch-$nickname`.
-
-In addition, the runner must be added to `runners.ini`.

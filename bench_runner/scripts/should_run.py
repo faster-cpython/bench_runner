@@ -48,7 +48,7 @@ def main(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        "Generate master index tables and comparison plots for all of the results.",
+        "Do we need to run this commit?",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
