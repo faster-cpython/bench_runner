@@ -18,7 +18,7 @@ REPO_ROOT = Path()
 BENCHMARK_JSON = REPO_ROOT / "benchmark.json"
 PROFILING_RESULTS = REPO_ROOT / "profiling" / "results"
 GITHUB_URL = "https://github.com/" + os.environ.get(
-    "GITHUB_REPOSITORY", "faster-cpython/benchmarking"
+    "GITHUB_REPOSITORY", "faster-cpython/bench_runner"
 )
 
 

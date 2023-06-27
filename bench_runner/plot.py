@@ -168,7 +168,7 @@ def longitudinal_plot(
                 for x in runner_results
             ]
             changes = [
-                result.Comparison(ref, r, base).geometric_mean_float
+                result.BenchmarkComparison(ref, r, base).geometric_mean_float
                 for r in runner_results
             ]
 

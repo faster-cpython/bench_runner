@@ -82,7 +82,23 @@ def write_plot_results(filename: Path, compare: Comparison) -> None:
     )
 
 
-RESULT_TYPES = {".md": write_markdown_results, ".png": write_plot_results}
+def write_pystats_diff(filename: Path, compare: Comparison) -> None:
+    if filename.exists():
+        filename.unlink()
+        compare = compare.copy()
+
+    contents = compare.contents
+    if contents is None:
+        return
+
+    with open(filename, "w") as fd:
+        fd.write(contents)
+
+
+RESULT_TYPES = {
+    "raw results" : {".md": write_markdown_results, ".png": write_plot_results},
+    "pystats raw" : {".md": write_pystats_diff}
+}
 
 
 def save_generated_results(results: Iterable[Result], force: bool = False) -> None:
@@ -95,7 +111,7 @@ def save_generated_results(results: Iterable[Result], force: bool = False) -> No
     for result in results:
         for compare in result.bases.values():
             if compare.filename is not None:
-                for suffix, func in RESULT_TYPES.items():
+                for suffix, func in RESULT_TYPES[result.result_info[0]].items():
                     filename = compare.filename.with_suffix(suffix)
                     if not filename.exists() or force:
                         util.status(".")
@@ -177,6 +193,8 @@ def results_by_runner(
     """
     by_runner = {}
     for result in results:
+        if result.result_info[0] != "raw results":
+            continue
         by_runner.setdefault(result.runner, []).append(result)
 
     for runner_name in sort_runner_names(by_runner.keys()):
@@ -273,30 +291,31 @@ def get_directory_indices_entries(
         )
         entries.append((dirpath, result.runner, None, f"platform: {result.platform}"))
 
-        for base, compare in result.bases.items():
-            entries.append((dirpath, result.runner, base, compare.geometric_mean))
-            missing_benchmarks, new_benchmarks = find_different_benchmarks(
-                result, compare.ref
-            )
-            if len(missing_benchmarks):
-                prefix = base == "base" and "🔴 " or ""
-                entries.append(
-                    (
-                        dirpath,
-                        result.runner,
-                        base,
-                        f"missing benchmarks: {prefix}{', '.join(missing_benchmarks)}",
-                    )
+        if result.result_info[0] == "raw results":
+            for base, compare in result.bases.items():
+                entries.append((dirpath, result.runner, base, compare.geometric_mean))
+                missing_benchmarks, new_benchmarks = find_different_benchmarks(
+                    result, compare.ref
                 )
-            if len(new_benchmarks):
-                entries.append(
-                    (
-                        dirpath,
-                        result.runner,
-                        base,
-                        f"new benchmarks: {', '.join(new_benchmarks)}",
+                if len(missing_benchmarks):
+                    prefix = base == "base" and "🔴 " or ""
+                    entries.append(
+                        (
+                            dirpath,
+                            result.runner,
+                            base,
+                            f"missing benchmarks: {prefix}{', '.join(missing_benchmarks)}",
+                        )
                     )
-                )
+                if len(new_benchmarks):
+                    entries.append(
+                        (
+                            dirpath,
+                            result.runner,
+                            base,
+                            f"new benchmarks: {', '.join(new_benchmarks)}",
+                        )
+                    )
 
     for dirpath in dirpaths:
         entries.append(
@@ -363,13 +382,14 @@ def main(repo_dir: Path, force: bool = False, bases: Optional[List[str]] = None)
     remove_duplicate_results(results_dir)
     results = load_all_results(bases, results_dir)
     print(f"Found {len(results)} results")
-    print("Generating comparison tables")
+    print("Generating comparison results")
     save_generated_results(results, force=force)
     print("Generating indices")
-    generate_indices(bases, results, repo_dir)
-    generate_directory_indices(results)
+    benchmarking_results = [r for r in results if r.result_info[0] == "raw results"]
+    generate_indices(bases, benchmarking_results, repo_dir)
+    generate_directory_indices(benchmarking_results)
     print("Generating longitudinal plot")
-    plot.longitudinal_plot(results, repo_dir / "longitudinal.png")
+    plot.longitudinal_plot(benchmarking_results, repo_dir / "longitudinal.png")
     print("Generating profiling plot")
     profiling_plot.generate_results(
         repo_dir / "profiling", repo_dir / "profiling" / "results"

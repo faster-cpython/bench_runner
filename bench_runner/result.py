@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import socket
 import subprocess
+import sys
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 
@@ -51,6 +52,31 @@ class Comparison:
     def copy(self):
         return type(self)(self.ref, self.head, self.base)
 
+    @property
+    def filename(self) -> Optional[Path]:
+        if self.ref == self.head:
+            return None
+
+        if self.ref.cpython_hash == self.head.cpython_hash:
+            return None
+
+        return self.head.filename.parent / (
+            self.head.filename.stem + f"-vs-{self.base}.txt"
+        )
+
+    @functools.cached_property
+    def contents(self) -> Optional[str]:
+        if self.filename is None:
+            return None
+
+        if self.filename.with_suffix(".md").is_file():
+            with open(self.filename.with_suffix(".md"), "r", encoding="utf-8") as fd:
+                return fd.read()
+        else:
+            return self._generate_contents()
+
+
+class BenchmarkComparison(Comparison):
     @functools.cached_property
     def geometric_mean(self) -> str:
         if self.ref == self.head:
@@ -96,37 +122,42 @@ class Comparison:
             number = 1.0 - (number - 1.0)
         return number
 
-    @functools.cached_property
-    def contents(self) -> Optional[str]:
-        if self.filename is None:
-            return None
-
-        if self.filename.with_suffix(".md").is_file():
-            with open(self.filename.with_suffix(".md"), "r", encoding="utf-8") as fd:
-                return fd.read()
-        else:
-            return subprocess.check_output(
-                [
-                    "pyperf",
-                    "compare_to",
-                    "-G",
-                    "--table",
-                    "--table-format",
-                    "md",
-                    self.ref.filename,
-                    self.head.filename,
-                ],
-                encoding="utf-8",
-            )
-
-    @property
-    def filename(self) -> Optional[Path]:
-        if self.ref == self.head:
-            return None
-
-        return self.head.filename.parent / (
-            self.head.filename.stem + f"-vs-{self.base}.txt"
+    def _generate_contents(self) -> Optional[str]:
+        return subprocess.check_output(
+            [
+                "pyperf",
+                "compare_to",
+                "-G",
+                "--table",
+                "--table-format",
+                "md",
+                self.ref.filename,
+                self.head.filename,
+            ],
+            encoding="utf-8",
         )
+
+
+class PystatsComparison(Comparison):
+    def _generate_contents(self) -> Optional[str]:
+        return subprocess.check_output(
+            [
+                sys.executable,
+                Path(__file__).parent / "summarize_stats.py",
+                self.ref.filename,
+                self.head.filename,
+            ],
+            encoding="utf-8",
+        )
+
+
+def comparison_factory(ref: "Result", head: "Result", base: str) -> Comparison:
+    if head.result_info[0] == "raw results":
+        return BenchmarkComparison(ref, head, base)
+    elif head.result_info[0] == "pystats raw":
+        return PystatsComparison(ref, head, base)
+
+    raise ValueError(f"Can not compare result of type {head.result_info[0]}")
 
 
 class Result:
@@ -245,8 +276,10 @@ class Result:
     def result_info(self) -> Tuple[str, Optional[str]]:
         if self.extra == [] and self.suffix == ".json":
             return ("raw results", None)
-        elif self.extra == ["pystats"]:
-            if self.suffix == ".md":
+        elif self.extra[0] == "pystats":
+            if len(self.extra) == 3 and self.extra[1] == "vs" and self.suffix == ".md":
+                return ("pystats diff", self.extra[2])
+            elif self.suffix == ".md":
                 return ("pystats table", None)
             elif self.suffix == ".json":
                 return ("pystats raw", None)
@@ -374,7 +407,12 @@ class Result:
         loose_results = [
             ref
             for ref in results
-            if ref != self and ref.nickname == self.nickname and ref.fork == "python"
+            if (
+                ref != self
+                and ref.nickname == self.nickname
+                and ref.fork == "python"
+                and ref.extra == self.extra
+            )
         ]
 
         if self.benchmark_hash is not None:
@@ -392,7 +430,7 @@ class Result:
             for result_set in [exact_results, loose_results]:
                 for ref in result_set:
                     if func(ref):
-                        self.bases[base] = Comparison(ref, self, base)
+                        self.bases[base] = comparison_factory(ref, self, base)
                         return
 
         for base in bases:
@@ -442,7 +480,7 @@ def load_all_results(
 
     for entry in results_dir.glob("**/*.json"):
         result = Result.from_filename(entry)
-        if result.result_info != ("raw results", None):
+        if result.result_info[0] not in ["raw results", "pystats raw"]:
             continue
         results.append(Result.from_filename(entry))
     if len(results) == 0:
