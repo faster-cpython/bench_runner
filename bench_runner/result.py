@@ -75,6 +75,9 @@ class Comparison:
         else:
             return self._generate_contents()
 
+    def _generate_contents(self) -> Optional[str]:
+        return None
+
 
 class BenchmarkComparison(Comparison):
     @functools.cached_property
@@ -458,17 +461,29 @@ def remove_duplicate_results(results_dir: Path) -> None:
                 result.filename.unlink()
 
 
-def has_result(results_dir: Path, commit_hash: str, machine: str) -> Optional[Result]:
+def has_result(
+    results_dir: Path, commit_hash: str, machine: str, pystats: bool
+) -> Optional[Result]:
     if machine == "all":
         nickname = None
     else:
         _, _, nickname = machine.split("-")
 
-    for result in load_all_results([], results_dir, False):
-        if commit_hash.startswith(result.cpython_hash) and (
-            nickname is None or result.nickname == nickname
-        ):
-            return result
+    results = load_all_results([], results_dir, False)
+
+    if pystats:
+        for result in results:
+            if (
+                commit_hash.startswith(result.cpython_hash)
+                and result.result_info[0] == "pystats raw"
+            ):
+                return result
+    else:
+        for result in results:
+            if commit_hash.startswith(result.cpython_hash) and (
+                nickname is None or result.nickname == nickname
+            ):
+                return result
 
     return None
 

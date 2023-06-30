@@ -15,6 +15,7 @@ from bench_runner import profiling_plot
 from bench_runner.result import (
     load_all_results,
     remove_duplicate_results,
+    BenchmarkComparison,
     Comparison,
     Result,
 )
@@ -41,7 +42,7 @@ def _tuple_to_nested_dicts(entries: List[Tuple], d: Optional[Dict] = None) -> Di
     return d
 
 
-def write_markdown_results(filename: Path, compare: Comparison) -> None:
+def write_markdown_results(filename: Path, compare: BenchmarkComparison) -> None:
     if filename.exists():
         filename.unlink()
         compare = compare.copy()
@@ -96,8 +97,8 @@ def write_pystats_diff(filename: Path, compare: Comparison) -> None:
 
 
 RESULT_TYPES = {
-    "raw results" : {".md": write_markdown_results, ".png": write_plot_results},
-    "pystats raw" : {".md": write_pystats_diff}
+    "raw results": {".md": write_markdown_results, ".png": write_plot_results},
+    "pystats raw": {".md": write_pystats_diff},
 }
 
 
@@ -304,7 +305,8 @@ def get_directory_indices_entries(
                             dirpath,
                             result.runner,
                             base,
-                            f"missing benchmarks: {prefix}{', '.join(missing_benchmarks)}",
+                            "missing benchmarks: "
+                            f"{prefix}{', '.join(missing_benchmarks)}",
                         )
                     )
                 if len(new_benchmarks):

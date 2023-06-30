@@ -1,3 +1,4 @@
 {
-    "useLibraryCodeForTypes": false
+  "useLibraryCodeForTypes": false,
+  "exclude": ["**/summarize_stats.py"]
 }
