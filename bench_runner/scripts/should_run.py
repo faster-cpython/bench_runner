@@ -17,6 +17,7 @@ def main(
     fork: str,
     ref: str,
     machine: str,
+    pystats: bool,
     cpython: Path = Path("cpython"),
     results_dir: Path = Path("results"),
 ) -> None:
@@ -32,7 +33,7 @@ def main(
         # Fail the rest of the workflow
         sys.exit(1)
 
-    found_result = has_result(results_dir, commit_hash, machine)
+    found_result = has_result(results_dir, commit_hash, machine, pystats)
 
     if force:
         if found_result is not None:
@@ -58,8 +59,10 @@ if __name__ == "__main__":
     parser.add_argument("fork")
     parser.add_argument("ref")
     parser.add_argument("machine")
+    parser.add_argument("pystats")
     args = parser.parse_args()
 
     force = args.force != "false"
+    pystats = args.pystats != "false"
 
-    main(force, args.fork, args.ref, args.machine)
+    main(force, args.fork, args.ref, args.machine, pystats)

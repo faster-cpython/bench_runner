@@ -35,7 +35,7 @@ def compare_pair(
     print(f"Comparing {counter[0]+1}/{counter[1]}", end="\r")
     counter[0] += 1
     name = f"{head_name}-vs-{ref_name}"
-    comparison = mod_result.Comparison(ref, head, "")
+    comparison = mod_result.BenchmarkComparison(ref, head, "")
     if comparison.contents is None:
         raise RuntimeError()
     with open(output_dir / f"{name}.md", "w", encoding="utf-8") as fd:
