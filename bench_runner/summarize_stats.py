@@ -373,7 +373,7 @@ def emit_comparative_execution_counts(
         )
 
 def get_defines():
-    spec_path = os.path.join(os.path.dirname(__file__), "../../Python/specialize.c")
+    spec_path = os.path.join("cpython/Python/specialize.c")
     with open(spec_path) as spec_src:
         defines = parse_kinds(spec_src)
     return defines
@@ -430,7 +430,7 @@ def emit_comparative_specialization_overview(base_opcode_stats, base_total, head
         )
 
 def get_stats_defines():
-    stats_path = os.path.join(os.path.dirname(__file__), "../../Include/pystats.h")
+    stats_path = os.path.join("cpython/Include/pystats.h")
     with open(stats_path) as stats_src:
         defines = parse_kinds(stats_src, prefix="EVAL_CALL")
     return defines
