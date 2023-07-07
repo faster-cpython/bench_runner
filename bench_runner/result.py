@@ -143,15 +143,18 @@ class BenchmarkComparison(Comparison):
 
 class PystatsComparison(Comparison):
     def _generate_contents(self) -> Optional[str]:
-        return subprocess.check_output(
-            [
-                sys.executable,
-                Path(__file__).parent / "summarize_stats.py",
-                self.ref.filename,
-                self.head.filename,
-            ],
-            encoding="utf-8",
-        )
+        try:
+            return subprocess.check_output(
+                [
+                    sys.executable,
+                    Path(__file__).parent / "summarize_stats.py",
+                    self.ref.filename,
+                    self.head.filename,
+                ],
+                encoding="utf-8",
+            )
+        except subprocess.CalledProcessError:
+            return None
 
 
 def comparison_factory(ref: "Result", head: "Result", base: str) -> Comparison:
