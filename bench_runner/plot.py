@@ -48,6 +48,7 @@ def plot_diff_pair(ax, data):
             all_data.extend(values)
         else:
             violins.append([1.0])
+            all_data.extend([1.0])
             ax.text(1.01, i + 1, "insignificant")
 
     violins.append(all_data)
