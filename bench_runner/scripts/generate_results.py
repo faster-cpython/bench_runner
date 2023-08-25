@@ -158,7 +158,7 @@ def output_results_index(
             if base in result.bases:
                 versus.append(
                     table.md_link(
-                        f"<small>{result.bases[base].summary}</small>",
+                        result.bases[base].summary,
                         result.bases[base].filename.with_suffix(".md"),
                         filename,
                     )

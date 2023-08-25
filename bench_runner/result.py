@@ -183,7 +183,8 @@ class BenchmarkComparison(Comparison):
         result = self.geometric_mean
         reliability = self.hpt_reliability
         if reliability is not None:
-            result += f" ({reliability} rel.)"
+            reliability = reliability[:-4]
+            result += f" ({reliability}% rel.)"
 
         return result
 
