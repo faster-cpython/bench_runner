@@ -152,7 +152,7 @@ def longitudinal_plot(
             data[key] = value
             return value
 
-    with open("longitudinal.json") as fd:
+    with open(output_filename.parent / "longitudinal.json") as fd:
         data = json.load(fd)
 
     fig, axs = plt.subplots(
@@ -225,7 +225,7 @@ def longitudinal_plot(
     plt.savefig(output_filename, dpi=150)
     plt.close()
 
-    with open("longitudinal.json", "w") as fd:
+    with open(output_filename.parent / "longitudinal.json", "w") as fd:
         json.dump(data, fd, indent=2)
 
 
