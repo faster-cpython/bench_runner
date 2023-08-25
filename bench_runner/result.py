@@ -1,4 +1,5 @@
 # Utilities to manage a results file
+from __future__ import annotations
 
 
 import functools
@@ -7,7 +8,7 @@ from pathlib import Path
 import socket
 import subprocess
 import sys
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
+from typing import Any, Iterable, Optional
 
 
 from . import git
@@ -179,7 +180,7 @@ class Result:
         ref: str,
         version: str,
         cpython_hash: str,
-        extra: List[str] = [],
+        extra: list[str] = [],
         suffix: str = ".json",
         commit_datetime: Optional[str] = None,
     ):
@@ -226,7 +227,7 @@ class Result:
 
     @classmethod
     def from_scratch(
-        cls, python: str, fork: str, ref: str, extra: List[str] = []
+        cls, python: str, fork: str, ref: str, extra: list[str] = []
     ) -> "Result":
         result = cls(
             _clean(runners.get_nickname_for_hostname(socket.gethostname())),
@@ -279,7 +280,7 @@ class Result:
         return self._filename
 
     @functools.cached_property
-    def result_info(self) -> Tuple[str, Optional[str]]:
+    def result_info(self) -> tuple[str, Optional[str]]:
         if self.extra == [] and self.suffix == ".json":
             return ("raw results", None)
         elif self.extra[0] == "pystats":
@@ -297,7 +298,7 @@ class Result:
         raise ValueError("Unknown result type")
 
     @property
-    def fast_contents(self) -> Dict[str, Any]:
+    def fast_contents(self) -> dict[str, Any]:
         """
         Gets just a portion of the JSON contents when the whole set isn't needed.
         """
@@ -331,7 +332,7 @@ class Result:
         return fast_contents
 
     @property
-    def contents(self) -> Dict[str, Any]:
+    def contents(self) -> dict[str, Any]:
         if hasattr(self, "_full_contents"):
             return self._full_contents
         with open(self.filename, "rb") as fd:
@@ -339,7 +340,7 @@ class Result:
         return self._full_contents
 
     @property
-    def metadata(self) -> Dict[str, Any]:
+    def metadata(self) -> dict[str, Any]:
         return self.fast_contents.get("metadata", {})
 
     @property
@@ -393,7 +394,7 @@ class Result:
         return self.metadata.get("github_action_url", None)
 
     @functools.cached_property
-    def benchmark_names(self) -> Set[str]:
+    def benchmark_names(self) -> set[str]:
         contents = self.fast_contents
         names = set()
         for benchmark in contents["benchmarks"]:
@@ -409,7 +410,7 @@ class Result:
 
         return pkg_version.parse(self.version.replace("+", "0"))
 
-    def match_to_bases(self, bases: List[str], results: Iterable["Result"]) -> None:
+    def match_to_bases(self, bases: list[str], results: Iterable["Result"]) -> None:
         loose_results = [
             ref
             for ref in results
@@ -492,8 +493,8 @@ def has_result(
 
 
 def load_all_results(
-    bases: Optional[List[str]], results_dir: Path, sorted: bool = True
-) -> List[Result]:
+    bases: Optional[list[str]], results_dir: Path, sorted: bool = True
+) -> list[Result]:
     results = []
 
     for entry in results_dir.glob("**/*.json"):

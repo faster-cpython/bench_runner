@@ -1,7 +1,9 @@
+from __future__ import annotations
+
+
 import configparser
 import functools
 from pathlib import Path
-from typing import Dict, List
 
 
 class Runner:
@@ -20,7 +22,7 @@ class Runner:
 
 
 @functools.cache
-def get_runners(path=Path("runners.ini")) -> List[Runner]:
+def get_runners(path=Path("runners.ini")) -> list[Runner]:
     config = configparser.ConfigParser()
     config.read(path)
     runners = []
@@ -41,11 +43,11 @@ def get_runners(path=Path("runners.ini")) -> List[Runner]:
     return runners
 
 
-def get_runners_by_hostname() -> Dict[str, Runner]:
+def get_runners_by_hostname() -> dict[str, Runner]:
     return {x.hostname: x for x in get_runners()}
 
 
-def get_runners_by_nickname() -> Dict[str, Runner]:
+def get_runners_by_nickname() -> dict[str, Runner]:
     return {x.nickname: x for x in get_runners()}
 
 

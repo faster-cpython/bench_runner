@@ -1,8 +1,11 @@
+from __future__ import annotations
+
+
 import argparse
 import datetime
 from pathlib import Path
 import re
-from typing import Any, Dict, Iterable, Optional, Tuple
+from typing import Any, Iterable, Optional
 
 
 from matplotlib import pyplot as plt
@@ -17,7 +20,7 @@ matplotlib.use("agg")
 from . import result
 
 
-def get_data(result: result.Result) -> Dict[str, Any]:
+def get_data(result: result.Result) -> dict[str, Any]:
     results = {}
 
     for benchmark in result.contents["benchmarks"]:
@@ -78,7 +81,7 @@ def formatter(val, pos):
 
 def calculate_diffs(
     ref_values, head_values, outlier_rejection=True
-) -> Tuple[Optional[np.ndarray], float]:
+) -> tuple[Optional[np.ndarray], float]:
     sig, t_score = pyperf._utils.is_significant(ref_values, head_values)
 
     if not sig:

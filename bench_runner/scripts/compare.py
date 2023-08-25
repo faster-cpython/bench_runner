@@ -2,25 +2,27 @@
 Utility to compare a matrix of arbitrary commits, for when the usual key
 versions or git merge base aren't enough.
 """
+from __future__ import annotations
+
 
 import argparse
 from pathlib import Path
 import sys
-from typing import Iterable, List, Set, Tuple
+from typing import Iterable
 
 
 from bench_runner import result as mod_result
 from bench_runner import plot
 
 
-def parse_commit(commit: str) -> Tuple[str, str]:
+def parse_commit(commit: str) -> tuple[str, str]:
     if "," in commit:
         return tuple(commit.split(",", 1))
     else:
         return (commit, commit)
 
 
-def get_machines(results: Iterable[mod_result.Result]) -> Set[str]:
+def get_machines(results: Iterable[mod_result.Result]) -> set[str]:
     return set(result.nickname for result in results)
 
 
@@ -30,7 +32,7 @@ def compare_pair(
     ref: mod_result.Result,
     head_name: str,
     head: mod_result.Result,
-    counter: List[int],
+    counter: list[int],
 ) -> str:
     print(f"Comparing {counter[0]+1}/{counter[1]}", end="\r")
     counter[0] += 1
@@ -47,10 +49,10 @@ def compare_pair(
 
 def do_one_to_many(
     fd,
-    parsed_commits: List[Tuple[str, str, List[mod_result.Result]]],
+    parsed_commits: list[tuple[str, str, list[mod_result.Result]]],
     machine: str,
     output_dir: Path,
-    counter: List[int],
+    counter: list[int],
 ) -> None:
     _, first_name, first_results = parsed_commits[0]
     first_result = [result for result in first_results if result.nickname == machine][0]
@@ -64,10 +66,10 @@ def do_one_to_many(
 
 def do_many_to_many(
     fd,
-    parsed_commits: List[Tuple[str, str, List[mod_result.Result]]],
+    parsed_commits: list[tuple[str, str, list[mod_result.Result]]],
     machine: str,
     output_dir: Path,
-    counter: List[int],
+    counter: list[int],
 ) -> None:
     fd.write("| ")
     fd.write(" | ".join([""] + [f"{x[1]} ({x[0]})" for x in parsed_commits]))
@@ -91,7 +93,7 @@ def do_many_to_many(
         fd.write("\n")
 
 
-def main(commits: List[str], output_dir: str, comparison_type: str):
+def main(commits: list[str], output_dir: str, comparison_type: str):
     results = mod_result.load_all_results(None, Path("results"), sorted=False)
 
     if len(commits) < 2:

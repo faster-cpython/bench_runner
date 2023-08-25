@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 import argparse
 import csv
 import json
@@ -7,7 +10,7 @@ import shutil
 import subprocess
 import sys
 import textwrap
-from typing import Iterable, List, Optional, Union
+from typing import Iterable, Optional, Union
 
 
 from bench_runner import git
@@ -29,7 +32,7 @@ class NoBenchmarkError(Exception):
 def run_benchmarks(
     python: Union[Path, str],
     benchmarks: str,
-    command_prefix: List[str] = [],
+    command_prefix: list[str] = [],
     test_mode: bool = False,
 ) -> None:
     if benchmarks.strip() == "":

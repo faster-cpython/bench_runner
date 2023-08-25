@@ -1,11 +1,12 @@
 # Various git-related utilities
+from __future__ import annotations
 
 
 import datetime
 import hashlib
 from pathlib import Path
 import subprocess
-from typing import Iterable, List, Optional
+from typing import Iterable, Optional
 
 
 def get_log(
@@ -13,7 +14,7 @@ def get_log(
     dirname,
     ref: Optional[str] = None,
     n: int = 1,
-    extra: List[str] = [],
+    extra: list[str] = [],
 ) -> str:
     """
     format: The git pretty format string for each log entry
@@ -84,7 +85,7 @@ def get_git_merge_base(dirname) -> Optional[str]:
         return None
 
 
-def get_tags(dirname) -> List[str]:
+def get_tags(dirname) -> list[str]:
     subprocess.check_call(["git", "fetch", "--tags"], cwd=dirname)
     return subprocess.check_output(
         ["git", "tag"], cwd=dirname, encoding="utf-8"
@@ -100,7 +101,7 @@ def generate_combined_hash(dirs: Iterable) -> str:
     return hash.hexdigest()[:6]
 
 
-def get_commits_between(dirname: Path, ref1: str, ref2: str) -> List[str]:
+def get_commits_between(dirname: Path, ref1: str, ref2: str) -> list[str]:
     return list(
         subprocess.check_output(
             ["git", "rev-list", "--ancestry-path", f"{ref1}..{ref2}"],
