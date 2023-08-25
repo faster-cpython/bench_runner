@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import datetime
+import json
 from pathlib import Path
 import re
 from typing import Any, Iterable, Optional
@@ -142,6 +143,18 @@ def longitudinal_plot(
     names=["linux", "linux2", "macos", "windows"],
     versions=[(3, 11), (3, 12), (3, 13)],
 ):
+    def get_comparison_value(ref, r, base):
+        key = ",".join((str(ref.filename)[8:], str(r.filename)[8:], base))
+        if key in data:
+            return data[key]
+        else:
+            value = result.BenchmarkComparison(ref, r, base).hpt_percentile_float(99)
+            data[key] = value
+            return value
+
+    with open("longitudinal.json") as fd:
+        data = json.load(fd)
+
     fig, axs = plt.subplots(
         len(versions), 1, figsize=(10, 5 * len(versions)), layout="constrained"
     )
@@ -171,10 +184,7 @@ def longitudinal_plot(
                 datetime.datetime.fromisoformat(x.commit_datetime)
                 for x in runner_results
             ]
-            changes = [
-                result.BenchmarkComparison(ref, r, base).geometric_mean_float
-                for r in runner_results
-            ]
+            changes = [get_comparison_value(ref, r, base) for r in runner_results]
 
             ax.plot(
                 dates,
@@ -214,6 +224,9 @@ def longitudinal_plot(
 
     plt.savefig(output_filename, dpi=150)
     plt.close()
+
+    with open("longitudinal.json", "w") as fd:
+        json.dump(data, fd, indent=2)
 
 
 if __name__ == "__main__":

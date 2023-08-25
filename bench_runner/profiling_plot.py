@@ -211,7 +211,9 @@ def generate_results(output_dir: Path = ROOT_DIR, input_dir: Path = RESULTS_DIR)
     for i, (val, category) in enumerate(sorted_categories):
         if category == "unknown":
             continue
-        values = np.array([results[name].get(category, 0.0) for name in names])
+        values = np.array(
+            [results[name].get(category, 0.0) for name in names], np.float64
+        )
         ax.barh(
             names,
             values,
