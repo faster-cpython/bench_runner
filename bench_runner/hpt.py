@@ -115,7 +115,6 @@ def cdfnorm(x: float) -> float:
     a3 = 1.781477937
     a4 = -1.821255978
     a5 = 1.330274429
-    pi = 3.141592653589793238462643
 
     L = x
 
@@ -124,7 +123,7 @@ def cdfnorm(x: float) -> float:
 
     K = 1.0 / (1.0 + 0.2316419 * L)
     tmp = ((((a5 * K + a4) * K + a3) * K + a2) * K + a1) * K
-    tmp = np.exp(0.0 - L * L / 2.0) * tmp / np.sqrt(2.0 * pi)
+    tmp = np.exp(0.0 - L * L / 2.0) * tmp / np.sqrt(2.0 * np.pi)
 
     if x > 0.0:
         tmp = 1.0 - tmp
