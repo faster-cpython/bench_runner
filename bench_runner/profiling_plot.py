@@ -1,12 +1,12 @@
 """
 Generate summary tables and a visualization of Linux perf profiling results.
 """
+from __future__ import annotations
 
 
 import csv
 from pathlib import Path
 import re
-from typing import Dict, List
 
 
 from matplotlib import pyplot as plt
@@ -19,7 +19,7 @@ RESULTS_DIR = ROOT_DIR / "results"
 
 # Categories of functions, where each value is a list of regular expressions.
 # These are matched in-order.
-CATEGORIES: Dict[str, List[str]] = {
+CATEGORIES: dict[str, list[str]] = {
     "interpreter": [
         "_PyCode_Quicken",
         "_PyEvalFramePushAndInit",

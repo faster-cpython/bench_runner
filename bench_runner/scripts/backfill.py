@@ -1,7 +1,10 @@
+from __future__ import annotations
+
+
 import argparse
 import datetime
 from pathlib import Path
-from typing import Iterable, List, Optional, Sequence, TypeAlias
+from typing import Iterable, Optional, Sequence, TypeAlias
 
 
 from bench_runner import gh
@@ -24,7 +27,7 @@ class Commit:
         self.hash = hash
         self.date = datetime.datetime.fromisoformat(date)
         self.source = source
-        self.runners: List[RunnerType] = []
+        self.runners: list[RunnerType] = []
 
 
 def get_all_with_prefix(

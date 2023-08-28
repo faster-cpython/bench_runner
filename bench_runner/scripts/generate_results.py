@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 import argparse
 import datetime
 import io
@@ -5,7 +8,7 @@ from pathlib import Path
 import re
 import sys
 import textwrap
-from typing import Dict, Iterable, List, Optional, TextIO, Tuple
+from typing import Iterable, Optional, TextIO
 from urllib.parse import unquote
 
 
@@ -23,8 +26,8 @@ from bench_runner import table
 from bench_runner import util
 
 
-def _tuple_to_nested_dicts(entries: List[Tuple], d: Optional[Dict] = None) -> Dict:
-    def recurse(entry: Tuple, d: Dict):
+def _tuple_to_nested_dicts(entries: list[tuple], d: Optional[dict] = None) -> dict:
+    def recurse(entry: tuple, d: dict):
         if len(entry) == 2:
             d.setdefault(entry[0], [])
             if entry[1] not in d[entry[0]]:
@@ -135,7 +138,7 @@ def save_generated_results(results: Iterable[Result], force: bool = False) -> No
 
 
 def output_results_index(
-    fd: TextIO, bases: List[str], results: Iterable[Result], filename: Path
+    fd: TextIO, bases: list[str], results: Iterable[Result], filename: Path
 ):
     """
     Outputs a results index table.
@@ -174,7 +177,7 @@ def output_results_index(
     table.output_table(fd, head, rows)
 
 
-def sort_runner_names(runner_names: Iterable[str]) -> List[str]:
+def sort_runner_names(runner_names: Iterable[str]) -> list[str]:
     # We want linux first, as the most meaningful/reliable one
     order = ["linux", "windows", "darwin"]
 
@@ -188,7 +191,7 @@ def sort_runner_names(runner_names: Iterable[str]) -> List[str]:
 
 def results_by_runner(
     results: Iterable[Result],
-) -> Iterable[Tuple[str, Iterable[Result]]]:
+) -> Iterable[tuple[str, Iterable[Result]]]:
     """
     Separate results by the runner used.
     """
@@ -202,7 +205,7 @@ def results_by_runner(
         yield (runner_name, by_runner[runner_name])
 
 
-def summarize_results(results: Iterable[Result], bases: List[str]) -> Iterable[Result]:
+def summarize_results(results: Iterable[Result], bases: list[str]) -> Iterable[Result]:
     """
     Create a shorter list of results which includes:
 
@@ -221,7 +224,7 @@ def summarize_results(results: Iterable[Result], bases: List[str]) -> Iterable[R
 
 def generate_index(
     filename: Path,
-    bases: List[str],
+    bases: list[str],
     results: Iterable[Result],
     summarize: bool = False,
 ) -> None:
@@ -239,7 +242,7 @@ def generate_index(
 
 
 def generate_indices(
-    bases: List[str], results: Iterable[Result], repo_dir: Path
+    bases: list[str], results: Iterable[Result], repo_dir: Path
 ) -> None:
     """
     Generate both indices:
@@ -256,7 +259,7 @@ def generate_indices(
     generate_index(results_file, bases, results, False)
 
 
-def find_different_benchmarks(head: Result, ref: Result) -> Tuple[List[str], List[str]]:
+def find_different_benchmarks(head: Result, ref: Result) -> tuple[list[str], list[str]]:
     head_benchmarks = head.benchmark_names
     base_benchmarks = ref.benchmark_names
     return (
@@ -266,8 +269,8 @@ def find_different_benchmarks(head: Result, ref: Result) -> Tuple[List[str], Lis
 
 
 def get_directory_indices_entries(
-    results: List[Result],
-) -> List[Tuple[Path, Optional[str], Optional[str], str]]:
+    results: list[Result],
+) -> list[tuple[Path, Optional[str], Optional[str], str]]:
     entries = []
     dirpaths = set()
     refs = {}
@@ -341,7 +344,7 @@ def get_directory_indices_entries(
     return entries
 
 
-def generate_directory_indices(results: List[Result]) -> None:
+def generate_directory_indices(results: list[Result]) -> None:
     """
     Generate the indices that go in each results directory.
     """
@@ -374,7 +377,7 @@ def generate_directory_indices(results: List[Result]) -> None:
     print()
 
 
-def main(repo_dir: Path, force: bool = False, bases: Optional[List[str]] = None):
+def main(repo_dir: Path, force: bool = False, bases: Optional[list[str]] = None):
     results_dir = repo_dir / "results"
     if bases is None:
         bases = get_bases()

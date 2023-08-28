@@ -1,9 +1,11 @@
 """
 Utilities to use the `gh` CLI for workflow automation.
 """
+from __future__ import annotations
+
 
 import subprocess
-from typing import Any, List, Mapping, Optional
+from typing import Any, Mapping, Optional
 
 
 from . import runners
@@ -13,7 +15,7 @@ def get_machines():
     return [x.name for x in runners.get_runners() if x.available] + ["all"]
 
 
-def _get_flags(d: Mapping[str, Any]) -> List[str]:
+def _get_flags(d: Mapping[str, Any]) -> list[str]:
     flags = []
     for key, val in d.items():
         if val is None:
