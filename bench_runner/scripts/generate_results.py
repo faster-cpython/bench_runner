@@ -64,6 +64,8 @@ def write_markdown_results(filename: Path, compare: BenchmarkComparison) -> None
     - commit hash: {compare.head.cpython_hash}
     - commit date: {compare.head.commit_date}
     - overall geometric mean: {compare.geometric_mean}
+    - HPT reliability: {compare.hpt_reliability}
+    - HPT 99th percentile: {compare.hpt_percentile(99)}
 
     """
     )
@@ -156,7 +158,7 @@ def output_results_index(
             if base in result.bases:
                 versus.append(
                     table.md_link(
-                        result.bases[base].geometric_mean,
+                        result.bases[base].summary,
                         result.bases[base].filename.with_suffix(".md"),
                         filename,
                     )
@@ -272,7 +274,7 @@ def get_directory_indices_entries(
     results: list[Result],
 ) -> list[tuple[Path, Optional[str], Optional[str], str]]:
     entries = []
-    dirpaths = set()
+    dirpaths: set[Path] = set()
     refs = {}
     for result in results:
         dirpath = result.filename.parent
@@ -297,7 +299,7 @@ def get_directory_indices_entries(
 
         if result.result_info[0] == "raw results":
             for base, compare in result.bases.items():
-                entries.append((dirpath, result.runner, base, compare.geometric_mean))
+                entries.append((dirpath, result.runner, base, compare.long_summary))
                 missing_benchmarks, new_benchmarks = find_different_benchmarks(
                     result, compare.ref
                 )

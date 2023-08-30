@@ -5,6 +5,7 @@ from __future__ import annotations
 import functools
 import json
 from pathlib import Path
+import re
 import socket
 import subprocess
 import sys
@@ -12,6 +13,7 @@ from typing import Any, Iterable, Optional
 
 
 from . import git
+from . import hpt
 from . import runners
 
 
@@ -76,6 +78,14 @@ class Comparison:
         else:
             return self._generate_contents()
 
+    @property
+    def contents_lines(self) -> Iterable[str]:
+        contents = self.contents
+        if contents is None:
+            return []
+        else:
+            return contents.splitlines()
+
     def _generate_contents(self) -> Optional[str]:
         return None
 
@@ -86,11 +96,7 @@ class BenchmarkComparison(Comparison):
         if self.ref == self.head:
             return ""
 
-        contents = self.contents
-        if contents is None:
-            return ""
-
-        lines = list(contents.splitlines())
+        lines = self.contents_lines
 
         if (
             self.head.benchmark_hash is None
@@ -126,19 +132,95 @@ class BenchmarkComparison(Comparison):
             number = 1.0 - (number - 1.0)
         return number
 
+    @functools.cached_property
+    def hpt_reliability(self) -> Optional[str]:
+        if self.ref == self.head:
+            return None
+
+        lines = self.contents_lines
+
+        for line in lines:
+            m = re.match(r"- Reliability score: (\S+)", line)
+            if m is not None:
+                return m.group(1)
+
+        return None
+
+    def hpt_percentile(self, percentile: int) -> Optional[str]:
+        if self.ref == self.head:
+            return None
+
+        lines = self.contents_lines
+
+        for line in lines:
+            m = re.match(r"- ([0-9]+)% likely to have a (\S+) of (\S+)", line)
+            if m is not None:
+                if int(m.group(1)) == percentile:
+                    if m.group(2) == "slowdown":
+                        suffix = "slower"
+                    else:
+                        suffix = "faster"
+                    return f"{m.group(3)} {suffix}"
+
+        return None
+
+    def hpt_percentile_float(self, percentile: int) -> Optional[float]:
+        result = self.hpt_percentile(percentile)
+        if result is not None:
+            num = float(result.split()[0][:-1])
+            if result.endswith("slower"):
+                return 1.0 - (num - 1.0)
+            else:
+                return num
+        else:
+            return None
+
+    @property
+    def summary(self) -> str:
+        if self.ref == self.head:
+            return ""
+
+        result = self.geometric_mean
+        reliability = self.hpt_reliability
+        if reliability is not None:
+            reliability = reliability[:-4]
+            result += f" ({reliability}% rel.)"
+
+        return result
+
+    @property
+    def long_summary(self) -> str:
+        if self.ref == self.head:
+            return ""
+
+        result = f"Geometric mean: {self.geometric_mean}"
+        reliability = self.hpt_reliability
+        if reliability is not None:
+            subresult = f"HPT: reliability of {reliability}"
+            percentile = self.hpt_percentile(99)
+            if percentile is not None:
+                subresult += f", {percentile} at 99th %ile"
+            result += f" ({subresult})"
+
+        return result
+
     def _generate_contents(self) -> Optional[str]:
-        return subprocess.check_output(
-            [
-                "pyperf",
-                "compare_to",
-                "-G",
-                "--table",
-                "--table-format",
-                "md",
-                self.ref.filename,
-                self.head.filename,
-            ],
-            encoding="utf-8",
+        return (
+            subprocess.check_output(
+                [
+                    "pyperf",
+                    "compare_to",
+                    "-G",
+                    "--table",
+                    "--table-format",
+                    "md",
+                    self.ref.filename,
+                    self.head.filename,
+                ],
+                encoding="utf-8",
+            )
+            + "\n\n"
+            + hpt.make_report(self.ref.filename, self.head.filename)
         )
 
 
