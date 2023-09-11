@@ -17,7 +17,9 @@ from bench_runner import plot
 
 def parse_commit(commit: str) -> tuple[str, str]:
     if "," in commit:
-        return tuple(commit.split(",", 1))
+        result = commit.split(",", 1)
+        # For pyright's benefit
+        return (result[0], result[1])
     else:
         return (commit, commit)
 
