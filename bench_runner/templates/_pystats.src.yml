@@ -26,6 +26,9 @@ env:
       force:
         description: 'Rerun and replace results if commit already exists'
         type: boolean
+      individual:
+        description: 'Collect pystats for each individual benchmark'
+        type: boolean
 
   workflow_call:
     inputs:
@@ -43,6 +46,9 @@ env:
         type: boolean
       force:
         description: 'Rerun and replace results if commit already exists'
+        type: boolean
+      individual:
+        description: 'Collect pystats for each individual benchmark'
         type: boolean
 
 jobs:
@@ -97,11 +103,11 @@ jobs:
       - name: Install pyperformance into the system python
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
-          python -m pip install ./pyperformance
+          python -m pip install --no-binary :all: ./pyperformance
       - name: Running pyperformance
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
-          python -m bench_runner.scripts.run_benchmarks pystats cpython/python ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.benchmarks || 'all' }} false --run_id ${{ github.run_id }}
+          python -m bench_runner.scripts.run_benchmarks pystats cpython/python ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.benchmarks || 'all' }} --run_id ${{ github.run_id }} ${{ inputs.individual != 'false' && '--individual' || '' }}
       - name: pull
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
