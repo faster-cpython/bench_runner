@@ -1,3 +1,4 @@
+from pathlib import Path
 import subprocess
 
 
@@ -7,7 +8,12 @@ import pytest
 from bench_runner import gh
 
 
+DATA_PATH = Path(__file__).parent / "data"
+
+
 def test_benchmark_arguments():
+    runner_path = DATA_PATH / "runners.ini"
+
     with pytest.raises(TypeError):
         gh.benchmark(fork=1)
 
@@ -15,16 +21,18 @@ def test_benchmark_arguments():
         gh.benchmark(ref=1)
 
     with pytest.raises(ValueError):
-        gh.benchmark(machine="")
+        gh.benchmark(machine="", _runner_path=runner_path)
 
     with pytest.raises(ValueError):
-        gh.benchmark(machine="linux-x86_64")
+        gh.benchmark(machine="linux-x86_64", _runner_path=runner_path)
 
     with pytest.raises(TypeError):
-        gh.benchmark(benchmark_base=1)
+        gh.benchmark(benchmark_base=1, _runner_path=runner_path)
 
 
 def test_benchmark_cmdline(monkeypatch):
+    runner_path = DATA_PATH / "runners.ini"
+
     args_out = None
 
     def get_args(args, **kwargs):
@@ -33,7 +41,7 @@ def test_benchmark_cmdline(monkeypatch):
 
     monkeypatch.setattr(subprocess, "check_call", get_args)
 
-    gh.benchmark(fork="myfork", benchmark_base=True)
+    gh.benchmark(fork="myfork", benchmark_base=True, _runner_path=runner_path)
 
     assert args_out == [
         "gh",

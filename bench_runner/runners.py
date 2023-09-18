@@ -4,6 +4,7 @@ from __future__ import annotations
 import configparser
 import functools
 from pathlib import Path
+from typing import Optional, Union
 
 
 class Runner:
@@ -22,7 +23,10 @@ class Runner:
 
 
 @functools.cache
-def get_runners(path=Path("runners.ini")) -> list[Runner]:
+def get_runners(path: Optional[Union[Path, str]] = None) -> list[Runner]:
+    if path is None:
+        path = Path("runners.ini")
+
     config = configparser.ConfigParser()
     config.read(path)
     runners = []
