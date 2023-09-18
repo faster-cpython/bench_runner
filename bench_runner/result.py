@@ -230,7 +230,7 @@ class PystatsComparison(Comparison):
             return subprocess.check_output(
                 [
                     sys.executable,
-                    Path(__file__).parent / "summarize_stats.py",
+                    Path("cpython") / "Tools" / "scripts" / "summarize_stats.py",
                     self.ref.filename,
                     self.head.filename,
                 ],
