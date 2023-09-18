@@ -107,6 +107,11 @@ def collect_pystats(
 
     all_benchmarks = get_benchmark_names(benchmarks)
 
+    # We could technically run each benchmark in parallel (since we don't care
+    # about performance timings), however, since the stats are written to the
+    # same directory, they would get intertwined. At some point, specifying an
+    # output directory for stats might make sense for this.
+
     with tempfile.TemporaryDirectory() as tempdir:
         for benchmark in all_benchmarks:
             try:
