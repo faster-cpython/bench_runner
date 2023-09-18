@@ -99,7 +99,7 @@ jobs:
       fork: ${{ inputs.fork }}
       ref: ${{ inputs.ref }}
       benchmarks: ${{ inputs.benchmarks }}
-      individual: ${{ inputs.individual }}
+      individual: ${{ inputs.pystats_individual }}
       force: true
     secrets: inherit
 
@@ -111,7 +111,7 @@ jobs:
       fork: python
       ref: ${{ needs.determine_base.outputs.ref }}
       benchmarks: ${{ inputs.benchmarks }}
-      individual: ${{ inputs.individual }}
+      individual: ${{ inputs.pystats_individual }}
       force: false
     secrets: inherit
 
