@@ -30,6 +30,10 @@ name: benchmark
         description: 'Also collect pystats for this commit'
         type: boolean
         default: false
+      pystats_individual:
+        description: 'Collect pystats for each individual benchmark'
+        type: boolean
+        default: false
 
 jobs:
   # Determine the base commit of the selected commit. The output is passed to
@@ -95,6 +99,7 @@ jobs:
       fork: ${{ inputs.fork }}
       ref: ${{ inputs.ref }}
       benchmarks: ${{ inputs.benchmarks }}
+      individual: ${{ inputs.individual }}
       force: true
     secrets: inherit
 
@@ -106,6 +111,7 @@ jobs:
       fork: python
       ref: ${{ needs.determine_base.outputs.ref }}
       benchmarks: ${{ inputs.benchmarks }}
+      individual: ${{ inputs.individual }}
       force: false
     secrets: inherit
 

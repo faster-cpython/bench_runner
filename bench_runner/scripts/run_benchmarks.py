@@ -9,6 +9,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+import tempfile
 import textwrap
 from typing import Iterable, Optional, Union
 
@@ -27,6 +28,27 @@ GITHUB_URL = "https://github.com/" + os.environ.get(
 
 class NoBenchmarkError(Exception):
     pass
+
+
+def get_benchmark_names(benchmarks: str) -> list[str]:
+    if benchmarks.strip() == "":
+        benchmarks = "all"
+
+    output = subprocess.check_output(
+        [
+            sys.executable,
+            "-m",
+            "pyperformance",
+            "list",
+            "--manifest",
+            "benchmarks.manifest",
+            "--benchmarks",
+            benchmarks,
+        ],
+        encoding="utf-8",
+    )
+
+    return [line[2:].strip() for line in output.splitlines() if line.startswith("- ")]
 
 
 def run_benchmarks(
@@ -78,6 +100,42 @@ def run_benchmarks(
         raise NoBenchmarkError("No benchmarks were run.")
 
 
+def collect_pystats(
+    python: Union[Path, str], benchmarks: str, fork: str, ref: str, individual: bool
+) -> None:
+    pystats_dir = Path("/tmp/py_stats")
+
+    all_benchmarks = get_benchmark_names(benchmarks)
+
+    # We could technically run each benchmark in parallel (since we don't care
+    # about performance timings), however, since the stats are written to the
+    # same directory, they would get intertwined. At some point, specifying an
+    # output directory for stats might make sense for this.
+
+    with tempfile.TemporaryDirectory() as tempdir:
+        for benchmark in all_benchmarks:
+            try:
+                run_benchmarks(python, benchmark)
+            except NoBenchmarkError:
+                pass
+            else:
+                if individual:
+                    run_summarize_stats(python, fork, ref, benchmark, False)
+
+            for filename in pystats_dir.iterdir():
+                os.rename(filename, Path(tempdir) / filename.name)
+
+        for filename in Path(tempdir).iterdir():
+            os.rename(filename, pystats_dir / filename.name)
+
+        if individual:
+            benchmark_links = all_benchmarks
+        else:
+            benchmark_links = []
+
+        run_summarize_stats(python, fork, ref, "all", True, benchmark_links)
+
+
 def perf_to_csv(lines: Iterable[str], output: Path):
     rows = []
     for line in lines:
@@ -100,26 +158,7 @@ def perf_to_csv(lines: Iterable[str], output: Path):
 
 
 def collect_perf(python: Union[Path, str], benchmarks: str):
-    if benchmarks.strip() == "":
-        benchmarks = "all"
-
-    output = subprocess.check_output(
-        [
-            sys.executable,
-            "-m",
-            "pyperformance",
-            "list",
-            "--manifest",
-            "benchmarks.manifest",
-            "--benchmarks",
-            benchmarks,
-        ],
-        encoding="utf-8",
-    )
-
-    all_benchmarks = [
-        line[2:].strip() for line in output.splitlines() if line.startswith("- ")
-    ]
+    all_benchmarks = get_benchmark_names(benchmarks)
 
     perf_data = Path("perf.data")
     for benchmark in all_benchmarks:
@@ -196,20 +235,36 @@ def copy_to_directory(filename: Path, python: str, fork: str, ref: str) -> None:
     shutil.copyfile(filename, result.filename)
 
 
-def run_summarize_stats(python: str, fork: str, ref: str) -> None:
+def run_summarize_stats(
+    python: Union[Path, str],
+    fork: str,
+    ref: str,
+    benchmark: str,
+    output_json: bool,
+    benchmarks: list[str] = [],
+) -> None:
     summarize_stats_path = (
         Path(python).parent / "Tools" / "scripts" / "summarize_stats.py"
     )
 
-    table = subprocess.check_output(
-        [python, summarize_stats_path, "--json-output", "pystats.json"],
-        encoding="utf-8",
-    )
+    parts = ["pystats"]
+    if benchmark != "all":
+        parts.append(benchmark)
+    result = Result.from_scratch(python, fork, ref, parts)
+    result.filename.parent.mkdir(parents=True, exist_ok=True)
+    pystats_json = result.filename.with_suffix(".json")
+
+    args = [python, summarize_stats_path]
+    if output_json:
+        args.extend(["--json-output", pystats_json])
+
+    table = subprocess.check_output(args, encoding="utf-8")
 
     header = textwrap.dedent(
         f"""
     # Pystats results
 
+    - benchmark: {benchmark}
     - fork: {fork}
     - ref: {ref}
     - commit hash: {git.get_git_hash('cpython')[:7]}
@@ -218,28 +273,28 @@ def run_summarize_stats(python: str, fork: str, ref: str) -> None:
     """
     )
 
-    result = Result.from_scratch(python, fork, ref, ["pystats"])
-    result.filename.parent.mkdir(parents=True, exist_ok=True)
-
     with open(
         result.filename.with_suffix(".md"),
         "w",
     ) as fd:
         fd.write(header)
+        if benchmarks:
+            for name in benchmarks:
+                fd.write(
+                    f"- [{name}]"
+                    f"({Path(result.filename.name).with_suffix('')}-{name}.md)\n"
+                )
+            fd.write("\n")
         fd.write(table)
 
-    pystats_json = Path("pystats.json")
-    if pystats_json.is_file():
-        update_metadata(pystats_json, fork, ref)
-        shutil.copy(
-            pystats_json,
-            result.filename.with_suffix(".json"),
-        )
-    else:
-        print(
-            "WARNING: No pystats.json file generated. "
-            "This is expected with CPython < 3.12"
-        )
+    if output_json:
+        if pystats_json.is_file():
+            update_metadata(pystats_json, fork, ref)
+        else:
+            print(
+                "WARNING: No pystats.json file generated. "
+                "This is expected with CPython < 3.12"
+            )
 
 
 def main(
@@ -248,19 +303,18 @@ def main(
     fork: str,
     ref: str,
     benchmarks: str,
-    perf: bool,
     test_mode: bool,
     run_id: Optional[str],
+    individual: bool,
 ) -> None:
-    if perf:
-        collect_perf(python, benchmarks)
-    else:
-        run_benchmarks(python, benchmarks, [], test_mode)
     if mode == "benchmark":
+        run_benchmarks(python, benchmarks, [], test_mode)
         update_metadata(BENCHMARK_JSON, fork, ref, run_id=run_id)
         copy_to_directory(BENCHMARK_JSON, python, fork, ref)
+    elif mode == "perf":
+        collect_perf(python, benchmarks)
     elif mode == "pystats":
-        run_summarize_stats(python, fork, ref)
+        collect_pystats(python, benchmarks, fork, ref, individual)
 
 
 if __name__ == "__main__":
@@ -272,19 +326,23 @@ if __name__ == "__main__":
         """
     )
     parser.add_argument(
-        "mode", choices=["benchmark", "pystats"], help="The mode of execution"
+        "mode", choices=["benchmark", "perf", "pystats"], help="The mode of execution"
     )
     parser.add_argument("python", help="The path to the Python executable")
     parser.add_argument("fork", help="The fork of CPython")
     parser.add_argument("ref", help="The git ref in the fork")
     parser.add_argument("benchmarks", help="The benchmarks to run")
-    parser.add_argument("perf", help="Collect Linux perf profiling data")
     parser.add_argument(
         "--test_mode",
         action="store_true",
         help="Run in a special mode for unit testing",
     )
     parser.add_argument("--run_id", default=None, type=str, help="The github run id")
+    parser.add_argument(
+        "--individual",
+        action="store_true",
+        help="For pystats mode, collect stats for each individual benchmark",
+    )
     args = parser.parse_args()
 
     if args.test_mode:
@@ -301,7 +359,7 @@ if __name__ == "__main__":
         args.fork,
         args.ref,
         args.benchmarks,
-        args.perf.lower() != "false",
         args.test_mode,
         args.run_id,
+        args.individual,
     )
