@@ -104,6 +104,7 @@ def write_pystats_diff(filename: Path, compare: Comparison) -> None:
 RESULT_TYPES = {
     "raw results": {".md": write_markdown_results, ".png": write_plot_results},
     "pystats raw": {".md": write_pystats_diff},
+    None: {},
 }
 
 
@@ -334,14 +335,15 @@ def get_directory_indices_entries(
                 continue
             result = Result.from_filename(filename)
             type, base = result.result_info
-            entries.append(
-                (
-                    dirpath,
-                    result.runner,
-                    base,
-                    table.md_link(type, result.filename.name),
+            if type is not None:
+                entries.append(
+                    (
+                        dirpath,
+                        result.runner,
+                        base,
+                        table.md_link(type, result.filename.name),
+                    )
                 )
-            )
 
     return entries
 
