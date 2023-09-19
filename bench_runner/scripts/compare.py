@@ -46,7 +46,7 @@ def compare_pair(
         fd.write(comparison.contents)
     plot.plot_diff(ref, head, output_dir / f"{name}.png", f"{head_name} vs. {ref_name}")
 
-    return f"{comparison.geometric_mean} [table]({name}.md) [plot]({name}.png)"
+    return f"{comparison.summary} [table]({name}.md) [plot]({name}.png)"
 
 
 def do_one_to_many(
@@ -95,7 +95,7 @@ def do_many_to_many(
         fd.write("\n")
 
 
-def main(commits: list[str], output_dir: str, comparison_type: str):
+def main(commits: list[str], output_dir: Path, comparison_type: str):
     results = mod_result.load_all_results(None, Path("results"), sorted=False)
 
     if len(commits) < 2:
@@ -178,7 +178,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     try:
-        main(args.commit, args.output_dir, args.type)
+        main(args.commit, Path(args.output_dir), args.type)
     except ValueError as e:
         print(str(e))
         sys.exit(1)
