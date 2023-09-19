@@ -6,13 +6,13 @@ from __future__ import annotations
 
 from pathlib import Path
 import subprocess
-from typing import Any, Mapping, Optional, Union
+from typing import Any, Mapping, Optional
 
 
 from . import runners
 
 
-def get_machines(path: Optional[Union[Path, str]] = None):
+def get_machines(path: Optional[Path] = None):
     return [x.name for x in runners.get_runners(path) if x.available] + ["all"]
 
 
@@ -34,7 +34,7 @@ def benchmark(
     ref: Optional[str] = None,
     machine: Optional[str] = None,
     benchmark_base: Optional[bool] = None,
-    _runner_path: Optional[Union[Path, str]] = None,
+    _runner_path: Optional[Path] = None,
 ) -> None:
     if not (fork is None or isinstance(fork, str)):
         raise TypeError(f"fork must be a str, got {type(fork)}")

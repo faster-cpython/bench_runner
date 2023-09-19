@@ -11,7 +11,7 @@ from typing import Iterable, Optional
 
 def get_log(
     format: str,
-    dirname,
+    dirname: Path,
     ref: Optional[str] = None,
     n: int = 1,
     extra: list[str] = [],
@@ -38,22 +38,22 @@ def get_log(
     ).strip()
 
 
-def get_git_hash(dirname) -> str:
+def get_git_hash(dirname: Path) -> str:
     return get_log("%h", dirname)
 
 
-def get_git_commit_date(dirname) -> str:
+def get_git_commit_date(dirname: Path) -> str:
     return get_log("%cI", dirname)
 
 
-def remove(repodir, path) -> None:
+def remove(repodir: Path, path: Path) -> None:
     subprocess.check_output(
         ["git", "rm", str(path)],
         cwd=repodir,
     )
 
 
-def get_git_merge_base(dirname) -> Optional[str]:
+def get_git_merge_base(dirname: Path) -> Optional[str]:
     # We need to make sure we have commits from main that are old enough to be
     # the base of this branch, but not so old that we waste a ton of bandwidth
     commit_date = datetime.datetime.fromisoformat(get_git_commit_date(dirname))
@@ -85,17 +85,17 @@ def get_git_merge_base(dirname) -> Optional[str]:
         return None
 
 
-def get_tags(dirname) -> list[str]:
+def get_tags(dirname: Path) -> list[str]:
     subprocess.check_call(["git", "fetch", "--tags"], cwd=dirname)
     return subprocess.check_output(
         ["git", "tag"], cwd=dirname, encoding="utf-8"
     ).splitlines()
 
 
-def generate_combined_hash(dirs: Iterable) -> str:
+def generate_combined_hash(dirs: Iterable[Path]) -> str:
     hash = hashlib.sha256()
     for dirname in dirs:
-        if Path(dirname).is_dir():
+        if dirname.is_dir():
             subhash = get_git_hash(dirname)
             hash.update(subhash.encode("ascii"))
     return hash.hexdigest()[:6]

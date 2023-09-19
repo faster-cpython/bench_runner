@@ -101,7 +101,7 @@ def run_benchmarks(
 
 
 def collect_pystats(
-    python: Union[Path, str], benchmarks: str, fork: str, ref: str, individual: bool
+    python: Path, benchmarks: str, fork: str, ref: str, individual: bool
 ) -> None:
     pystats_dir = Path("/tmp/py_stats")
 
@@ -157,7 +157,7 @@ def perf_to_csv(lines: Iterable[str], output: Path):
             csvwriter.writerow(row)
 
 
-def collect_perf(python: Union[Path, str], benchmarks: str):
+def collect_perf(python: Path, benchmarks: str):
     all_benchmarks = get_benchmark_names(benchmarks)
 
     perf_data = Path("perf.data")
@@ -203,7 +203,7 @@ def update_metadata(
     filename: Path,
     fork: str,
     ref: str,
-    cpython="cpython",
+    cpython: Path = Path("cpython"),
     run_id: Optional[str] = None,
 ) -> None:
     with open(filename) as fd:
@@ -220,7 +220,7 @@ def update_metadata(
         if merge_base is not None:
             metadata["commit_merge_base"] = merge_base
     metadata["benchmark_hash"] = git.generate_combined_hash(
-        ["pyperformance", "pyston-benchmarks"]
+        [Path("pyperformance"), Path("pyston-benchmarks")]
     )
     if run_id is not None:
         metadata["github_action_url"] = f"{GITHUB_URL}/actions/runs/{run_id}"
@@ -229,14 +229,14 @@ def update_metadata(
         json.dump(content, fd, indent=2)
 
 
-def copy_to_directory(filename: Path, python: str, fork: str, ref: str) -> None:
+def copy_to_directory(filename: Path, python: Path, fork: str, ref: str) -> None:
     result = Result.from_scratch(python, fork, ref)
     result.filename.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(filename, result.filename)
 
 
 def run_summarize_stats(
-    python: Union[Path, str],
+    python: Path,
     fork: str,
     ref: str,
     benchmark: str,
@@ -254,7 +254,7 @@ def run_summarize_stats(
     result.filename.parent.mkdir(parents=True, exist_ok=True)
     pystats_json = result.filename.with_suffix(".json")
 
-    args = [python, summarize_stats_path]
+    args = [str(python), summarize_stats_path]
     if output_json:
         args.extend(["--json-output", pystats_json])
 
@@ -267,8 +267,8 @@ def run_summarize_stats(
     - benchmark: {benchmark}
     - fork: {fork}
     - ref: {ref}
-    - commit hash: {git.get_git_hash('cpython')[:7]}
-    - commit date: {git.get_git_commit_date('cpython')}
+    - commit hash: {git.get_git_hash(Path('cpython'))[:7]}
+    - commit date: {git.get_git_commit_date(Path('cpython'))}
 
     """
     )
@@ -300,7 +300,7 @@ def run_summarize_stats(
 
 def main(
     mode: str,
-    python: str,
+    python: Path,
     fork: str,
     ref: str,
     benchmarks: str,
@@ -356,7 +356,7 @@ if __name__ == "__main__":
 
     main(
         args.mode,
-        args.python,
+        Path(args.python),
         args.fork,
         args.ref,
         args.benchmarks,

@@ -9,7 +9,7 @@ import re
 import socket
 import subprocess
 import sys
-from typing import Any, Iterable, Optional, Union
+from typing import Any, Iterable, Optional
 
 
 from . import git
@@ -36,7 +36,7 @@ def _clean_for_url(string: str) -> str:
     return string.replace("-", "%2d")
 
 
-def _get_platform_value(python: Union[Path, str], item: str) -> str:
+def _get_platform_value(python: Path, item: str) -> str:
     """
     Get a value from the platform module of the given Python interpreter.
     """
@@ -64,7 +64,7 @@ class Comparison:
             return None
 
         return self.head.filename.parent / (
-            self.head.filename.stem + f"-vs-{self.base}.txt"
+            f"{self.head.filename.stem}-vs-{self.base}.txt"
         )
 
     @functools.cached_property
@@ -309,7 +309,7 @@ class Result:
 
     @classmethod
     def from_scratch(
-        cls, python: Union[Path, str], fork: str, ref: str, extra: list[str] = []
+        cls, python: Path, fork: str, ref: str, extra: list[str] = []
     ) -> "Result":
         result = cls(
             _clean(runners.get_nickname_for_hostname(socket.gethostname())),
@@ -317,10 +317,10 @@ class Result:
             _clean_for_url(fork),
             _clean(ref[:20]),
             _clean(_get_platform_value(python, "python_version")),
-            git.get_git_hash("cpython")[:7],
+            git.get_git_hash(Path("cpython"))[:7],
             extra,
             ".json",
-            commit_datetime=git.get_git_commit_date("cpython"),
+            commit_datetime=git.get_git_commit_date(Path("cpython")),
         )
         return result
 
