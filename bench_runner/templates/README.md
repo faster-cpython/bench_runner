@@ -8,7 +8,6 @@ Here are some recent and important revisions. 👉 [Complete list of results](RE
 
 <!-- START table -->
 
-
 <!-- END table -->
 
 `*` indicates that the exact same versions of pyperformance was not used.
@@ -55,8 +54,8 @@ The most convenient way to get results locally is to clone this repo and `git pu
 To automate benchmarking runs, it may be more convenient to use the [GitHub CLI](https://cli.github.com/).
 Once you have `gh` installed and configured, you can run benchmarks by cloning this repository and then from inside it:
 
-```bash
-$ gh workflow run benchmark.yml -f fork=me -f ref=my_branch
+```bash session
+gh workflow run benchmark.yml -f fork=me -f ref=my_branch
 ```
 
 Any of the parameters described above are available at the commandline using the `-f key=value` syntax.
@@ -65,4 +64,3 @@ Any of the parameters described above are available at the commandline using the
 
 To collect Linux perf sampling profile data for a benchmarking run, run the `_benchmark` action and check the `perf` checkbox.
 Follow this by a run of the `_generate` action to regenerate the plots.
-
