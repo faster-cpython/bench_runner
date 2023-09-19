@@ -4,7 +4,7 @@ Utilities to generate markdown tables.
 
 
 from pathlib import Path
-from typing import Iterable, Sequence, TextIO, Union
+from typing import Iterable, Optional, Sequence, TextIO
 from urllib.parse import quote
 
 
@@ -59,14 +59,12 @@ def replace_section(filename: Path, name: str, content: str) -> None:
                 fd.write(line + "\n")
 
 
-def md_link(
-    text: str, link: Union[str, Path], root: Union[str, Path, None] = None
-) -> str:
+def md_link(text: str, link: str, root: Optional[Path] = None) -> str:
     """
     Formats a Markdown link. The link is resolved relative to the given root.
     """
     if root is not None:
-        link = Path(link).resolve().relative_to(Path(root).parent.resolve())
+        link = str(Path(link).resolve().relative_to(root.parent.resolve()))
     if not str(link).startswith("http"):
         link = "/".join(quote(x) for x in Path(link).parts)
     return f"[{text}]({link})"

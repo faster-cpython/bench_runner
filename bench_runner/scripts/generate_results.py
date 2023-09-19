@@ -169,7 +169,9 @@ def output_results_index(
 
         rows.append(
             [
-                table.md_link(result.commit_date, result.filename.parent, filename),
+                table.md_link(
+                    result.commit_date, str(result.filename.parent), filename
+                ),
                 unquote(result.fork),
                 result.ref[:10],
                 result.version,
