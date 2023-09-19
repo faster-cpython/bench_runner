@@ -9,43 +9,43 @@ env:
   workflow_call:
     inputs:
       fork:
-        description: 'Fork of cpython to benchmark'
+        description: "Fork of cpython to benchmark"
         type: string
       ref:
-        description: 'Branch, tag or (full) SHA commit to benchmark'
+        description: "Branch, tag or (full) SHA commit to benchmark"
         type: string
       machine:
-        description: 'Machine to run on'
+        description: "Machine to run on"
         type: string
       benchmarks:
-        description: 'Benchmarks to run (comma-separated; empty runs all benchmarks)'
+        description: "Benchmarks to run (comma-separated; empty runs all benchmarks)"
         type: string
       pgo:
-        description: 'Build with PGO'
+        description: "Build with PGO"
         type: boolean
       dry_run:
-        description: 'Dry run: Do not commit to the repo'
+        description: "Dry run: Do not commit to the repo"
         type: boolean
       force:
-        description: 'Rerun and replace results if commit already exists'
+        description: "Rerun and replace results if commit already exists"
         type: boolean
       perf:
-        description: 'Collect Linux perf profiling data (Linux only)'
+        description: "Collect Linux perf profiling data (Linux only)"
         type: boolean
 
   workflow_dispatch:
     inputs:
       fork:
-        description: 'Fork of cpython to benchmark'
+        description: "Fork of cpython to benchmark"
         type: string
-        default: 'python'
+        default: "python"
       ref:
-        description: 'Branch, tag or (full) SHA commit to benchmark'
+        description: "Branch, tag or (full) SHA commit to benchmark"
         type: string
-        default: 'main'
+        default: "main"
       machine:
-        description: 'Machine to run on'
-        default: 'linux-amd64'
+        description: "Machine to run on"
+        default: "linux-amd64"
         type: choice
         options:
           - linux-amd64
@@ -53,19 +53,19 @@ env:
           - darwin-arm64
           - all
       benchmarks:
-        description: 'Benchmarks to run (comma-separated; empty runs all benchmarks)'
+        description: "Benchmarks to run (comma-separated; empty runs all benchmarks)"
         type: string
       pgo:
-        description: 'Build with PGO'
+        description: "Build with PGO"
         type: boolean
       dry_run:
-        description: 'Dry run: Do not commit to the repo'
+        description: "Dry run: Do not commit to the repo"
         type: boolean
       force:
-        description: 'Rerun and replace results if commit already exists'
+        description: "Rerun and replace results if commit already exists"
         type: boolean
       perf:
-        description: 'Collect Linux perf profiling data (Linux only)'
+        description: "Collect Linux perf profiling data (Linux only)"
         type: boolean
 
 jobs:
@@ -151,7 +151,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: "3.10"
           cache: pip
       - uses: actions/checkout@v3
         with:
