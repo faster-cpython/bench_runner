@@ -279,10 +279,11 @@ def run_summarize_stats(
     ) as fd:
         fd.write(header)
         if benchmarks:
+            fd.write("- ")
             for name in benchmarks:
                 fd.write(
-                    f"- [{name}]"
-                    f"({Path(result.filename.name).with_suffix('')}-{name}.md)\n"
+                    f"[{name}]"
+                    f"({Path(result.filename.name).with_suffix('')}-{name}.md), "
                 )
             fd.write("\n")
         fd.write(table)
