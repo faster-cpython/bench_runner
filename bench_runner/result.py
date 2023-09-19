@@ -362,7 +362,7 @@ class Result:
         return self._filename
 
     @functools.cached_property
-    def result_info(self) -> tuple[str, Optional[str]]:
+    def result_info(self) -> tuple[Optional[str], Optional[str]]:
         if self.extra == [] and self.suffix == ".json":
             return ("raw results", None)
         elif self.extra[0] == "pystats":

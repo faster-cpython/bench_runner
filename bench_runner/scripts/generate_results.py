@@ -104,6 +104,7 @@ def write_pystats_diff(filename: Path, compare: Comparison) -> None:
 RESULT_TYPES = {
     "raw results": {".md": write_markdown_results, ".png": write_plot_results},
     "pystats raw": {".md": write_pystats_diff},
+    None: {},
 }
 
 
