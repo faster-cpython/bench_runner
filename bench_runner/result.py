@@ -369,7 +369,10 @@ class Result:
             if len(self.extra) == 3 and self.extra[1] == "vs" and self.suffix == ".md":
                 return ("pystats diff", self.extra[2])
             elif self.suffix == ".md":
-                return ("pystats table", None)
+                if self.filename.name.endswith("pystats.md"):
+                    return ("pystats table", None)
+                else:
+                    return (None, None)
             elif self.suffix == ".json":
                 return ("pystats raw", None)
         elif len(self.extra) == 2 and self.extra[0] == "vs":
