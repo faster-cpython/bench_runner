@@ -52,6 +52,7 @@ To change the reference versions, just make sure the data set for the reference 
 Additionally, if a benchmark has the `commit_merge_base` metadata entry, it is also compared against that commit hash, if the data exists.
 
 Each comparison produces two files:
+
 - A markdown table produced by `pyperf compare_to`.
 - A set of violin plots showing the distribution of the difference in timings for each benchmark.
 
@@ -76,7 +77,7 @@ Results are organized into directories.
 Each directory contains results for a specific commit hash, but may contain results from multiple platforms.
 The directories are named:
 
-```
+```text
 bm-{date}-{version}-{cpython_hash}
 ```
 
@@ -88,7 +89,7 @@ bm-{date}-{version}-{cpython_hash}
 
 Within each directory are files, each with the following root name:
 
-```
+```text
 bm-{date}-{nickname}-{machine}-{fork}-{ref}-{version}-{cpython_hash}
 ```
 
@@ -119,4 +120,3 @@ The following metadata fields are added to the raw results (in addition to those
 - `benchmark_hash`: a combined hash of the pyperformance and pyston benchmark suites.
   Used to confirm that two sets of benchmarks used the same benchmarking code.
 - `github_actions_url`: the URL to the github action that produced the result. Useful for getting a full log of the run to debug issues.
-

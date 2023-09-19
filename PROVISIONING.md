@@ -12,7 +12,7 @@ These instructions are for Ubuntu 22.04.  If you want to benchmark on a differen
 
 ### Install requirements
 
-```
+```bash session
 sudo apt install python3 build-essential ccache gdb lcov pkg-config \
       libbz2-dev libffi-dev libgdbm-dev libgdbm-compat-dev liblzma-dev \
       libncurses5-dev libreadline6-dev libsqlite3-dev libssl-dev \
@@ -21,14 +21,14 @@ sudo apt install python3 build-essential ccache gdb lcov pkg-config \
 
 ### Enable ccache
 
-```
+```bash session
 sudo /usr/sbin/update-ccache-symlinks
 echo 'export PATH="/usr/lib/ccache:$PATH"' | tee -a ~/.bashrc
 ```
 
 ### Setup passwordless sudo
 
-https://askubuntu.com/questions/192050/how-to-run-sudo-command-with-no-password
+[Running sudo with no password](https://askubuntu.com/questions/192050/how-to-run-sudo-command-with-no-password)
 
 ## macOS
 
@@ -42,19 +42,19 @@ This is the easiest way to get openssl, which is required for pip downloading fi
 
 #### Install brew
 
-```
+```bash session
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
 Add the following to the end of `~/.zprofile`:
 
-```
+```bash session
 eval "$(/opt/homebrew/bin/brew shellenv)"
 ```
 
 #### Install brew packages
 
-```
+```bash session
 brew install openssl jq python@3.9 coreutils ccache
 ```
 
@@ -73,6 +73,7 @@ In an administrator PowerShell terminal, run `Set-ExecutionPolicy -ExecutionPoli
 Install Visual Studio Community Edition 2022 from the Microsoft Store.
 
 Install the following components:
+
 - MSVC v143 VS 2022 x64/x86 build tools
 - Windows SDK version 10.0.22621.0
 - Windows SDK version 10.0.19041.0
