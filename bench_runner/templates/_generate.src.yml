@@ -37,14 +37,12 @@ jobs:
           path: cpython
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: "3.11"
           cache: pip
       - name: install dependencies
-        run:
-          python -m pip install -r requirements.txt
+        run: python -m pip install -r requirements.txt
       - name: regenerate
-        run:
-          python -m bench_runner.scripts.generate_results ${{ inputs.force == true && '--force' || '' }}
+        run: python -m bench_runner.scripts.generate_results ${{ inputs.force == true && '--force' || '' }}
       - name: Add to repo
         uses: EndBug/add-and-commit@v9
         if: ${{ !inputs.dry_run }}
