@@ -34,7 +34,8 @@ jobs:
       fork: python
       ref: main
       benchmarks: all
-
+      individual: true
+ 
   generate:
     uses: ./.github/workflows/_generate.yml
     with:
