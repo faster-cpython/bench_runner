@@ -118,20 +118,6 @@ class BenchmarkComparison(Comparison):
 
         return geometric_mean
 
-    @property
-    def geometric_mean_float(self) -> float:
-        geometric_mean = self.geometric_mean
-        if geometric_mean == "not sig":
-            return 1.0
-        parts = geometric_mean.split(" ")
-        if len(parts) == 1:
-            return 1.0
-        (number, direction, *_) = parts
-        number = float(number[:-1])
-        if direction == "slower":
-            number = 1.0 - (number - 1.0)
-        return number
-
     @functools.cached_property
     def hpt_reliability(self) -> Optional[str]:
         if self.ref == self.head:
