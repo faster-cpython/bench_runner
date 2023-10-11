@@ -9,6 +9,7 @@ import sys
 import pytest
 
 
+from bench_runner import git
 from bench_runner.scripts import generate_results
 from bench_runner.scripts import run_benchmarks
 from bench_runner.scripts import should_run
@@ -293,7 +294,7 @@ def test_should_run_exists_force(tmp_path, benchmarks_checkout, capsys, monkeypa
         removed_paths.append(path)
         (repo / path).unlink()
 
-    monkeypatch.setattr(should_run.git, "remove", remove)
+    monkeypatch.setattr(git, "remove", remove)
 
     generate_results.main(repo, force=False, bases=["3.11.0b3"])
     should_run.main(
@@ -355,5 +356,5 @@ def test_should_run_checkout_failed(tmp_path, capsys):
         )
 
     captured = capsys.readouterr()
-    assert "The checkout of cpython failed" in captured.out
-    assert "You specified fork 'python' and ref 'main'" in captured.out
+    assert "The checkout of cpython failed" in captured.err
+    assert "You specified fork 'python' and ref 'main'" in captured.err

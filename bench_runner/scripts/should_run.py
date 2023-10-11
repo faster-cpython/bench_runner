@@ -8,8 +8,8 @@ import subprocess
 import sys
 
 
-from bench_runner import git
-from bench_runner.result import has_result
+# NOTE: This file should import in Python 3.9 or later so it can at least print
+# the error message that the version of Python is too old.
 
 
 def main(
@@ -21,15 +21,27 @@ def main(
     cpython: Path = Path("cpython"),
     results_dir: Path = Path("results"),
 ) -> None:
+    if sys.version_info[:2] < (3, 11):
+        print(
+            "The benchmarking infrastructure requires Python 3.11 or later.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    # Now that we've assert we are Python 3.11 or later, we can import
+    # parts of our library.
+    from bench_runner import git
+    from bench_runner.result import has_result
+
     try:
         commit_hash = git.get_git_hash(cpython)
     except subprocess.CalledProcessError:
         # This will fail if the cpython checkout failed for some reason. Print
         # a nice error message since the one the checkout itself gives is
         # totally inscrutable.
-        print("The checkout of cpython failed.")
-        print(f"You specified fork {fork!r} and ref {ref!r}.")
-        print("Are you sure you entered the fork and ref correctly?")
+        print("The checkout of cpython failed.", file=sys.stderr)
+        print(f"You specified fork {fork!r} and ref {ref!r}.", file=sys.stderr)
+        print("Are you sure you entered the fork and ref correctly?", file=sys.stderr)
         # Fail the rest of the workflow
         sys.exit(1)
 
