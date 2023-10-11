@@ -87,7 +87,6 @@ jobs:
           ref: ${{ inputs.ref }}
           fetch-depth: 50
       - name: Install dependencies
-        shell: powershell
         run: |
           py -m venv venv
           venv\Scripts\python.exe -m pip install -r requirements.txt
