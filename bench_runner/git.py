@@ -58,11 +58,26 @@ def get_git_merge_base(dirname: Path) -> Optional[str]:
     # the base of this branch, but not so old that we waste a ton of bandwidth
     commit_date = datetime.datetime.fromisoformat(get_git_commit_date(dirname))
     commit_date = commit_date - datetime.timedelta(365 * 2)
+    commit_hash = get_log("%H", dirname)
 
-    subprocess.check_call(
-        ["git", "remote", "add", "upstream", "https://github.com/python/cpython.git"],
-        cwd=dirname,
-    )
+    try:
+        subprocess.check_call(
+            [
+                "git",
+                "remote",
+                "add",
+                "upstream",
+                "https://github.com/python/cpython.git",
+            ],
+            cwd=dirname,
+        )
+    except subprocess.CalledProcessError as e:
+        if e.returncode == 3:
+            # Remote may already exist, that's ok
+            pass
+        else:
+            raise
+
     subprocess.check_call(
         [
             "git",
@@ -75,7 +90,7 @@ def get_git_merge_base(dirname: Path) -> Optional[str]:
         cwd=dirname,
     )
     try:
-        return subprocess.check_output(
+        merge_base = subprocess.check_output(
             ["git", "merge-base", "upstream/main", "HEAD"],
             cwd=dirname,
             encoding="utf-8",
@@ -83,6 +98,11 @@ def get_git_merge_base(dirname: Path) -> Optional[str]:
     except subprocess.CalledProcessError:
         print("Failed to get merge base")
         return None
+
+    if merge_base == commit_hash:
+        return get_log("%H", dirname, "HEAD^")
+    else:
+        return merge_base
 
 
 def get_tags(dirname: Path) -> list[str]:

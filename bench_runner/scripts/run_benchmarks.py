@@ -215,10 +215,9 @@ def update_metadata(
     metadata["commit_fork"] = fork
     metadata["commit_branch"] = ref
     metadata["commit_date"] = git.get_git_commit_date(cpython)
-    if fork != "python" and ref != "main":
-        merge_base = git.get_git_merge_base(cpython)
-        if merge_base is not None:
-            metadata["commit_merge_base"] = merge_base
+    merge_base = git.get_git_merge_base(cpython)
+    if merge_base is not None:
+        metadata["commit_merge_base"] = merge_base
     metadata["benchmark_hash"] = git.generate_combined_hash(
         [Path("pyperformance"), Path("pyston-benchmarks")]
     )
