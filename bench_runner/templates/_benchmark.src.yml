@@ -179,6 +179,11 @@ jobs:
           repository: mdboom/pyperformance
           path: pyperformance
           ref: ${{ env.PYPERFORMANCE_HASH }}
+      - uses: actions/checkout@v3
+        if: ${{ steps.should_run.outputs.should_run != 'false' }}
+        with:
+          repository: giampaolo/psutil
+          path: psutil
       - name: Build Python
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
