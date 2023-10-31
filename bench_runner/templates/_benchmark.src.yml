@@ -2,7 +2,7 @@
 name: _benchmark
 
 env:
-  PYPERFORMANCE_HASH: f8a4463d4b515a274678aa9586d00ffe0542cf52
+  PYPERFORMANCE_HASH: e9c4b78a53fdc6379c566ab91388b96f8793c61a
   PYSTON_BENCHMARKS_HASH: d4868ff7825f3996e0005197643ed56eba4fb567
 
 "on":
@@ -176,7 +176,7 @@ jobs:
       - uses: actions/checkout@v3
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         with:
-          repository: python/pyperformance
+          repository: mdboom/pyperformance
           path: pyperformance
           ref: ${{ env.PYPERFORMANCE_HASH }}
       - name: Build Python
