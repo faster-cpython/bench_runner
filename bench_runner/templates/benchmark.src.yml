@@ -34,6 +34,10 @@ name: benchmark
         description: "Collect pystats for each individual benchmark"
         type: boolean
         default: false
+      tier2:
+        description: "Enable the Tier 2 interpreter"
+        type: boolean
+        default: false
 
 jobs:
   # Determine the base commit of the selected commit. The output is passed to
@@ -76,6 +80,7 @@ jobs:
       pgo: true
       perf: false
       force: true
+      tier2: ${{ inputs.tier2 }}
     secrets: inherit
 
   base:
@@ -90,6 +95,7 @@ jobs:
       pgo: true
       perf: false
       force: false
+      tier2: false
     secrets: inherit
 
   pystats-head:
@@ -101,6 +107,7 @@ jobs:
       benchmarks: ${{ inputs.benchmarks }}
       individual: ${{ inputs.pystats_individual }}
       force: true
+      tier2: ${{ inputs.tier2 }}
     secrets: inherit
 
   pystats-base:
@@ -113,6 +120,7 @@ jobs:
       benchmarks: ${{ inputs.benchmarks }}
       individual: ${{ inputs.pystats_individual }}
       force: false
+      tier2: false
     secrets: inherit
 
   generate:

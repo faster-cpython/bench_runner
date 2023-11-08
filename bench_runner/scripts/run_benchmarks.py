@@ -86,6 +86,8 @@ def run_benchmarks(
             benchmarks,
             "--python",
             python,
+            "--inherit-environ",
+            "PYTHON_UOPS",
         ]
     )
 

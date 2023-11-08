@@ -29,6 +29,9 @@ env:
       individual:
         description: "Collect pystats for each individual benchmark"
         type: boolean
+      tier2:
+        description: "Enable the Tier 2 interpreter"
+        type: boolean
 
   workflow_call:
     inputs:
@@ -49,6 +52,9 @@ env:
         type: boolean
       individual:
         description: "Collect pystats for each individual benchmark"
+        type: boolean
+      tier2:
+        description: "Enable the Tier 2 interpreter"
         type: boolean
 
 jobs:
@@ -103,6 +109,10 @@ jobs:
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
           python -m pip install --no-binary :all: ./pyperformance
+      - name: Enable Tier 2
+        if: ${{ inputs.tier2 }}
+        run: |
+          echo "PYTHON_UOPS=1" >> "$GITHUB_ENV"
       - name: Running pyperformance
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
