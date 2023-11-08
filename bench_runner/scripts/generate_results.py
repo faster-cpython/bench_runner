@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import datetime
 import io
+from operator import attrgetter
 from pathlib import Path
 import re
 import sys
@@ -230,14 +231,34 @@ def summarize_results(results: Iterable[Result], bases: list[str]) -> Iterable[R
 def generate_index(
     filename: Path,
     bases: list[str],
-    results: Iterable[Result],
+    all_results: Iterable[Result],
+    benchmarking_results: Iterable[Result],
     summarize: bool = False,
 ) -> None:
     """
     Generate the tables, by each platform.
     """
     content = io.StringIO()
-    for runner, results in results_by_runner(results):
+
+    candidate_pystats = [
+        result
+        for result in all_results
+        if result.result_info[0] == "pystats raw" and result.fork == "python"
+    ]
+    if len(candidate_pystats):
+        most_recent_pystats = sorted(
+            candidate_pystats,
+            key=attrgetter("commit_datetime"),
+            reverse=True,
+        )[0]
+        link = table.md_link(
+            f"Most recent pystats on main ({most_recent_pystats.cpython_hash})",
+            str(most_recent_pystats.filename.with_suffix(".md")),
+            filename,
+        )
+        content.write(f"{link}\n\n")
+
+    for runner, results in results_by_runner(benchmarking_results):
         content.write(f"## {runner}\n")
         if summarize:
             results = summarize_results(results, bases)
@@ -247,7 +268,10 @@ def generate_index(
 
 
 def generate_indices(
-    bases: list[str], results: Iterable[Result], repo_dir: Path
+    bases: list[str],
+    all_results: Iterable[Result],
+    benchmarking_results: Iterable[Result],
+    repo_dir: Path,
 ) -> None:
     """
     Generate both indices:
@@ -257,11 +281,13 @@ def generate_indices(
 
     (For the ideas repo, the second file is at `results/README.md`).
     """
-    generate_index(repo_dir / "README.md", bases, results, True)
+    generate_index(
+        repo_dir / "README.md", bases, all_results, benchmarking_results, True
+    )
     results_file = repo_dir / "RESULTS.md"
     if not results_file.is_file():
         results_file = repo_dir / "results" / "README.md"
-    generate_index(results_file, bases, results, False)
+    generate_index(results_file, bases, all_results, benchmarking_results, False)
 
 
 def find_different_benchmarks(head: Result, ref: Result) -> tuple[list[str], list[str]]:
@@ -397,7 +423,7 @@ def main(repo_dir: Path, force: bool = False, bases: Optional[list[str]] = None)
     save_generated_results(results, force=force)
     print("Generating indices")
     benchmarking_results = [r for r in results if r.result_info[0] == "raw results"]
-    generate_indices(bases, benchmarking_results, repo_dir)
+    generate_indices(bases, results, benchmarking_results, repo_dir)
     generate_directory_indices(benchmarking_results)
     print("Generating longitudinal plot")
     plot.longitudinal_plot(benchmarking_results, repo_dir / "longitudinal.png")
