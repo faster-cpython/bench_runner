@@ -16,7 +16,7 @@ classifiers = [
 ]
 dependencies = [
     "ijson==3.2.3",
-    "matplotlib==3.8.0",
+    "matplotlib==3.8.1",
     "pyperf>=2.6.0",
     "ruamel.yaml==0.18.5",
     "wheel",
