@@ -251,6 +251,7 @@ class Result:
         extra: list[str] = [],
         suffix: str = ".json",
         commit_datetime: Optional[str] = None,
+        flags: list[str] = [],
     ):
         self.nickname = nickname
         if nickname not in runners.get_runners_by_nickname():
@@ -262,6 +263,7 @@ class Result:
         self.cpython_hash = cpython_hash
         self.extra = extra
         self.suffix = suffix
+        self.flags = sorted(set(flags))
         self._commit_datetime = commit_datetime
         self._filename = None
         self.bases = {}
@@ -280,6 +282,11 @@ class Result:
             *extra,
         ) = filename.stem.split("-")
         assert name == "bm"
+        (name, _, _, _, *flags) = filename.parent.name.split("-")
+        assert name == "bm"
+        assert len(flags) <= 1
+        if len(flags) == 1:
+            flags = flags[0].split(",")
         obj = cls(
             nickname=nickname,
             machine=machine,
@@ -289,13 +296,19 @@ class Result:
             cpython_hash=cpython_hash,
             extra=extra,
             suffix=filename.suffix,
+            flags=flags,
         )
         obj._filename = filename
         return obj
 
     @classmethod
     def from_scratch(
-        cls, python: Path, fork: str, ref: str, extra: list[str] = []
+        cls,
+        python: Path,
+        fork: str,
+        ref: str,
+        extra: list[str] = [],
+        flags: list[str] = [],
     ) -> "Result":
         result = cls(
             _clean(runners.get_nickname_for_hostname(socket.gethostname())),
@@ -307,6 +320,7 @@ class Result:
             extra,
             ".json",
             commit_datetime=git.get_git_commit_date(Path("cpython")),
+            flags=flags,
         )
         return result
 
@@ -318,16 +332,13 @@ class Result:
                 extra = ["-".join(self.extra)]
             else:
                 extra = []
+            if self.flags:
+                flags = [",".join(self.flags)]
+            else:
+                flags = []
             self._filename = (
                 Path("results")
-                / "-".join(
-                    [
-                        "bm",
-                        date,
-                        self.version,
-                        self.cpython_hash,
-                    ]
-                )
+                / "-".join(["bm", date, self.version, self.cpython_hash, *flags])
                 / (
                     "-".join(
                         [
@@ -339,8 +350,8 @@ class Result:
                             self.ref,
                             self.version,
                             self.cpython_hash,
+                            *extra,
                         ]
-                        + extra
                     )
                     + self.suffix
                 )
@@ -516,7 +527,12 @@ class Result:
 
         merge_base = self.commit_merge_base
         if merge_base is not None:
-            find_match("base", lambda ref: merge_base.startswith(ref.cpython_hash))
+            find_match(
+                "base",
+                lambda ref: (
+                    merge_base.startswith(ref.cpython_hash) and ref.flags == self.flags
+                ),
+            )
 
 
 def remove_duplicate_results(results_dir: Path) -> None:
