@@ -7,11 +7,34 @@ name: _weekly
   workflow_dispatch: {}
 
 jobs:
+  # Determine the base commit of the selected commit. The output is passed to
+  # the `base` job below. If the data already exists for this commit, it will be
+  # skipped.
+  determine_head:
+    runs-on: ubuntu-latest
+    outputs:
+      ref: ${{ steps.head.outputs.commit }}
+    steps:
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          cache: pip
+      - uses: actions/checkout@v3
+        if: ${{ inputs.benchmark_base }}
+        with:
+          repository: python/cpython
+          path: cpython
+      - name: Determine head commit
+        id: head
+        run: |
+          git log -n 1 --format="commit=%H" >> $GITHUB_OUTPUT
+
   weekly:
     uses: ./.github/workflows/_benchmark.yml
+    needs: determine_head
     with:
       fork: python
-      ref: main
+      ref: {{ needs.determine_head.outputs.commit }}
       machine: all
       benchmarks: all
       pgo: true
@@ -20,9 +43,10 @@ jobs:
 
   weekly-tier2:
     uses: ./.github/workflows/_benchmark.yml
+    needs: determine_head
     with:
       fork: python
-      ref: main
+      ref: {{ needs.determine_head.outputs.commit }}
       machine: all
       benchmarks: all
       pgo: true
@@ -31,9 +55,10 @@ jobs:
 
   pystats:
     uses: ./.github/workflows/_pystats.yml
+    needs: determine_head
     with:
       fork: python
-      ref: main
+      ref: {{ needs.determine_head.outputs.commit }}
       benchmarks: all
       individual: true
       tier2: false
@@ -41,9 +66,10 @@ jobs:
 
   pystats-tier2:
     uses: ./.github/workflows/_pystats.yml
+    needs: determine_head
     with:
       fork: python
-      ref: main
+      ref: {{ needs.determine_head.outputs.commit }}
       benchmarks: all
       individual: true
       tier2: true
