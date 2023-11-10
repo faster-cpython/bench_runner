@@ -4,9 +4,21 @@ name: _weekly
 "on":
   schedule:
     - cron: "0 0 * * 0"
+  workflow_dispatch: {}
 
 jobs:
   weekly:
+    uses: ./.github/workflows/_benchmark.yml
+    with:
+      fork: python
+      ref: main
+      machine: all
+      benchmarks: all
+      pgo: true
+      tier2: false
+    secrets: inherit
+
+  weekly-tier2:
     uses: ./.github/workflows/_benchmark.yml
     with:
       fork: python
@@ -24,16 +36,27 @@ jobs:
       ref: main
       benchmarks: all
       individual: true
+      tier2: false
+    secrets: inherit
+
+  pystats-tier2:
+    uses: ./.github/workflows/_pystats.yml
+    with:
+      fork: python
+      ref: main
+      benchmarks: all
+      individual: true
       tier2: true
+    secrets: inherit
 
   generate:
     uses: ./.github/workflows/_generate.yml
     with:
       force: false
-    needs: [weekly, pystats]
+    needs: [weekly, weekly-tier2, pystats, pystats-tier2]
     secrets: inherit
 
   publish:
     uses: ./.github/workflows/_publish.yml
-    needs: [weekly, pystats]
+    needs: [generate]
     secrets: inherit

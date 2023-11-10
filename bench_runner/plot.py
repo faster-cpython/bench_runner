@@ -2,6 +2,7 @@ from __future__ import annotations
 
 
 import argparse
+from collections import defaultdict
 import datetime
 import json
 from pathlib import Path
@@ -134,6 +135,27 @@ def get_micro_version(version):
     return micro
 
 
+def remove_duplicate_commits(results: Iterable[result.Result]) -> list[result.Result]:
+    # Favor Tier 2 runs if both are available
+    commits = defaultdict(list)
+    for r in results:
+        commits[r.cpython_hash].append(r)
+
+    out_results = []
+    for result_set in commits.values():
+        if len(result_set) == 1:
+            out_results.append(result_set[0])
+        else:
+            for r in result_set:
+                if "PYTHON_UOPS" in r.flags:
+                    out_results.append(r)
+                    break
+            else:
+                out_results.append(result_set[0])
+
+    return out_results
+
+
 # TODO: Make this configurable
 def longitudinal_plot(
     results: Iterable[result.Result],
@@ -160,6 +182,7 @@ def longitudinal_plot(
     )
 
     results = [r for r in results if r.fork == "python"]
+    results = remove_duplicate_commits(results)
 
     for version, base, ax in zip(versions, bases, axs):
         version_str = ".".join(str(x) for x in version)

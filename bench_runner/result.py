@@ -533,6 +533,9 @@ class Result:
                     merge_base.startswith(ref.cpython_hash) and ref.flags == self.flags
                 ),
             )
+        elif self.fork == "python" and self.ref == "main":
+            # Compare Tier 1 and Tier 2 of the same commit
+            find_match("base", lambda ref: (ref.cpython_hash == self.cpython_hash))
 
 
 def remove_duplicate_results(results_dir: Path) -> None:

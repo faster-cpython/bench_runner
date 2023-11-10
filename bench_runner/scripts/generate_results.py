@@ -4,7 +4,6 @@ from __future__ import annotations
 import argparse
 import datetime
 import io
-from operator import attrgetter
 from pathlib import Path
 import re
 import sys
@@ -168,6 +167,11 @@ def output_results_index(
             else:
                 versus.append("")
 
+        if "PYTHON_UOPS" in result.flags:
+            tier2 = " (Tier 2)"
+        else:
+            tier2 = ""
+
         rows.append(
             [
                 table.md_link(
@@ -175,7 +179,7 @@ def output_results_index(
                 ),
                 unquote(result.fork),
                 result.ref[:10],
-                result.version,
+                result.version + tier2,
                 result.cpython_hash,
             ]
             + versus
@@ -248,7 +252,7 @@ def generate_index(
     if len(candidate_pystats):
         most_recent_pystats = sorted(
             candidate_pystats,
-            key=attrgetter("commit_datetime"),
+            key=lambda x: (x.commit_datetime, len(x.flags)),
             reverse=True,
         )[0]
         link = table.md_link(
@@ -311,6 +315,9 @@ def get_directory_indices_entries(
         refs.setdefault(dirpath, set()).add(result.ref)
         entries.append((dirpath, None, None, f"fork: {unquote(result.fork)}"))
         entries.append((dirpath, None, None, f"version: {result.version}"))
+        entries.append(
+            (dirpath, None, None, f"tier 2: {'PYTHON_UOPS' in result.flags}")
+        )
         link = table.link_to_hash(result.cpython_hash, result.fork)
         entries.append((dirpath, None, None, f"commit hash: {link}"))
         entries.append((dirpath, None, None, f"commit date: {result.commit_datetime}"))
