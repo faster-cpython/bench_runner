@@ -16,6 +16,7 @@ from typing import Iterable, Optional, Union
 
 from bench_runner import git
 from bench_runner.result import Result
+from bench_runner.table import md_link
 
 
 REPO_ROOT = Path()
@@ -283,8 +284,9 @@ def run_summarize_stats(
             fd.write("- ")
             for name in benchmarks:
                 fd.write(
-                    table.md_link(
-                        name, Path(result.filename.name).with_suffix("") + "-{name}.md"
+                    md_link(
+                        name,
+                        str(Path(result.filename.name).with_suffix("")) + "-{name}.md",
                     )
                 )
                 fd.write(", ")
