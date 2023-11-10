@@ -131,7 +131,7 @@ jobs:
       - name: Running pyperformance
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
-          venv\Scripts\python.exe -m bench_runner.scripts.run_benchmarks benchmark cpython\PCbuild\amd64\python.exe ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.benchmarks || 'all' }} --run_id ${{ github.run_id }} ${{ inputs.tier2 == 'true' && '--flag PYTHON_UOPS' || '' }}
+          venv\Scripts\python.exe -m bench_runner.scripts.run_benchmarks benchmark cpython\PCbuild\amd64\python.exe ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.benchmarks || 'all' }} --run_id ${{ github.run_id }} ${{ inputs.tier2 == true && '--flag PYTHON_UOPS' || '' }}
       - name: Upload artifacts
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         uses: actions/upload-artifact@v3
@@ -215,7 +215,7 @@ jobs:
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
           rm -rf ~/.debug/*
-          venv/bin/python -m bench_runner.scripts.run_benchmarks ${{ inputs.perf && 'perf' || 'benchmark' }} cpython/python ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.benchmarks || 'all' }} --run_id ${{ github.run_id }} ${{ inputs.tier2 == 'true' && '--flag PYTHON_UOPS' || '' }}
+          venv/bin/python -m bench_runner.scripts.run_benchmarks ${{ inputs.perf && 'perf' || 'benchmark' }} cpython/python ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.benchmarks || 'all' }} --run_id ${{ github.run_id }} ${{ inputs.tier2 == true && '--flag PYTHON_UOPS' || '' }}
       - name: Upload benchmark artifacts
         if: ${{ steps.should_run.outputs.should_run != 'false' && !inputs.perf }}
         uses: actions/upload-artifact@v3
@@ -300,7 +300,7 @@ jobs:
       - name: Running pyperformance
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
-          venv/bin/python -m bench_runner.scripts.run_benchmarks benchmark cpython/python.exe ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.benchmarks || 'all' }} --run_id ${{ github.run_id }} ${{ inputs.tier2 == 'true' && '--flag PYTHON_UOPS' || '' }}
+          venv/bin/python -m bench_runner.scripts.run_benchmarks benchmark cpython/python.exe ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.benchmarks || 'all' }} --run_id ${{ github.run_id }} ${{ inputs.tier2 == true && '--flag PYTHON_UOPS' || '' }}
       - name: Upload artifacts
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         uses: actions/upload-artifact@v3
