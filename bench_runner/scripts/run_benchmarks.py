@@ -283,9 +283,11 @@ def run_summarize_stats(
             fd.write("- ")
             for name in benchmarks:
                 fd.write(
-                    f"[{name}]"
-                    f"({Path(result.filename.name).with_suffix('')}-{name}.md), "
+                    table.md_link(
+                        name, Path(result.filename.name).with_suffix("") + "-{name}.md"
+                    )
                 )
+                fd.write(", ")
             fd.write("\n")
         fd.write(table)
 
