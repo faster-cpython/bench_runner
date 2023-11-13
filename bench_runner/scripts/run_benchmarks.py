@@ -128,7 +128,9 @@ def collect_pystats(
                 pass
             else:
                 if individual:
-                    run_summarize_stats(python, fork, ref, benchmark, False, flags)
+                    run_summarize_stats(
+                        python, fork, ref, benchmark, False, flags=flags
+                    )
 
             for filename in pystats_dir.iterdir():
                 os.rename(filename, Path(tempdir) / filename.name)
@@ -141,7 +143,9 @@ def collect_pystats(
         else:
             benchmark_links = []
 
-        run_summarize_stats(python, fork, ref, "all", True, benchmark_links, flags)
+        run_summarize_stats(
+            python, fork, ref, "all", True, benchmark_links, flags=flags
+        )
 
 
 def perf_to_csv(lines: Iterable[str], output: Path):

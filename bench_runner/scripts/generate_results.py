@@ -17,7 +17,6 @@ from bench_runner import plot
 from bench_runner import profiling_plot
 from bench_runner.result import (
     load_all_results,
-    remove_duplicate_results,
     BenchmarkComparison,
     Comparison,
     Result,
@@ -168,7 +167,7 @@ def output_results_index(
                 versus.append("")
 
         if "PYTHON_UOPS" in result.flags:
-            tier2 = " (T2)"
+            tier2 = " 2️⃣"
         else:
             tier2 = ""
 
@@ -423,7 +422,6 @@ def main(repo_dir: Path, force: bool = False, bases: Optional[list[str]] = None)
     if len(bases) == 0:
         raise ValueError("Must have at least one base specified")
     print(f"Comparing to bases {bases}")
-    remove_duplicate_results(results_dir)
     results = load_all_results(bases, results_dir)
     print(f"Found {len(results)} results")
     print("Generating comparison results")

@@ -139,7 +139,7 @@ def remove_duplicate_commits(results: Iterable[result.Result]) -> list[result.Re
     # Favor Tier 2 runs if both are available
     commits = defaultdict(list)
     for r in results:
-        commits[r.cpython_hash].append(r)
+        commits[(r.cpython_hash, r.nickname)].append(r)
 
     out_results = []
     for result_set in commits.values():
@@ -242,6 +242,11 @@ def longitudinal_plot(
         ylim = ax.get_ylim()
         ax.set_ylim(top=ylim[1] + 0.1)
         ax.legend(loc="upper left")
+
+    # Add a line for when Tier 2 was turned on
+    tier2_date = datetime.datetime.fromisoformat("2023-11-11")
+    ax.axvline(tier2_date)
+    ax.annotate("TIER 2", xy=(date, 1.05), xycoords="data", rotation=90)
 
     fig.suptitle("Performance improvement by major version")
 

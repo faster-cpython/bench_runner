@@ -60,7 +60,10 @@ class Comparison:
         if self.ref == self.head:
             return None
 
-        if self.ref.cpython_hash == self.head.cpython_hash:
+        if (
+            self.ref.cpython_hash == self.head.cpython_hash
+            and self.ref.flags == self.head.flags
+        ):
             return None
 
         return self.head.filename.parent / (
@@ -520,39 +523,26 @@ class Result:
                 for ref in result_set:
                     if func(ref):
                         self.bases[base] = comparison_factory(ref, self, base)
-                        return
+                        return True
+            return False
 
         for base in bases:
             find_match(base, lambda ref: ref.version == base)
 
         merge_base = self.commit_merge_base
         if merge_base is not None:
-            find_match(
-                "base",
-                lambda ref: (
-                    merge_base.startswith(ref.cpython_hash) and ref.flags == self.flags
-                ),
-            )
-        elif self.fork == "python":
-            # Compare Tier 1 and Tier 2 of the same commit
-            find_match("base", lambda ref: (ref.cpython_hash == self.cpython_hash))
-
-
-def remove_duplicate_results(results_dir: Path) -> None:
-    sifted = {}
-    for entry in results_dir.glob("**/*.json"):
-        result = Result.from_filename(entry)
-        if result.result_info != ("raw results", None):
-            continue
-        result = Result.from_filename(entry)
-        key = (result.nickname, result.cpython_hash, result.result_info)
-        sifted.setdefault(key, []).append(result)
-
-    for result_set in sifted.values():
-        if len(result_set) != 1:
-            result_set.sort(key=lambda x: x.run_datetime)
-            for result in result_set[:-1]:
-                result.filename.unlink()
+            if (
+                not find_match(
+                    "base",
+                    lambda ref: (
+                        merge_base.startswith(ref.cpython_hash)
+                        and ref.flags == self.flags
+                    ),
+                )
+                and self.fork == "python"
+            ):
+                # Compare Tier 1 and Tier 2 of the same commit
+                find_match("base", lambda ref: (ref.cpython_hash == self.cpython_hash))
 
 
 def has_result(
