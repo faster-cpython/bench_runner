@@ -103,3 +103,16 @@ def test_from_scratch(monkeypatch):
 
     assert result.runner == "linux x86_64 (linux)"
     assert result.system == "linux"
+
+    result = mod_result.Result.from_scratch(
+        python,
+        "my-fork",
+        "9d38120e335357a3b294277fd5eff0a10e46e043",
+        flags=["PYTHON_UOPS", "BAR"],
+    )
+
+    assert result.filename == Path(
+        f"results/bm-20221119-{platform.python_version()}-b7e4f1d-BAR,PYTHON_UOPS/"
+        f"bm-20221119-{platform.system().lower()}-{platform.machine().lower()}"
+        f"-my%2dfork-9d38120e335357a3b294-{platform.python_version()}-b7e4f1d.json"
+    )

@@ -60,7 +60,10 @@ class Comparison:
         if self.ref == self.head:
             return None
 
-        if self.ref.cpython_hash == self.head.cpython_hash:
+        if (
+            self.ref.cpython_hash == self.head.cpython_hash
+            and self.ref.flags == self.head.flags
+        ):
             return None
 
         return self.head.filename.parent / (
@@ -251,6 +254,7 @@ class Result:
         extra: list[str] = [],
         suffix: str = ".json",
         commit_datetime: Optional[str] = None,
+        flags: list[str] = [],
     ):
         self.nickname = nickname
         if nickname not in runners.get_runners_by_nickname():
@@ -262,6 +266,7 @@ class Result:
         self.cpython_hash = cpython_hash
         self.extra = extra
         self.suffix = suffix
+        self.flags = sorted(set(flags))
         self._commit_datetime = commit_datetime
         self._filename = None
         self.bases = {}
@@ -280,6 +285,11 @@ class Result:
             *extra,
         ) = filename.stem.split("-")
         assert name == "bm"
+        (name, _, _, _, *flags) = filename.parent.name.split("-")
+        assert name == "bm"
+        assert len(flags) <= 1
+        if len(flags) == 1:
+            flags = flags[0].split(",")
         obj = cls(
             nickname=nickname,
             machine=machine,
@@ -289,13 +299,19 @@ class Result:
             cpython_hash=cpython_hash,
             extra=extra,
             suffix=filename.suffix,
+            flags=flags,
         )
         obj._filename = filename
         return obj
 
     @classmethod
     def from_scratch(
-        cls, python: Path, fork: str, ref: str, extra: list[str] = []
+        cls,
+        python: Path,
+        fork: str,
+        ref: str,
+        extra: list[str] = [],
+        flags: list[str] = [],
     ) -> "Result":
         result = cls(
             _clean(runners.get_nickname_for_hostname(socket.gethostname())),
@@ -307,6 +323,7 @@ class Result:
             extra,
             ".json",
             commit_datetime=git.get_git_commit_date(Path("cpython")),
+            flags=flags,
         )
         return result
 
@@ -318,16 +335,13 @@ class Result:
                 extra = ["-".join(self.extra)]
             else:
                 extra = []
+            if self.flags:
+                flags = [",".join(self.flags)]
+            else:
+                flags = []
             self._filename = (
                 Path("results")
-                / "-".join(
-                    [
-                        "bm",
-                        date,
-                        self.version,
-                        self.cpython_hash,
-                    ]
-                )
+                / "-".join(["bm", date, self.version, self.cpython_hash, *flags])
                 / (
                     "-".join(
                         [
@@ -339,8 +353,8 @@ class Result:
                             self.ref,
                             self.version,
                             self.cpython_hash,
+                            *extra,
                         ]
-                        + extra
                     )
                     + self.suffix
                 )
@@ -509,31 +523,26 @@ class Result:
                 for ref in result_set:
                     if func(ref):
                         self.bases[base] = comparison_factory(ref, self, base)
-                        return
+                        return True
+            return False
 
         for base in bases:
             find_match(base, lambda ref: ref.version == base)
 
         merge_base = self.commit_merge_base
         if merge_base is not None:
-            find_match("base", lambda ref: merge_base.startswith(ref.cpython_hash))
-
-
-def remove_duplicate_results(results_dir: Path) -> None:
-    sifted = {}
-    for entry in results_dir.glob("**/*.json"):
-        result = Result.from_filename(entry)
-        if result.result_info != ("raw results", None):
-            continue
-        result = Result.from_filename(entry)
-        key = (result.nickname, result.cpython_hash, result.result_info)
-        sifted.setdefault(key, []).append(result)
-
-    for result_set in sifted.values():
-        if len(result_set) != 1:
-            result_set.sort(key=lambda x: x.run_datetime)
-            for result in result_set[:-1]:
-                result.filename.unlink()
+            if (
+                not find_match(
+                    "base",
+                    lambda ref: (
+                        merge_base.startswith(ref.cpython_hash)
+                        and ref.flags == self.flags
+                    ),
+                )
+                and self.fork == "python"
+            ):
+                # Compare Tier 1 and Tier 2 of the same commit
+                find_match("base", lambda ref: (ref.cpython_hash == self.cpython_hash))
 
 
 def has_result(

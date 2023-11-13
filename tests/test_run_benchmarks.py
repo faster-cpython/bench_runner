@@ -169,7 +169,7 @@ def test_run_benchmarks(tmp_path, benchmarks_checkout):
     assert metadata["commit_branch"] == "main"
     assert metadata["commit_date"] == "2022-03-23T20:12:04+00:00"
     assert "commit_merge_base" not in metadata
-    assert metadata["benchmark_hash"] == "9d2e5f"
+    assert metadata["benchmark_hash"] == "215d35"
     assert (
         metadata["github_action_url"]
         == "https://github.com/faster-cpython/bench_runner/actions/runs/12345"
@@ -358,3 +358,45 @@ def test_should_run_checkout_failed(tmp_path, capsys):
     captured = capsys.readouterr()
     assert "The checkout of cpython failed" in captured.err
     assert "You specified fork 'python' and ref 'main'" in captured.err
+
+
+def test_run_benchmarks_flags(tmp_path, benchmarks_checkout):
+    for dirname in ["cpython", "pyperformance", "pyston-benchmarks", "venv"]:
+        shutil.copytree(benchmarks_checkout / dirname, tmp_path / dirname)
+    shutil.copyfile(DATA_PATH / "runners.ini", tmp_path / "runners.ini")
+
+    venv_dir = tmp_path / "venv"
+    venv_python = venv_dir / "bin" / "python"
+
+    shutil.copy(
+        DATA_PATH / "benchmarks.manifest",
+        tmp_path / "benchmarks.manifest",
+    )
+
+    # Now actually run the run_benchmarks.py script
+    subprocess.check_call(
+        [
+            venv_python,
+            run_benchmarks.__file__,
+            "benchmark",
+            sys.executable,
+            "python",
+            "main",
+            "deepcopy",
+            "--test_mode",
+            "--run_id",
+            "12345",
+            "--flag",
+            "PYTHON_UOPS",
+        ],
+        cwd=tmp_path,
+    )
+
+    with open(
+        tmp_path
+        / "results"
+        / f"bm-20220323-{platform.python_version()}-9d38120-PYTHON_UOPS"
+        / f"bm-20220323-{platform.system().lower()}-{platform.machine()}-"
+        f"python-main-{platform.python_version()}-9d38120.json"
+    ) as fd:
+        json.load(fd)

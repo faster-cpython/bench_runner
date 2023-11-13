@@ -70,15 +70,13 @@ def run_benchmarks(
         fast_arg = []
 
     subprocess.call(
-        command_prefix
-        + [
+        [
+            *command_prefix,
             sys.executable,
             "-m",
             "pyperformance",
             "run",
-        ]
-        + fast_arg
-        + [
+            *fast_arg,
             "-o",
             BENCHMARK_JSON,
             "--manifest",
@@ -96,7 +94,9 @@ def run_benchmarks(
     # We only want to fail if things are worse than that.
 
     if not Path(BENCHMARK_JSON).is_file():
-        raise NoBenchmarkError("No benchmark file created.")
+        raise NoBenchmarkError(
+            f"No benchmark file created at {BENCHMARK_JSON.resolve()}."
+        )
     with open(BENCHMARK_JSON) as fd:
         contents = json.load(fd)
     if len(contents.get("benchmarks", [])) == 0:
@@ -104,7 +104,12 @@ def run_benchmarks(
 
 
 def collect_pystats(
-    python: Path, benchmarks: str, fork: str, ref: str, individual: bool
+    python: Path,
+    benchmarks: str,
+    fork: str,
+    ref: str,
+    individual: bool,
+    flags: list[str] = [],
 ) -> None:
     pystats_dir = Path("/tmp/py_stats")
 
@@ -123,7 +128,9 @@ def collect_pystats(
                 pass
             else:
                 if individual:
-                    run_summarize_stats(python, fork, ref, benchmark, False)
+                    run_summarize_stats(
+                        python, fork, ref, benchmark, False, flags=flags
+                    )
 
             for filename in pystats_dir.iterdir():
                 os.rename(filename, Path(tempdir) / filename.name)
@@ -136,7 +143,9 @@ def collect_pystats(
         else:
             benchmark_links = []
 
-        run_summarize_stats(python, fork, ref, "all", True, benchmark_links)
+        run_summarize_stats(
+            python, fork, ref, "all", True, benchmark_links, flags=flags
+        )
 
 
 def perf_to_csv(lines: Iterable[str], output: Path):
@@ -231,8 +240,10 @@ def update_metadata(
         json.dump(content, fd, indent=2)
 
 
-def copy_to_directory(filename: Path, python: Path, fork: str, ref: str) -> None:
-    result = Result.from_scratch(python, fork, ref)
+def copy_to_directory(
+    filename: Path, python: Path, fork: str, ref: str, flags: list[str]
+) -> None:
+    result = Result.from_scratch(python, fork, ref, flags=flags)
     result.filename.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(filename, result.filename)
 
@@ -244,6 +255,7 @@ def run_summarize_stats(
     benchmark: str,
     output_json: bool,
     benchmarks: list[str] = [],
+    flags: list[str] = [],
 ) -> None:
     summarize_stats_path = (
         Path(python).parent / "Tools" / "scripts" / "summarize_stats.py"
@@ -252,7 +264,7 @@ def run_summarize_stats(
     parts = ["pystats"]
     if benchmark != "all":
         parts.append(benchmark)
-    result = Result.from_scratch(python, fork, ref, parts)
+    result = Result.from_scratch(python, fork, ref, parts, flags=flags)
     result.filename.parent.mkdir(parents=True, exist_ok=True)
     pystats_json = result.filename.with_suffix(".json")
 
@@ -312,15 +324,16 @@ def main(
     test_mode: bool,
     run_id: Optional[str],
     individual: bool,
+    flags: list[str],
 ) -> None:
     if mode == "benchmark":
         run_benchmarks(python, benchmarks, [], test_mode)
         update_metadata(BENCHMARK_JSON, fork, ref, run_id=run_id)
-        copy_to_directory(BENCHMARK_JSON, python, fork, ref)
+        copy_to_directory(BENCHMARK_JSON, python, fork, ref, flags)
     elif mode == "perf":
         collect_perf(python, benchmarks)
     elif mode == "pystats":
-        collect_pystats(python, benchmarks, fork, ref, individual)
+        collect_pystats(python, benchmarks, fork, ref, individual, flags)
 
 
 if __name__ == "__main__":
@@ -349,6 +362,11 @@ if __name__ == "__main__":
         action="store_true",
         help="For pystats mode, collect stats for each individual benchmark",
     )
+    parser.add_argument(
+        "--flag",
+        action="append",
+        help="Build or runtime flags",
+    )
     args = parser.parse_args()
 
     if args.test_mode:
@@ -368,4 +386,5 @@ if __name__ == "__main__":
         args.test_mode,
         args.run_id,
         args.individual,
+        args.flag or [],
     )

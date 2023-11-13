@@ -4,7 +4,6 @@ from __future__ import annotations
 import argparse
 import datetime
 import io
-from operator import attrgetter
 from pathlib import Path
 import re
 import sys
@@ -18,7 +17,6 @@ from bench_runner import plot
 from bench_runner import profiling_plot
 from bench_runner.result import (
     load_all_results,
-    remove_duplicate_results,
     BenchmarkComparison,
     Comparison,
     Result,
@@ -168,6 +166,11 @@ def output_results_index(
             else:
                 versus.append("")
 
+        if "PYTHON_UOPS" in result.flags:
+            tier2 = " 2️⃣"
+        else:
+            tier2 = ""
+
         rows.append(
             [
                 table.md_link(
@@ -176,7 +179,7 @@ def output_results_index(
                 unquote(result.fork),
                 result.ref[:10],
                 result.version,
-                result.cpython_hash,
+                result.cpython_hash + tier2,
             ]
             + versus
         )
@@ -248,7 +251,7 @@ def generate_index(
     if len(candidate_pystats):
         most_recent_pystats = sorted(
             candidate_pystats,
-            key=attrgetter("commit_datetime"),
+            key=lambda x: (x.commit_datetime, len(x.flags)),
             reverse=True,
         )[0]
         link = table.md_link(
@@ -311,6 +314,9 @@ def get_directory_indices_entries(
         refs.setdefault(dirpath, set()).add(result.ref)
         entries.append((dirpath, None, None, f"fork: {unquote(result.fork)}"))
         entries.append((dirpath, None, None, f"version: {result.version}"))
+        entries.append(
+            (dirpath, None, None, f"tier 2: {'PYTHON_UOPS' in result.flags}")
+        )
         link = table.link_to_hash(result.cpython_hash, result.fork)
         entries.append((dirpath, None, None, f"commit hash: {link}"))
         entries.append((dirpath, None, None, f"commit date: {result.commit_datetime}"))
@@ -416,7 +422,6 @@ def main(repo_dir: Path, force: bool = False, bases: Optional[list[str]] = None)
     if len(bases) == 0:
         raise ValueError("Must have at least one base specified")
     print(f"Comparing to bases {bases}")
-    remove_duplicate_results(results_dir)
     results = load_all_results(bases, results_dir)
     print(f"Found {len(results)} results")
     print("Generating comparison results")

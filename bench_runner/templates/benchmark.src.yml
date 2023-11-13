@@ -95,7 +95,7 @@ jobs:
       pgo: true
       perf: false
       force: false
-      tier2: false
+      tier2: ${{ inputs.tier2 }}
     secrets: inherit
 
   pystats-head:
@@ -120,7 +120,7 @@ jobs:
       benchmarks: ${{ inputs.benchmarks }}
       individual: ${{ inputs.pystats_individual }}
       force: false
-      tier2: false
+      tier2: ${{ inputs.tier2 }}
     secrets: inherit
 
   generate:
