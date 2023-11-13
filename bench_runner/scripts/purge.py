@@ -14,7 +14,7 @@ from bench_runner.result import load_all_results
 from bench_runner.scripts.generate_results import main as generate_results
 
 
-def main(repo_dir: Path, days: int, bases: Optional[list[str]] = None):
+def main(repo_dir: Path, days: int, dry_run: bool, bases: Optional[list[str]] = None):
     results_dir = repo_dir / "results"
     if bases is None:
         bases = get_bases()
@@ -32,7 +32,7 @@ def main(repo_dir: Path, days: int, bases: Optional[list[str]] = None):
         if result.result_info[0] != "raw results":
             continue
         if (
-            not result.version.endswith("+")
+            not (result.version.endswith("+") or result.version.endswith("a0"))
             or result.version in bases
             or result.run_date >= earliest
         ):
@@ -45,11 +45,14 @@ def main(repo_dir: Path, days: int, bases: Optional[list[str]] = None):
 
     for d in all_dirs:
         if d not in keep_dirs:
-            shutil.rmtree(d)
+            print(f"Removing {d}")
+            if not dry_run:
+                shutil.rmtree(d)
 
-    print("Regenerating results")
+    if not dry_run:
+        print("Regenerating results")
 
-    generate_results(repo_dir, force=False, bases=bases)
+        generate_results(repo_dir, force=False, bases=bases)
 
 
 if __name__ == "__main__":
@@ -72,6 +75,7 @@ if __name__ == "__main__":
         default=90,
         help="The number of days to retain",
     )
+    parser.add_argument("--dry-run", action="store_true")
 
     args = parser.parse_args()
 
@@ -79,4 +83,4 @@ if __name__ == "__main__":
         print(f"{args.repo_dir} is not a directory.")
         sys.exit(1)
 
-    main(args.repo_dir, args.days)
+    main(args.repo_dir, args.days, args.dry_run)
