@@ -184,7 +184,7 @@ def longitudinal_plot(
     results = [r for r in results if r.fork == "python"]
     results = remove_duplicate_commits(results)
 
-    for version, base, ax in zip(versions, bases, axs):
+    for i, (version, base, ax) in enumerate(zip(versions, bases, axs)):
         version_str = ".".join(str(x) for x in version)
         ver_results = [r for r in results if r.parsed_version.release[0:2] == version]
 
@@ -243,10 +243,18 @@ def longitudinal_plot(
         ax.set_ylim(top=ylim[1] + 0.1)
         ax.legend(loc="upper left")
 
-    # Add a line for when Tier 2 was turned on
-    tier2_date = datetime.datetime.fromisoformat("2023-11-11")
-    ax.axvline(tier2_date)
-    ax.annotate("TIER 2", xy=(date, 1.05), xycoords="data", rotation=90)
+        # Add a line for when Tier 2 was turned on
+        if i == 2:
+            tier2_date = datetime.datetime.fromisoformat("2023-11-11")
+            ax.axvline(tier2_date)
+            ax.annotate(
+                "TIER 2",
+                xy=(tier2_date, 0.9),
+                xycoords=("data", "axes fraction"),
+                xytext=(10, 0),
+                textcoords="offset pixels",
+                rotation=90,
+            )
 
     fig.suptitle("Performance improvement by major version")
 
