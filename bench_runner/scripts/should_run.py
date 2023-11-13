@@ -18,6 +18,7 @@ def main(
     ref: str,
     machine: str,
     pystats: bool,
+    tier2: bool,
     cpython: Path = Path("cpython"),
     results_dir: Path = Path("results"),
 ) -> None:
@@ -45,7 +46,12 @@ def main(
         # Fail the rest of the workflow
         sys.exit(1)
 
-    found_result = has_result(results_dir, commit_hash, machine, pystats)
+    if tier2:
+        flags = ["PYTHON_UOPS"]
+    else:
+        flags = []
+
+    found_result = has_result(results_dir, commit_hash, machine, pystats, flags)
 
     if force:
         if found_result is not None:
@@ -72,9 +78,11 @@ if __name__ == "__main__":
     parser.add_argument("ref")
     parser.add_argument("machine")
     parser.add_argument("pystats")
+    parser.add_argument("tier2")
     args = parser.parse_args()
 
     force = args.force != "false"
     pystats = args.pystats != "false"
+    tier2 = args.tier2 != "false"
 
-    main(force, args.fork, args.ref, args.machine, pystats)
+    main(force, args.fork, args.ref, args.machine, pystats, tier2)

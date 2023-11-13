@@ -39,7 +39,7 @@ def test_get_merge_base(tmp_path, capsys, checkout, monkeypatch):
 
     shutil.copytree(checkout / "cpython", tmp_path / "cpython")
 
-    get_merge_base.main(True, "linux-x86_64-linux", False, tmp_path / "cpython")
+    get_merge_base.main(True, "linux-x86_64-linux", False, [], tmp_path / "cpython")
 
     captured = capsys.readouterr()
 
@@ -55,7 +55,7 @@ def test_get_merge_base(tmp_path, capsys, checkout, monkeypatch):
 
 
 def test_hard_coded(capsys):
-    get_merge_base.main(False, "linux-x86_64-linux", False)
+    get_merge_base.main(False, "linux-x86_64-linux", False, [])
 
     captured = capsys.readouterr()
 
