@@ -168,7 +168,7 @@ def output_results_index(
                 versus.append("")
 
         if "PYTHON_UOPS" in result.flags:
-            tier2 = " (Tier 2)"
+            tier2 = " (T2)"
         else:
             tier2 = ""
 
@@ -179,8 +179,8 @@ def output_results_index(
                 ),
                 unquote(result.fork),
                 result.ref[:10],
-                result.version + tier2,
-                result.cpython_hash,
+                result.version,
+                result.cpython_hash + tier2,
             ]
             + versus
         )

@@ -13,20 +13,16 @@ jobs:
   determine_head:
     runs-on: ubuntu-latest
     outputs:
-      ref: ${{ steps.head.outputs.commit }}
+      commit: ${{ steps.head.outputs.commit }}
     steps:
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
-          cache: pip
       - uses: actions/checkout@v3
-        if: ${{ inputs.benchmark_base }}
         with:
           repository: python/cpython
           path: cpython
       - name: Determine head commit
         id: head
         run: |
+          cd cpython
           git log -n 1 --format="commit=%H" >> $GITHUB_OUTPUT
 
   weekly:
@@ -34,7 +30,7 @@ jobs:
     needs: determine_head
     with:
       fork: python
-      ref: {{ needs.determine_head.outputs.commit }}
+      ref: ${{ needs.determine_head.outputs.commit }}
       machine: all
       benchmarks: all
       pgo: true
@@ -46,7 +42,7 @@ jobs:
     needs: determine_head
     with:
       fork: python
-      ref: {{ needs.determine_head.outputs.commit }}
+      ref: ${{ needs.determine_head.outputs.commit }}
       machine: all
       benchmarks: all
       pgo: true
@@ -58,7 +54,7 @@ jobs:
     needs: determine_head
     with:
       fork: python
-      ref: {{ needs.determine_head.outputs.commit }}
+      ref: ${{ needs.determine_head.outputs.commit }}
       benchmarks: all
       individual: true
       tier2: false
@@ -69,7 +65,7 @@ jobs:
     needs: determine_head
     with:
       fork: python
-      ref: {{ needs.determine_head.outputs.commit }}
+      ref: ${{ needs.determine_head.outputs.commit }}
       benchmarks: all
       individual: true
       tier2: true
