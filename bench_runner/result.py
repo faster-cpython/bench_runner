@@ -546,7 +546,7 @@ class Result:
 
 
 def has_result(
-    results_dir: Path, commit_hash: str, machine: str, pystats: bool
+    results_dir: Path, commit_hash: str, machine: str, pystats: bool, flags: list[str]
 ) -> Optional[Result]:
     if machine == "all":
         nickname = None
@@ -560,12 +560,15 @@ def has_result(
             if (
                 commit_hash.startswith(result.cpython_hash)
                 and result.result_info[0] == "pystats raw"
+                and result.flags == flags
             ):
                 return result
     else:
         for result in results:
-            if commit_hash.startswith(result.cpython_hash) and (
-                nickname is None or result.nickname == nickname
+            if (
+                commit_hash.startswith(result.cpython_hash)
+                and (nickname is None or result.nickname == nickname)
+                and result.flags == flags
             ):
                 return result
 
