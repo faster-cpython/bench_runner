@@ -542,7 +542,13 @@ class Result:
                 and self.fork == "python"
             ):
                 # Compare Tier 1 and Tier 2 of the same commit
-                find_match("base", lambda ref: (ref.cpython_hash == self.cpython_hash))
+                find_match(
+                    "base",
+                    lambda ref: (
+                        ref.cpython_hash == self.cpython_hash
+                        and ref.flags != self.flags
+                    ),
+                )
 
 
 def has_result(
