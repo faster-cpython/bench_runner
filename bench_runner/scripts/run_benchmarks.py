@@ -337,6 +337,10 @@ def main(
 
 
 if __name__ == "__main__":
+    print("Environment variables:")
+    for var in ["PYTHON_UOPS"]:
+        print(f"{var}={os.environ[var]}")
+
     parser = argparse.ArgumentParser(
         """
         Run benchmarks in `pyperformance` with the given python executable. Add
