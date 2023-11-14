@@ -127,7 +127,7 @@ jobs:
       - name: Enable Tier 2
         if: ${{ inputs.tier2 }}
         run: |
-          echo "PYTHON_UOPS=1" >> "$GITHUB_ENV"
+          echo "PYTHON_UOPS=1" >> $env:GITHUB_ENV
       - name: Running pyperformance
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
