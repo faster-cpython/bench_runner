@@ -10,7 +10,6 @@ import functools
 from operator import itemgetter
 from pathlib import Path
 import re
-from typing import Optional
 
 
 from matplotlib import pyplot as plt

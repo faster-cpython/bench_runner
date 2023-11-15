@@ -10,7 +10,7 @@ import re
 import socket
 import subprocess
 import sys
-from typing import Any, Iterable, Mapping, Optional
+from typing import Any, Optional
 
 
 from . import git
@@ -84,7 +84,7 @@ class Comparison:
             return self._generate_contents()
 
     @property
-    def contents_lines(self) -> Iterable[str]:
+    def contents_lines(self) -> list[str]:
         if self.contents is None:
             return []
         else:
