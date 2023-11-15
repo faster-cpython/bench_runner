@@ -567,12 +567,13 @@ def match_to_bases(results: list[Result], bases: Optional[list[str]]):
         merge_base = result.commit_merge_base
         found_base = False
         if merge_base is not None:
+            _merge_base: str = merge_base
             found_base = find_match(
                 result,
                 candidates,
                 "base",
                 lambda ref: (
-                    merge_base.startswith(ref.cpython_hash)
+                    _merge_base.startswith(ref.cpython_hash)
                     and ref.flags == result.flags
                 ),
             )
