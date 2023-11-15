@@ -32,7 +32,7 @@ def get_log(
     else:
         n_args = ["-n", str(n)]
     return subprocess.check_output(
-        ["git", "log", f"--pretty=format:{format}"] + n_args + ref_args + extra,
+        ["git", "log", f"--pretty=format:{format}", *n_args, *ref_args, *extra],
         encoding="utf-8",
         cwd=dirname,
     ).strip()

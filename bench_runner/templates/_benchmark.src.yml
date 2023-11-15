@@ -1,10 +1,6 @@
 ---
 name: _benchmark
 
-env:
-  PYPERFORMANCE_HASH: f7f36509e2e81e9a20cfeadddd6608f2378ff26c
-  PYSTON_BENCHMARKS_HASH: d4868ff7825f3996e0005197643ed56eba4fb567
-
 "on":
   workflow_call:
     inputs:
@@ -85,14 +81,16 @@ jobs:
       - name: Enable symlinks for git
         run: |
           git config --global core.symlinks true
-      - uses: actions/checkout@v3
-      - uses: actions/checkout@v3
+      - name: Checkout benchmarking
+        uses: actions/checkout@v3
+      - name: Checkout CPython
+        uses: actions/checkout@v3
         with:
           repository: ${{ inputs.fork }}/cpython
           path: cpython
           ref: ${{ inputs.ref }}
           fetch-depth: 50
-      - name: Install dependencies
+      - name: Install dependencies from PyPI
         run: |
           py -m venv venv
           venv\Scripts\python.exe -m pip install -r requirements.txt
@@ -101,13 +99,15 @@ jobs:
         id: should_run
         run: |
           venv\Scripts\python.exe -m bench_runner.scripts.should_run ${{ inputs.force }} ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.machine }} false ${{ inputs.tier2 }} >> $GITHUB_OUTPUT
-      - uses: actions/checkout@v3
+      - name: Checkout python-macrobenchmarks
+        uses: actions/checkout@v3
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         with:
           repository: pyston/python-macrobenchmarks
           path: pyston-benchmarks
           ref: ${{ env.PYSTON_BENCHMARKS_HASH }}
-      - uses: actions/checkout@v3
+      - name: Checkout pyperformance
+        uses: actions/checkout@v3
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         with:
           repository: python/pyperformance
@@ -140,7 +140,7 @@ jobs:
           path: |
             benchmark.json
       # Pull again, since another job may have committed results in the meantime
-      - name: pull
+      - name: Pull benchmarking
         if: ${{ steps.should_run.outputs.should_run != 'false' && !inputs.dry_run }}
         run: |
           # Another benchmarking task may have created results for the same
@@ -148,7 +148,7 @@ jobs:
           # that any local results for this commit will override anything we
           # just pulled in in that case.
           git pull -s recursive -X ours --autostash --rebase
-      - name: Add to repo
+      - name: Add data to repo
         if: ${{ steps.should_run.outputs.should_run != 'false' && !inputs.dry_run }}
         uses: EndBug/add-and-commit@v9
         with:
@@ -158,17 +158,20 @@ jobs:
     runs-on: [self-hosted, linux, bare-metal]
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - name: Checkout benchmarking
+        uses: actions/checkout@v3
+      - name: Setup system Python
+        uses: actions/setup-python@v4
         with:
           python-version: "3.11"
-      - uses: actions/checkout@v3
+      - name: Checkout CPython
+        uses: actions/checkout@v3
         with:
           repository: ${{ inputs.fork }}/cpython
           path: cpython
           ref: ${{ inputs.ref }}
           fetch-depth: 50
-      - name: Install dependencies
+      - name: Install dependencies from PyPI
         run: |
           python -m venv venv
           venv/bin/python -m pip install -r requirements.txt
@@ -177,13 +180,15 @@ jobs:
         id: should_run
         run: |
           venv/bin/python -m bench_runner.scripts.should_run ${{ inputs.force }} ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.machine }} false ${{ inputs.tier2 }} >> $GITHUB_OUTPUT
-      - uses: actions/checkout@v3
+      - name: Checkout python-macrobenchmarks
+        uses: actions/checkout@v3
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         with:
           repository: pyston/python-macrobenchmarks
           path: pyston-benchmarks
           ref: ${{ env.PYSTON_BENCHMARKS_HASH }}
-      - uses: actions/checkout@v3
+      - name: Checkout pyperformance
+        uses: actions/checkout@v3
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         with:
           repository: python/pyperformance
@@ -203,7 +208,7 @@ jobs:
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
           sudo LD_LIBRARY_PATH=$LD_LIBRARY_PATH venv/bin/python -m pyperf system tune
-      - name: Tune for perf
+      - name: Tune for (Linux) perf
         if: ${{ steps.should_run.outputs.should_run != 'false' && inputs.perf }}
         run: |
           sudo bash -c "echo 100000 > /proc/sys/kernel/perf_event_max_sample_rate"
@@ -231,7 +236,7 @@ jobs:
           path: |
             profiling/results
       # Pull again, since another job may have committed results in the meantime
-      - name: pull
+      - name: Pull benchmarking
         if: ${{ steps.should_run.outputs.should_run != 'false' && !inputs.dry_run && !inputs.perf }}
         run: |
           # Another benchmarking task may have created results for the same
@@ -239,7 +244,7 @@ jobs:
           # that any local results for this commit will override anything we
           # just pulled in in that case.
           git pull -s recursive -X ours --autostash --rebase
-      - name: Add to repo
+      - name: Adding data to repo
         if: ${{ steps.should_run.outputs.should_run != 'false' && !inputs.dry_run && !inputs.perf }}
         uses: EndBug/add-and-commit@v9
         with:
@@ -249,14 +254,16 @@ jobs:
     runs-on: [self-hosted, macos, bare-metal]
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/checkout@v3
+      - name: Checkout benchmarking
+        uses: actions/checkout@v3
+      - name: Checkout CPython
+        uses: actions/checkout@v3
         with:
           repository: ${{ inputs.fork }}/cpython
           path: cpython
           ref: ${{ inputs.ref }}
           fetch-depth: 50
-      - name: Install dependencies
+      - name: Install dependencies from PyPI
         run: |
           python3 -m venv venv
           venv/bin/python -m pip install -r requirements.txt
@@ -265,13 +272,15 @@ jobs:
         id: should_run
         run: |
           venv/bin/python -m bench_runner.scripts.should_run ${{ inputs.force }} ${{ inputs.force }} ${{ inputs.ref }} ${{ inputs.machine }} false ${{ inputs.tier2 }} >> $GITHUB_OUTPUT
-      - uses: actions/checkout@v3
+      - name: Checkout python-macrobenchmarks
+        uses: actions/checkout@v3
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         with:
           repository: pyston/python-macrobenchmarks
           path: pyston-benchmarks
           ref: ${{ env.PYSTON_BENCHMARKS_HASH }}
-      - uses: actions/checkout@v3
+      - name: Checkout pyperformance
+        uses: actions/checkout@v3
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         with:
           repository: python/pyperformance
@@ -309,7 +318,7 @@ jobs:
           path: |
             benchmark.json
       # Pull again, since another job may have committed results in the meantime
-      - name: pull
+      - name: Pull benchmarking
         if: ${{ steps.should_run.outputs.should_run != 'false' && !inputs.dry_run }}
         run: |
           # Another benchmarking task may have created results for the same
@@ -317,7 +326,7 @@ jobs:
           # that any local results for this commit will override anything we
           # just pulled in in that case.
           git pull -s recursive -X ours --autostash --rebase
-      - name: Add to repo
+      - name: Add data to repo
         if: ${{ steps.should_run.outputs.should_run != 'false' && !inputs.dry_run }}
         uses: EndBug/add-and-commit@v9
         with:

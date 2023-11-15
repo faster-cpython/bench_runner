@@ -23,8 +23,11 @@ WORKFLOW_PATH = Path() / ".github" / "workflows"
 
 
 def fail_check(dst: Path):
-    print(f"{dst.relative_to(ROOT_PATH)} needs to be regenerated.")
-    print("Run `python -m bench_runner.scripts.install` and commit the result.")
+    print(f"{dst.relative_to(ROOT_PATH)} needs to be regenerated.", file=sys.stderr)
+    print(
+        "Run `python -m bench_runner.scripts.install` and commit the result.",
+        file=sys.stderr,
+    )
     sys.exit(1)
 
 
@@ -68,7 +71,7 @@ def load_yaml(src: Path) -> Any:
         return yaml.load(fd)
 
 
-def generate__benchmark(input_path: Path, output_path: Path, check: bool) -> None:
+def generate__benchmark(src: Any) -> Any:
     """
     Generates _benchmark.yml from _benchmark.src.yml.
 
@@ -79,9 +82,8 @@ def generate__benchmark(input_path: Path, output_path: Path, check: bool) -> Non
     user.
     """
     available_runners = [r for r in runners.get_runners() if r.available]
-    runner_choices = [x.name for x in available_runners] + ["all"]
+    runner_choices = [*[x.name for x in available_runners], "all"]
 
-    src = load_yaml(input_path)
     dst = copy.deepcopy(src)
 
     dst["jobs"] = {}
@@ -95,10 +97,10 @@ def generate__benchmark(input_path: Path, output_path: Path, check: bool) -> Non
 
     dst["on"]["workflow_dispatch"]["inputs"]["machine"]["options"] = runner_choices
 
-    write_yaml(output_path, dst, check)
+    return dst
 
 
-def generate_benchmark(input_path: Path, output_path: Path, check: bool) -> None:
+def generate_benchmark(dst: Any) -> Any:
     """
     Generates benchmark.yml from benchmark.src.yml.
 
@@ -106,23 +108,15 @@ def generate_benchmark(input_path: Path, output_path: Path, check: bool) -> None
     user.
     """
     available_runners = [r for r in runners.get_runners() if r.available]
-    runner_choices = [x.name for x in available_runners] + ["all"]
+    runner_choices = [*[x.name for x in available_runners], "all"]
 
-    src = load_yaml(input_path)
-    src["on"]["workflow_dispatch"]["inputs"]["machine"]["options"] = runner_choices
-    write_yaml(output_path, src, check)
+    dst["on"]["workflow_dispatch"]["inputs"]["machine"]["options"] = runner_choices
+
+    return dst
 
 
-def generate_generic(input_path: Path, output_path: Path, check: bool) -> None:
-    if check:
-        if not output_path.is_file():
-            fail_check(output_path)
-        input_content = input_path.read_bytes()
-        output_content = output_path.read_bytes()
-        if input_content != output_content:
-            fail_check(output_path)
-    else:
-        shutil.copyfile(input_path, output_path)
+def generate_generic(dst: Any) -> Any:
+    return dst
 
 
 GENERATORS = {
@@ -134,12 +128,18 @@ GENERATORS = {
 def main(check: bool) -> None:
     WORKFLOW_PATH.mkdir(parents=True, exist_ok=True)
 
-    for path in TEMPLATE_PATH.glob("*.src.yml"):
-        generator = GENERATORS.get(path.name, generate_generic)
-        generator(path, WORKFLOW_PATH / (path.name[:-8] + ".yml"), check)
+    env = load_yaml(TEMPLATE_PATH / "env.yml")
+
+    for src_path in TEMPLATE_PATH.glob("*.src.yml"):
+        dst_path = WORKFLOW_PATH / (src_path.name[:-8] + ".yml")
+        generator = GENERATORS.get(src_path.name, generate_generic)
+        src = load_yaml(src_path)
+        dst = generator(src)
+        dst = {"env": env, **dst}
+        write_yaml(dst_path, dst, check)
 
     for path in TEMPLATE_PATH.glob("*"):
-        if path.name.endswith(".src.yml"):
+        if path.name.endswith(".src.yml") or path.name == "env.yml":
             continue
 
         if not (ROOT_PATH / path.name).is_file():

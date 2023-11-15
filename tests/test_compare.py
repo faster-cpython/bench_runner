@@ -72,9 +72,9 @@ def test_compare_n_to_n(tmp_path, monkeypatch):
 
         |  | 9d38120 (9d38120) | eb0004c (eb0004c) | b0e1f9c (b0e1f9c) |
         | -- | -- | -- | -- |
-        | 9d38120 | | 1.57x faster (94% rel.) [table](eb0004c-vs-9d38120.md) [plot](eb0004c-vs-9d38120.png) | 1.70x faster \* (94% rel.) [table](b0e1f9c-vs-9d38120.md) [plot](b0e1f9c-vs-9d38120.png) |
-        | eb0004c | 1.57x slower (94% rel.) [table](9d38120-vs-eb0004c.md) [plot](9d38120-vs-eb0004c.png) | | 1.08x faster \* (94% rel.) [table](b0e1f9c-vs-eb0004c.md) [plot](b0e1f9c-vs-eb0004c.png) |
-        | b0e1f9c | 1.70x slower \* (94% rel.) [table](9d38120-vs-b0e1f9c.md) [plot](9d38120-vs-b0e1f9c.png) | 1.08x slower \* (94% rel.) [table](eb0004c-vs-b0e1f9c.md) [plot](eb0004c-vs-b0e1f9c.png) | |
+        | 9d38120 |  | 1.57x faster (94% rel.) [table](eb0004c-vs-9d38120.md) [plot](eb0004c-vs-9d38120.png) | 1.70x faster \* (94% rel.) [table](b0e1f9c-vs-9d38120.md) [plot](b0e1f9c-vs-9d38120.png) |
+        | eb0004c | 1.57x slower (94% rel.) [table](9d38120-vs-eb0004c.md) [plot](9d38120-vs-eb0004c.png) |  | 1.08x faster \* (94% rel.) [table](b0e1f9c-vs-eb0004c.md) [plot](b0e1f9c-vs-eb0004c.png) |
+        | b0e1f9c | 1.70x slower \* (94% rel.) [table](9d38120-vs-b0e1f9c.md) [plot](9d38120-vs-b0e1f9c.png) | 1.08x slower \* (94% rel.) [table](eb0004c-vs-b0e1f9c.md) [plot](eb0004c-vs-b0e1f9c.png) |  |
         """  # noqa
     ).strip()
     assert expected in content

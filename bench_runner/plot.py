@@ -5,6 +5,7 @@ import argparse
 from collections import defaultdict
 import datetime
 import json
+from operator import attrgetter, itemgetter
 from pathlib import Path
 import re
 from typing import Any, Iterable, Optional
@@ -108,9 +109,9 @@ def plot_diff(
         for name, ref in ref_data.items()
         if name in head_data
     ]
-    combined_data.sort(key=lambda x: x[2])
+    combined_data.sort(key=itemgetter(2))
 
-    fig, axs = plt.subplots(
+    _, axs = plt.subplots(
         figsize=(8, 2 + len(combined_data) * 0.3), layout="constrained"
     )
     plt.axvline(1.0)
@@ -147,7 +148,7 @@ def remove_duplicate_commits(results: Iterable[result.Result]) -> list[result.Re
             out_results.append(result_set[0])
         else:
             for r in result_set:
-                if "PYTHON_UOPS" in r.flags:
+                if r.is_tier2:
                     out_results.append(r)
                     break
             else:
@@ -202,7 +203,7 @@ def longitudinal_plot(
             else:
                 continue
 
-            runner_results.sort(key=lambda x: x.commit_datetime)
+            runner_results.sort(key=attrgetter("commit_datetime"))
             dates = [
                 datetime.datetime.fromisoformat(x.commit_datetime)
                 for x in runner_results

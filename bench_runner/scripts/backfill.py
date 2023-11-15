@@ -2,7 +2,10 @@ from __future__ import annotations
 
 
 import argparse
+from collections import defaultdict
 import datetime
+import functools
+from operator import attrgetter
 from pathlib import Path
 from typing import Iterable, Optional, Sequence, TypeAlias
 
@@ -16,18 +19,37 @@ from bench_runner import runners
 RunnerType: TypeAlias = runners.Runner
 
 
+@functools.cache
+def _get_hash_and_date(cpython: Path, ref: str) -> tuple[str, datetime.datetime]:
+    hash, date = git.get_log("%H %cI", cpython, ref).split()
+    return hash, datetime.datetime.fromisoformat(date)
+
+
 class Commit:
     """
     Represents a single commit to possibly benchmark.
     """
 
     def __init__(self, cpython: Path, ref: str, source: str):
+        self.cpython = cpython
         self.ref = ref
-        hash, date = git.get_log("%H %cI", cpython, ref).split()
-        self.hash = hash
-        self.date = datetime.datetime.fromisoformat(date)
         self.source = source
         self.runners: list[RunnerType] = []
+
+    def _set_hash_and_date(self):
+        self._hash, self._date = _get_hash_and_date(self.cpython, self.ref)
+
+    @property
+    def hash(self) -> str:
+        if not hasattr(self, "_hash"):
+            self._set_hash_and_date()
+        return self._hash
+
+    @property
+    def date(self) -> datetime.datetime:
+        if not hasattr(self, "_date"):
+            self._set_hash_and_date()
+        return self._date
 
 
 def get_all_with_prefix(
@@ -52,7 +74,7 @@ def get_latest_with_prefix(
         if tag.startswith(prefix):
             commits.append(Commit(cpython, tag, f"--latest-with-prefix {prefix}"))
 
-    commits.sort(key=lambda x: x.date)
+    commits.sort(key=attrgetter("date"))
     yield commits[-1]
 
 
@@ -165,10 +187,10 @@ def get_commits(
 
 
 def deduplicate_commits(cpython: Path, commits: Iterable[Commit]) -> Iterable[Commit]:
-    commits_by_hash = {}
+    commits_by_hash = defaultdict(list)
 
     for commit in commits:
-        commits_by_hash.setdefault(commit.hash, []).append(commit)
+        commits_by_hash[commit.hash].append(commit)
 
     for commit_set in commits_by_hash.values():
         first_commit = commit_set[0]
@@ -216,7 +238,7 @@ def main(
     commits = deduplicate_commits(cpython, commits)
     commits = remove_existing(force, commits, runners)
 
-    commits = sorted(commits, key=lambda x: x.date)
+    commits = sorted(commits, key=attrgetter("date"))
 
     print(f"runners: {', '.join(x.nickname for x in runners)}")
     print()
@@ -278,7 +300,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--machine",
-        choices=list(runners_by_names.keys()) + ["all"],
+        choices=[*runners_by_names.keys(), "all"],
         default=all_runners[0].nickname,
         help="The machine to run on.",
     )

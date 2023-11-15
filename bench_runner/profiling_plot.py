@@ -4,9 +4,13 @@ Generate summary tables and a visualization of Linux perf profiling results.
 from __future__ import annotations
 
 
+from collections import defaultdict
 import csv
+import functools
+from operator import itemgetter
 from pathlib import Path
 import re
+from typing import Optional
 
 
 from matplotlib import pyplot as plt
@@ -115,6 +119,7 @@ CATEGORIES: dict[str, list[str]] = {
 }
 
 
+@functools.cache
 def category_for_obj_sym(obj: str, sym: str) -> str:
     if obj == "[kernel.kallsyms]":
         return "kernel"
@@ -135,8 +140,8 @@ def category_for_obj_sym(obj: str, sym: str) -> str:
 
 
 def generate_results(output_dir: Path = ROOT_DIR, input_dir: Path = RESULTS_DIR):
-    results = {}
-    categories = {}
+    results = defaultdict(lambda: defaultdict(float))
+    categories = defaultdict(lambda: defaultdict(float))
 
     if not input_dir.exists() or len(list(input_dir.glob("*.csv"))) == 0:
         print("No profiling data. Skipping.")
@@ -145,7 +150,6 @@ def generate_results(output_dir: Path = ROOT_DIR, input_dir: Path = RESULTS_DIR)
     with open(output_dir / "profiling.md", "w") as md:
         for csv_path in sorted(input_dir.glob("*.csv")):
             stem = csv_path.stem.split(".", 1)[0]
-            results[stem] = {}
 
             md.write(f"\n## {stem}\n\n")
             md.write("| percentage | object | symbol | category |\n")
@@ -168,11 +172,8 @@ def generate_results(output_dir: Path = ROOT_DIR, input_dir: Path = RESULTS_DIR)
                         break
 
                     category = category_for_obj_sym(obj, sym)
-                    categories.setdefault(category, {})
-                    categories[category].setdefault((obj, sym), 0.0)
                     categories[category][(obj, sym)] += self_time
 
-                    results[stem].setdefault(category, 0.0)
                     results[stem][category] += self_time
 
                     if self_time >= 0.005:
@@ -196,7 +197,7 @@ def generate_results(output_dir: Path = ROOT_DIR, input_dir: Path = RESULTS_DIR)
             md.write("| percentage | object | symbol |\n")
             md.write("| ---: | :--- | :--- |\n")
             for (obj, sym), self_time in sorted(
-                matches.items(), key=lambda x: x[1], reverse=True
+                matches.items(), key=itemgetter(1), reverse=True
             ):
                 if self_time < 0.005:
                     break
