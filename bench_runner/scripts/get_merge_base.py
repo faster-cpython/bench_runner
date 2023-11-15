@@ -1,9 +1,10 @@
+import argparse
 from pathlib import Path
-import sys
 
 
 from bench_runner import git
 from bench_runner.result import has_result
+from bench_runner import util
 
 
 def main(
@@ -23,10 +24,9 @@ def main(
             print("ref=xxxxxxx")
             print("need_to_run=false")
         else:
+            flags = []
             if tier2:
-                flags = ["PYTHON_UOPS"]
-            else:
-                flags = []
+                flags.extend(util.TIER2_FLAGS)
 
             need_to_run = (
                 machine == "all"
@@ -39,8 +39,21 @@ def main(
 
 
 if __name__ == "__main__":
-    need_to_run = sys.argv[-4] != "false"
-    pystats = sys.argv[-2] != "false"
-    tier2 = sys.argv[-1] != "false"
+    parser = argparse.ArgumentParser(
+        """
+        Find the git merge-base in CPython main of a given commit, and also
+        determine whether we already have data for that commit.
+        """
+    )
+    parser.add_argument("need_to_run")
+    parser.add_argument("machine")
+    parser.add_argument("pystats")
+    parser.add_argument("tier2")
+    args = parser.parse_args()
 
-    main(need_to_run, sys.argv[-3], pystats, tier2)
+    main(
+        args.need_to_run != "false",
+        args.machine,
+        args.pystats != "false",
+        args.tier2 != "false",
+    )

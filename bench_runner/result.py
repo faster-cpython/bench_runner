@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 
+from collections import defaultdict
 import functools
 import json
 from pathlib import Path
@@ -9,7 +10,7 @@ import re
 import socket
 import subprocess
 import sys
-from typing import Any, Iterable, Optional
+from typing import Any, Optional
 
 
 from . import git
@@ -51,19 +52,20 @@ class Comparison:
         self.ref = ref
         self.head = head
         self.base = base
+        self.valid_comparison = not (
+            self.ref == self.head
+            or (
+                self.ref.cpython_hash == self.head.cpython_hash
+                and self.ref.flags == self.head.flags
+            )
+        )
 
     def copy(self):
         return type(self)(self.ref, self.head, self.base)
 
     @property
     def filename(self) -> Optional[Path]:
-        if self.ref == self.head:
-            return None
-
-        if (
-            self.ref.cpython_hash == self.head.cpython_hash
-            and self.ref.flags == self.head.flags
-        ):
+        if not self.valid_comparison:
             return None
 
         return self.head.filename.parent / (
@@ -82,12 +84,11 @@ class Comparison:
             return self._generate_contents()
 
     @property
-    def contents_lines(self) -> Iterable[str]:
-        contents = self.contents
-        if contents is None:
+    def contents_lines(self) -> list[str]:
+        if self.contents is None:
             return []
         else:
-            return contents.splitlines()
+            return self.contents.splitlines()
 
     def _generate_contents(self) -> Optional[str]:
         return None
@@ -96,7 +97,7 @@ class Comparison:
 class BenchmarkComparison(Comparison):
     @functools.cached_property
     def geometric_mean(self) -> str:
-        if self.ref == self.head:
+        if not self.valid_comparison:
             return ""
 
         lines = self.contents_lines
@@ -109,22 +110,21 @@ class BenchmarkComparison(Comparison):
         else:
             suffix = ""
 
-        geometric_mean = None
-        for line in lines:
-            # We want to get the *last* geometric mean in the file, in case
-            # it's divided by tags
+        # We want to get the *last* geometric mean in the file, in case
+        # it's divided by tags
+        for line in lines[::-1]:
             if "Geometric mean" in line:
                 geometric_mean = line.split("|")[3].strip() + suffix
-
-        if geometric_mean is None:
+                break
+        else:
             geometric_mean = "not sig"
 
         return geometric_mean
 
     @functools.cached_property
     def hpt_reliability(self) -> Optional[str]:
-        if self.ref == self.head:
-            return None
+        if not self.valid_comparison:
+            return ""
 
         lines = self.contents_lines
 
@@ -136,8 +136,8 @@ class BenchmarkComparison(Comparison):
         return None
 
     def hpt_percentile(self, percentile: int) -> Optional[str]:
-        if self.ref == self.head:
-            return None
+        if not self.valid_comparison:
+            return ""
 
         lines = self.contents_lines
 
@@ -166,7 +166,7 @@ class BenchmarkComparison(Comparison):
 
     @property
     def summary(self) -> str:
-        if self.ref == self.head:
+        if not self.valid_comparison:
             return ""
 
         result = self.geometric_mean
@@ -179,7 +179,7 @@ class BenchmarkComparison(Comparison):
 
     @property
     def long_summary(self) -> str:
-        if self.ref == self.head:
+        if not self.valid_comparison:
             return ""
 
         result = f"Geometric mean: {self.geometric_mean}"
@@ -275,7 +275,7 @@ class Result:
     def from_filename(cls, filename: Path) -> "Result":
         (
             name,
-            date,
+            _,
             nickname,
             machine,
             fork,
@@ -401,17 +401,22 @@ class Result:
         with open(self.filename, "rb") as fd:
             parser = ijson.parse(fd)
             for prefix, _, value in parser:
-                if prefix == "benchmarks.item.metadata.name":
-                    fast_contents["benchmarks"].append({"metadata": {"name": value}})
-                elif prefix == "benchmarks.item.runs.item.metadata.date":
-                    if len(fast_contents["benchmarks"]) == 0:
-                        fast_contents["benchmarks"].append({})
-                    if len(fast_contents["benchmarks"]) == 1:
-                        fast_contents["benchmarks"][-1]["runs"] = [
-                            {"metadata": {"date": value}}
-                        ]
-                elif prefix.startswith("metadata."):
-                    fast_contents["metadata"][prefix[9:]] = value
+                match prefix:
+                    case "benchmarks.item.metadata.name":
+                        fast_contents["benchmarks"].append(
+                            {"metadata": {"name": value}}
+                        )
+                    case "benchmarks.item.runs.item.metadata.date":
+                        if len(fast_contents["benchmarks"]) == 0:
+                            fast_contents["benchmarks"].append({})
+                        if len(fast_contents["benchmarks"]) == 1:
+                            fast_contents["benchmarks"][-1]["runs"] = [
+                                {"metadata": {"date": value}}
+                            ]
+                    case s if s.startswith("metadata."):
+                        fast_contents["metadata"][prefix[9:]] = value
+                    case _:
+                        pass
 
         self._fast_contents = fast_contents
         return fast_contents
@@ -420,6 +425,7 @@ class Result:
     def contents(self) -> dict[str, Any]:
         if hasattr(self, "_full_contents"):
             return self._full_contents
+
         with open(self.filename, "rb") as fd:
             self._full_contents = json.load(fd)
         return self._full_contents
@@ -447,11 +453,11 @@ class Result:
         return self.run_datetime[:10]
 
     @property
-    def commit_merge_base(self) -> str:
+    def commit_merge_base(self) -> Optional[str]:
         return self.metadata.get("commit_merge_base", None)
 
     @property
-    def benchmark_hash(self) -> str:
+    def benchmark_hash(self) -> Optional[str]:
         return self.metadata.get("benchmark_hash", None)
 
     @property
@@ -478,6 +484,10 @@ class Result:
     def github_action_url(self) -> Optional[str]:
         return self.metadata.get("github_action_url", None)
 
+    @property
+    def is_tier2(self) -> bool:
+        return "PYTHON_UOPS" in self.flags
+
     @functools.cached_property
     def benchmark_names(self) -> set[str]:
         contents = self.fast_contents
@@ -494,61 +504,6 @@ class Result:
         from packaging import version as pkg_version
 
         return pkg_version.parse(self.version.replace("+", "0"))
-
-    def match_to_bases(self, bases: list[str], results: Iterable["Result"]) -> None:
-        loose_results = [
-            ref
-            for ref in results
-            if (
-                ref != self
-                and ref.nickname == self.nickname
-                and ref.fork == "python"
-                and ref.extra == self.extra
-            )
-        ]
-
-        if self.benchmark_hash is not None:
-            exact_results = [
-                ref
-                for ref in loose_results
-                if ref.benchmark_hash == self.benchmark_hash
-            ]
-        else:
-            exact_results = []
-
-        def find_match(base, func):
-            # Try for an exact match (same benchmark_hash) first,
-            # then fall back to less exact.
-            for result_set in [exact_results, loose_results]:
-                for ref in result_set:
-                    if func(ref):
-                        self.bases[base] = comparison_factory(ref, self, base)
-                        return True
-            return False
-
-        for base in bases:
-            find_match(base, lambda ref: ref.version == base)
-
-        merge_base = self.commit_merge_base
-        if merge_base is not None:
-            if (
-                not find_match(
-                    "base",
-                    lambda ref: (
-                        merge_base.startswith(ref.cpython_hash)
-                        and ref.flags == self.flags
-                    ),
-                )
-                and self.fork == "python"
-            ):
-                # Compare Tier 1 and Tier 2 of the same commit
-                find_match(
-                    "base",
-                    lambda ref: (
-                        ref.cpython_hash == self.cpython_hash
-                        and ref.flags != self.flags
-                    ),
-                )
 
 
 def has_result(
@@ -581,6 +536,61 @@ def has_result(
     return None
 
 
+def match_to_bases(results: list[Result], bases: Optional[list[str]]):
+    def find_match(result, candidates, base, func):
+        # Try for an exact match (same benchmark_hash) first,
+        # then fall back to less exact.
+        for result_set in [
+            candidates.get(result.benchmark_hash, []),
+            *(v for k, v in candidates.items() if k != result.benchmark_hash),
+        ]:
+            for ref in result_set:
+                if ref != result and func(ref):
+                    result.bases[base] = comparison_factory(ref, result, base)
+                    return True
+        return False
+
+    groups = defaultdict(lambda: defaultdict(list))
+    for result in results:
+        if result.fork == "python":
+            groups[(result.nickname, tuple(result.extra))][
+                result.benchmark_hash
+            ].append(result)
+
+    for result in results:
+        candidates = groups[(result.nickname, tuple(result.extra))]
+
+        if bases is not None:
+            for base in bases:
+                find_match(result, candidates, base, lambda ref: ref.version == base)
+
+        merge_base = result.commit_merge_base
+        found_base = False
+        if merge_base is not None:
+            _merge_base: str = merge_base
+            found_base = find_match(
+                result,
+                candidates,
+                "base",
+                lambda ref: (
+                    _merge_base.startswith(ref.cpython_hash)
+                    and ref.flags == result.flags
+                ),
+            )
+
+        if not found_base and result.fork == "python":
+            # Compare Tier 1 and Tier 2 of the same commit
+            find_match(
+                result,
+                candidates,
+                "base",
+                lambda ref: (
+                    ref.cpython_hash == result.cpython_hash
+                    and ref.flags != result.flags
+                ),
+            )
+
+
 def load_all_results(
     bases: Optional[list[str]], results_dir: Path, sorted: bool = True
 ) -> list[Result]:
@@ -594,9 +604,7 @@ def load_all_results(
     if len(results) == 0:
         raise ValueError("Didn't find any results.  That seems fishy.")
 
-    if bases is not None:
-        for result in results:
-            result.match_to_bases(bases, results)
+    match_to_bases(results, bases)
 
     if sorted:
         results.sort(

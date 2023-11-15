@@ -2,6 +2,7 @@ from __future__ import annotations
 
 
 import argparse
+from collections import defaultdict
 import datetime
 import io
 from pathlib import Path
@@ -145,7 +146,7 @@ def output_results_index(
     """
     Outputs a results index table.
     """
-    bases = bases + ["base"]
+    bases = [*bases, "base"]
 
     head = ["date", "fork", "ref", "version", "hash"] + [
         f"vs. {base}:" for base in bases
@@ -166,7 +167,7 @@ def output_results_index(
             else:
                 versus.append("")
 
-        if "PYTHON_UOPS" in result.flags:
+        if result.is_tier2:
             tier2 = " 2️⃣"
         else:
             tier2 = ""
@@ -180,8 +181,8 @@ def output_results_index(
                 result.ref[:10],
                 result.version,
                 result.cpython_hash + tier2,
+                *versus,
             ]
-            + versus
         )
     table.output_table(fd, head, rows)
 
@@ -204,17 +205,19 @@ def results_by_runner(
     """
     Separate results by the runner used.
     """
-    by_runner = {}
+    by_runner = defaultdict(list)
     for result in results:
         if result.result_info[0] != "raw results":
             continue
-        by_runner.setdefault(result.runner, []).append(result)
+        by_runner[result.runner].append(result)
 
     for runner_name in sort_runner_names(by_runner.keys()):
         yield (runner_name, by_runner[runner_name])
 
 
-def summarize_results(results: Iterable[Result], bases: list[str]) -> Iterable[Result]:
+def summarize_results(
+    results: Iterable[Result], bases: list[str], n_recent: int = 3, days: int = 3
+) -> Iterable[Result]:
     """
     Create a shorter list of results which includes:
 
@@ -224,11 +227,25 @@ def summarize_results(results: Iterable[Result], bases: list[str]) -> Iterable[R
     """
     results = list(results)
     new_results = []
-    earliest = (datetime.date.today() - datetime.timedelta(days=3)).isoformat()
+    earliest = (datetime.date.today() - datetime.timedelta(days=days)).isoformat()
     for i, result in enumerate(results):
-        if i < 3 or result.run_date >= earliest or result.version in bases:
+        if i < n_recent or result.run_date >= earliest or result.version in bases:
             new_results.append(result)
     return new_results
+
+
+def get_most_recent_pystats(results: Iterable[Result]) -> Optional[Result]:
+    candidate_pystats = [
+        result
+        for result in results
+        if result.result_info[0] == "pystats raw" and result.fork == "python"
+    ]
+    if len(candidate_pystats):
+        return sorted(
+            candidate_pystats,
+            key=lambda x: (x.commit_datetime, len(x.flags)),
+            reverse=True,
+        )[0]
 
 
 def generate_index(
@@ -243,17 +260,7 @@ def generate_index(
     """
     content = io.StringIO()
 
-    candidate_pystats = [
-        result
-        for result in all_results
-        if result.result_info[0] == "pystats raw" and result.fork == "python"
-    ]
-    if len(candidate_pystats):
-        most_recent_pystats = sorted(
-            candidate_pystats,
-            key=lambda x: (x.commit_datetime, len(x.flags)),
-            reverse=True,
-        )[0]
+    if (most_recent_pystats := get_most_recent_pystats(all_results)) is not None:
         link = table.md_link(
             f"Most recent pystats on main ({most_recent_pystats.cpython_hash})",
             str(most_recent_pystats.filename.with_suffix(".md")),
@@ -307,16 +314,14 @@ def get_directory_indices_entries(
 ) -> list[tuple[Path, Optional[str], Optional[str], str]]:
     entries = []
     dirpaths: set[Path] = set()
-    refs = {}
+    refs = defaultdict(set)
     for result in results:
         dirpath = result.filename.parent
         dirpaths.add(dirpath)
-        refs.setdefault(dirpath, set()).add(result.ref)
+        refs[dirpath].add(result.ref)
         entries.append((dirpath, None, None, f"fork: {unquote(result.fork)}"))
         entries.append((dirpath, None, None, f"version: {result.version}"))
-        entries.append(
-            (dirpath, None, None, f"tier 2: {'PYTHON_UOPS' in result.flags}")
-        )
+        entries.append((dirpath, None, None, f"tier 2: {result.is_tier2}"))
         link = table.link_to_hash(result.cpython_hash, result.fork)
         entries.append((dirpath, None, None, f"commit hash: {link}"))
         entries.append((dirpath, None, None, f"commit date: {result.commit_datetime}"))

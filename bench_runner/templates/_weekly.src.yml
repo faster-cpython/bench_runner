@@ -15,7 +15,8 @@ jobs:
     outputs:
       commit: ${{ steps.head.outputs.commit }}
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout CPython
+        uses: actions/checkout@v3
         with:
           repository: python/cpython
           path: cpython

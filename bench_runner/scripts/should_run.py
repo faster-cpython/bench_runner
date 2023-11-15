@@ -46,10 +46,9 @@ def main(
         # Fail the rest of the workflow
         sys.exit(1)
 
+    flags = []
     if tier2:
-        flags = ["PYTHON_UOPS"]
-    else:
-        flags = []
+        flags.extend(["PYTHON_UOPS"])
 
     found_result = has_result(results_dir, commit_hash, machine, pystats, flags)
 
@@ -81,8 +80,11 @@ if __name__ == "__main__":
     parser.add_argument("tier2")
     args = parser.parse_args()
 
-    force = args.force != "false"
-    pystats = args.pystats != "false"
-    tier2 = args.tier2 != "false"
-
-    main(force, args.fork, args.ref, args.machine, pystats, tier2)
+    main(
+        args.force != "false",
+        args.fork,
+        args.ref,
+        args.machine,
+        args.pystats != "false",
+        args.tier2 != "false",
+    )

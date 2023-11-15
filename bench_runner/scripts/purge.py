@@ -80,7 +80,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if not args.repo_dir.is_dir():
-        print(f"{args.repo_dir} is not a directory.")
+        print(f"{args.repo_dir} is not a directory.", file=sys.stderr)
         sys.exit(1)
 
     main(args.repo_dir, args.days, args.dry_run)

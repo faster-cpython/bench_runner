@@ -59,5 +59,5 @@ def benchmark(
     )
 
     subprocess.check_call(
-        ["gh", "workflow", "run", "benchmark.yml"] + flags,
+        ["gh", "workflow", "run", "benchmark.yml", *flags],
     )

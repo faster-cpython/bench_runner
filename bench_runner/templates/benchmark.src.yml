@@ -49,19 +49,22 @@ jobs:
       ref: ${{ steps.base.outputs.ref }}
       need_to_run: ${{ steps.base.outputs.need_to_run }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - name: Checkout benchmarking
+        uses: actions/checkout@v3
+      - name: Setup system Python
+        uses: actions/setup-python@v4
         with:
           python-version: "3.11"
           cache: pip
-      - uses: actions/checkout@v3
+      - name: Checkout CPython
+        uses: actions/checkout@v3
         if: ${{ inputs.benchmark_base }}
         with:
           repository: ${{ inputs.fork }}/cpython
           path: cpython
           ref: ${{ inputs.ref }}
           fetch-depth: 0
-      - name: Install dependencies
+      - name: Install dependencies from PyPI
         run: |
           pip install -r requirements.txt
       - name: Determine base

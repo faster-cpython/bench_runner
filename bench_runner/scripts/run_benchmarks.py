@@ -5,6 +5,7 @@ import argparse
 import csv
 import json
 import os
+from operator import itemgetter
 from pathlib import Path
 import shutil
 import subprocess
@@ -25,6 +26,8 @@ PROFILING_RESULTS = REPO_ROOT / "profiling" / "results"
 GITHUB_URL = "https://github.com/" + os.environ.get(
     "GITHUB_REPOSITORY", "faster-cpython/bench_runner"
 )
+# Environment variables that control the execution of CPython
+ENV_VARS = ["PYTHON_UOPS"]
 
 
 class NoBenchmarkError(Exception):
@@ -86,7 +89,7 @@ def run_benchmarks(
             "--python",
             python,
             "--inherit-environ",
-            "PYTHON_UOPS",
+            ",".join(ENV_VARS),
         ]
     )
 
@@ -160,7 +163,7 @@ def perf_to_csv(lines: Iterable[str], output: Path):
         if children > 0.0 or self > 0.0:
             rows.append([self, children, shared, symbol])
 
-    rows.sort(key=lambda x: x[0], reverse=True)
+    rows.sort(key=itemgetter(0), reverse=True)
 
     with open(output, "w") as fd:
         csvwriter = csv.writer(fd)
@@ -338,7 +341,7 @@ def main(
 
 if __name__ == "__main__":
     print("Environment variables:")
-    for var in ["PYTHON_UOPS"]:
+    for var in ENV_VARS:
         print(f"{var}={os.environ.get(var, '<unset>')}")
 
     parser = argparse.ArgumentParser(

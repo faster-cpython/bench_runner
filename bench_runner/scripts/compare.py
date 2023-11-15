@@ -49,6 +49,10 @@ def compare_pair(
     return f"{comparison.summary} [table]({name}.md) [plot]({name}.png)"
 
 
+def write_row(fd, columns: list[str]):
+    fd.write(f"| {' | '.join(columns)} |\n")
+
+
 def do_one_to_many(
     fd,
     parsed_commits: list[tuple[str, str, list[mod_result.Result]]],
@@ -58,12 +62,12 @@ def do_one_to_many(
 ) -> None:
     _, first_name, first_results = parsed_commits[0]
     first_result = [result for result in first_results if result.nickname == machine][0]
-    fd.write("| commit | change |\n")
-    fd.write("| -- | -- |\n")
+    write_row(fd, ["commit", "change"])
+    write_row(fd, ["--"] * 2)
     for hash, name, results in parsed_commits[1:]:
         result = [result for result in results if result.nickname == machine][0]
         link = compare_pair(output_dir, first_name, first_result, name, result, counter)
-        fd.write(f"| {name} ({hash}) | {link} |\n")
+        write_row(fd, [f"{name} ({hash})", link])
 
 
 def do_many_to_many(
@@ -73,26 +77,22 @@ def do_many_to_many(
     output_dir: Path,
     counter: list[int],
 ) -> None:
-    fd.write("| ")
-    fd.write(" | ".join([""] + [f"{x[1]} ({x[0]})" for x in parsed_commits]))
-    fd.write(" |\n")
-    fd.write("| ")
-    fd.write(" | ".join(["--"] * (len(parsed_commits) + 1)))
-    fd.write(" |\n")
+    write_row(fd, ["", *[f"{x[1]} ({x[0]})" for x in parsed_commits]])
+    write_row(fd, ["--"] * (len(parsed_commits) + 1))
     for hash1, name1, results1 in parsed_commits:
+        columns = [name1]
         result1 = [result for result in results1 if result.nickname == machine][0]
-        fd.write(f"| {name1} |")
         for hash2, name2, results2 in parsed_commits:
             if hash1 == hash2:
-                fd.write(" |")
+                columns.append("")
                 continue
             else:
                 result2 = [result for result in results2 if result.nickname == machine][
                     0
                 ]
                 link = compare_pair(output_dir, name1, result1, name2, result2, counter)
-                fd.write(f" {link} |")
-        fd.write("\n")
+                columns.append(link)
+        write_row(fd, columns)
 
 
 def main(commits: list[str], output_dir: Path, comparison_type: str):
@@ -129,14 +129,15 @@ def main(commits: list[str], output_dir: Path, comparison_type: str):
     if not output_dir_path.exists():
         output_dir_path.mkdir()
 
-    if comparison_type == "1:n":
-        total = (len(parsed_commits) - 1) * len(machines)
-        func = do_one_to_many
-    elif comparison_type == "n:n":
-        total = ((len(parsed_commits) ** 2) - len(parsed_commits)) * len(machines)
-        func = do_many_to_many
-    else:
-        raise ValueError(f"Unknown comparison type {comparison_type}")
+    match comparison_type:
+        case "1:n":
+            total = (len(parsed_commits) - 1) * len(machines)
+            func = do_one_to_many
+        case "n:n":
+            total = ((len(parsed_commits) ** 2) - len(parsed_commits)) * len(machines)
+            func = do_many_to_many
+        case _:
+            raise ValueError(f"Unknown comparison type {comparison_type}")
 
     with open(output_dir_path / "README.md", "w", encoding="utf-8") as fd:
         for machine in machines:
@@ -180,5 +181,5 @@ if __name__ == "__main__":
     try:
         main(args.commit, Path(args.output_dir), args.type)
     except ValueError as e:
-        print(str(e))
+        print(str(e), file=sys.stderr)
         sys.exit(1)
