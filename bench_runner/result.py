@@ -445,12 +445,11 @@ class Result:
 
                     case 2:
                         for prefix, _, value in parser:
-                            match prefix:
-                                case s if s.startswith("metadata"):
-                                    fast_contents["metadata"][prefix[9:]] = value
-                                case _:
-                                    state = TOP_STATE
-                                    break
+                            if prefix.startswith("metadata"):
+                                fast_contents["metadata"][prefix[9:]] = value
+                            else:
+                                state = TOP_STATE
+                                break
                         else:
                             break
 
