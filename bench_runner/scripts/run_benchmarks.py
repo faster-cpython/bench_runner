@@ -301,7 +301,7 @@ def run_summarize_stats(
                 fd.write(
                     md_link(
                         name,
-                        str(Path(result.filename.name).with_suffix("")) + "-{name}.md",
+                        str(Path(result.filename.name).with_suffix("")) + f"-{name}.md",
                     )
                 )
                 fd.write(", ")
