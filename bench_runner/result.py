@@ -397,26 +397,62 @@ class Result:
         except ImportError:
             return self.contents
 
+        TOP_STATE = 0
+        BENCHMARKS_STATE = 1
+        METADATA_STATE = 2
+        state = TOP_STATE
+
         fast_contents = {"metadata": {}, "benchmarks": []}
         with open(self.filename, "rb") as fd:
             parser = ijson.parse(fd)
-            for prefix, _, value in parser:
-                match prefix:
-                    case "benchmarks.item.metadata.name":
-                        fast_contents["benchmarks"].append(
-                            {"metadata": {"name": value}}
-                        )
-                    case "benchmarks.item.runs.item.metadata.date":
-                        if len(fast_contents["benchmarks"]) == 0:
-                            fast_contents["benchmarks"].append({})
-                        if len(fast_contents["benchmarks"]) == 1:
-                            fast_contents["benchmarks"][-1]["runs"] = [
-                                {"metadata": {"date": value}}
-                            ]
-                    case s if s.startswith("metadata."):
-                        fast_contents["metadata"][prefix[9:]] = value
-                    case _:
-                        pass
+            while True:
+                match state:
+                    case 0:
+                        for prefix, _, value in parser:
+                            match prefix:
+                                case "benchmarks":
+                                    state = BENCHMARKS_STATE
+                                    break
+                                case "metadata":
+                                    state = METADATA_STATE
+                                    break
+                                case _:
+                                    pass
+                        else:
+                            break
+
+                    case 1:
+                        for prefix, _, value in parser:
+                            match prefix:
+                                case "benchmarks.item.metadata.name":
+                                    fast_contents["benchmarks"].append(
+                                        {"metadata": {"name": value}}
+                                    )
+                                case "benchmarks.item.runs.item.metadata.date":
+                                    if len(fast_contents["benchmarks"]) == 0:
+                                        fast_contents["benchmarks"].append({})
+                                    if len(fast_contents["benchmarks"]) == 1:
+                                        fast_contents["benchmarks"][-1]["runs"] = [
+                                            {"metadata": {"date": value}}
+                                        ]
+                                case s if s.startswith("benchmarks"):
+                                    pass
+                                case _:
+                                    state = TOP_STATE
+                                    break
+                        else:
+                            break
+
+                    case 2:
+                        for prefix, _, value in parser:
+                            match prefix:
+                                case s if s.startswith("metadata"):
+                                    fast_contents["metadata"][prefix[9:]] = value
+                                case _:
+                                    state = TOP_STATE
+                                    break
+                        else:
+                            break
 
         self._fast_contents = fast_contents
         return fast_contents
