@@ -290,6 +290,10 @@ jobs:
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
           echo "PKG_CONFIG_PATH=$(brew --prefix openssl@1.1)/lib/pkgconfig" >> $GITHUB_ENV
+      - name: Enable Tier 2
+        if: ${{ inputs.tier2 }}
+        run: |
+          echo "PYTHON_UOPS=1" >> "$GITHUB_ENV"
       - name: Build Python
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
@@ -302,10 +306,6 @@ jobs:
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
           venv/bin/python -m pip install --no-binary :all: ./pyperformance
-      - name: Enable Tier 2
-        if: ${{ inputs.tier2 }}
-        run: |
-          echo "PYTHON_UOPS=1" >> "$GITHUB_ENV"
       - name: Running pyperformance
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
