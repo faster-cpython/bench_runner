@@ -136,27 +136,6 @@ def get_micro_version(version):
     return micro
 
 
-def remove_duplicate_commits(results: Iterable[result.Result]) -> list[result.Result]:
-    # Favor Tier 2 runs if both are available
-    commits = defaultdict(list)
-    for r in results:
-        commits[(r.cpython_hash, r.nickname)].append(r)
-
-    out_results = []
-    for result_set in commits.values():
-        if len(result_set) == 1:
-            out_results.append(result_set[0])
-        else:
-            for r in result_set:
-                if r.is_tier2:
-                    out_results.append(r)
-                    break
-            else:
-                out_results.append(result_set[0])
-
-    return out_results
-
-
 # TODO: Make this configurable
 def longitudinal_plot(
     results: Iterable[result.Result],
@@ -166,6 +145,8 @@ def longitudinal_plot(
     names=["linux", "linux2", "macos", "windows"],
     versions=[(3, 11), (3, 12), (3, 13)],
 ):
+    tier2_date = datetime.datetime.fromisoformat("2023-11-11T00:00:00Z")
+
     def get_comparison_value(ref, r, base):
         key = ",".join((str(ref.filename)[8:], str(r.filename)[8:], base))
         if key in data:
@@ -183,7 +164,6 @@ def longitudinal_plot(
     )
 
     results = [r for r in results if r.fork == "python"]
-    results = remove_duplicate_commits(results)
 
     for i, (version, base, ax) in enumerate(zip(versions, bases, axs)):
         version_str = ".".join(str(x) for x in version)
@@ -195,6 +175,17 @@ def longitudinal_plot(
 
         for runner_i, (runner, name) in enumerate(zip(runners, names)):
             runner_results = [r for r in ver_results if r.nickname == runner]
+
+            # For 3.13, only use Tier 2 results after 2023-11-11
+            if version == (3, 13):
+                runner_results = [
+                    r
+                    for r in runner_results
+                    if not (
+                        datetime.datetime.fromisoformat(r.commit_datetime) > tier2_date
+                        and not r.is_tier2
+                    )
+                ]
 
             for r in results:
                 if r.nickname == runner and r.version == base:
@@ -246,7 +237,6 @@ def longitudinal_plot(
 
         # Add a line for when Tier 2 was turned on
         if i == 2:
-            tier2_date = datetime.datetime.fromisoformat("2023-11-11")
             ax.axvline(tier2_date)
             ax.annotate(
                 "TIER 2",
