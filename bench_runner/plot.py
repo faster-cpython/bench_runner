@@ -40,7 +40,7 @@ def get_data(result: result.Result) -> dict[str, Any]:
 
 
 def remove_outliers(values, m=2):
-    return values[abs(values - np.mean(values)) < m * np.std(values)]
+    return values[abs(values - np.mean(values)) < np.multiply(m, np.std(values))]
 
 
 def plot_diff_pair(ax, data):

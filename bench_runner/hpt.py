@@ -178,11 +178,11 @@ def prepare_one_row(
 
 def unibench(ub_x: NDArray[np.float64], alpha: float) -> Optional[np.float64]:
     wl, _, ml, mr = prepare_one_row(ub_x)
-    target = wl
+    target = float(wl)
 
     rst_lower, rst_upper = ranksum_table(len(ub_x) // 2, alpha)
     if target <= rst_lower or target >= rst_upper:
-        return ml - mr
+        return np.subtract(ml, mr)
     return None
 
 
@@ -197,8 +197,8 @@ def crossbench(cb_x: NDArray[np.float64]) -> Tuple[float, float, float]:
     zero = sign == 0
 
     wz = np.sum(cb_rank[zero] / 2 + cb_rep[zero] / 4 - 1 / 4)
-    wp = np.sum(cb_rank[positive] + cb_rep[positive] / 2 - 1 / 2) + wz
-    wn = np.sum(cb_rank[negative] + cb_rep[negative] / 2 - 1 / 2) + wz
+    wp = np.add(np.sum(cb_rank[positive] + cb_rep[positive] / 2 - 1 / 2), wz)
+    wn = np.add(np.sum(cb_rank[negative] + cb_rep[negative] / 2 - 1 / 2), wz)
 
     n = len(cb_x)
 
