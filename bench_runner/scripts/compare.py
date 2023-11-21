@@ -13,15 +13,21 @@ from typing import Iterable
 
 from bench_runner import result as mod_result
 from bench_runner import plot
+from bench_runner import util
 
 
-def parse_commit(commit: str) -> tuple[str, str]:
+def parse_commit(commit: str) -> tuple[str, str, list[str]]:
     if "," in commit:
         result = commit.split(",", 1)
-        # For pyright's benefit
-        return (result[0], result[1])
+        commit, name = result
     else:
-        return (commit, commit)
+        name = commit
+    if commit.endswith("T"):
+        commit = commit[:-1]
+        flags = util.TIER2_FLAGS
+    else:
+        flags = []
+    return (commit, name, flags)
 
 
 def get_machines(results: Iterable[mod_result.Result]) -> set[str]:
@@ -55,16 +61,16 @@ def write_row(fd, columns: list[str]):
 
 def do_one_to_many(
     fd,
-    parsed_commits: list[tuple[str, str, list[mod_result.Result]]],
+    parsed_commits: list[tuple[str, list[str], str, list[mod_result.Result]]],
     machine: str,
     output_dir: Path,
     counter: list[int],
 ) -> None:
-    _, first_name, first_results = parsed_commits[0]
+    _, _, first_name, first_results = parsed_commits[0]
     first_result = [result for result in first_results if result.nickname == machine][0]
     write_row(fd, ["commit", "change"])
     write_row(fd, ["--"] * 2)
-    for hash, name, results in parsed_commits[1:]:
+    for hash, _, name, results in parsed_commits[1:]:
         result = [result for result in results if result.nickname == machine][0]
         link = compare_pair(output_dir, first_name, first_result, name, result, counter)
         write_row(fd, [f"{name} ({hash})", link])
@@ -72,18 +78,18 @@ def do_one_to_many(
 
 def do_many_to_many(
     fd,
-    parsed_commits: list[tuple[str, str, list[mod_result.Result]]],
+    parsed_commits: list[tuple[str, list[str], str, list[mod_result.Result]]],
     machine: str,
     output_dir: Path,
     counter: list[int],
 ) -> None:
-    write_row(fd, ["", *[f"{x[1]} ({x[0]})" for x in parsed_commits]])
+    write_row(fd, ["", *[f"{x[2]} ({x[0]})" for x in parsed_commits]])
     write_row(fd, ["--"] * (len(parsed_commits) + 1))
-    for hash1, name1, results1 in parsed_commits:
+    for hash1, flags1, name1, results1 in parsed_commits:
         columns = [name1]
         result1 = [result for result in results1 if result.nickname == machine][0]
-        for hash2, name2, results2 in parsed_commits:
-            if hash1 == hash2:
+        for hash2, flags2, name2, results2 in parsed_commits:
+            if hash1 == hash2 and flags1 == flags2:
                 columns.append("")
                 continue
             else:
@@ -93,6 +99,8 @@ def do_many_to_many(
                 link = compare_pair(output_dir, name1, result1, name2, result2, counter)
                 columns.append(link)
         write_row(fd, columns)
+
+    fd.write("\n\nRows are 'bases', columns are 'heads'\n")
 
 
 def main(commits: list[str], output_dir: Path, comparison_type: str):
@@ -105,17 +113,17 @@ def main(commits: list[str], output_dir: Path, comparison_type: str):
     machines = set()
 
     for commit in commits:
-        commit_hash, name = parse_commit(commit)
+        commit_hash, name, flags = parse_commit(commit)
 
         subresults = []
         for result in results:
-            if result.cpython_hash.startswith(commit_hash):
+            if result.cpython_hash.startswith(commit_hash) and result.flags == flags:
                 subresults.append(result)
 
         if len(subresults) == 0:
             raise ValueError(f"Couldn't find commit {commit_hash}")
 
-        parsed_commits.append((commit_hash, name, subresults))
+        parsed_commits.append((commit_hash, flags, name, subresults))
 
         if len(machines) == 0:
             machines = get_machines(subresults)
@@ -162,8 +170,9 @@ if __name__ == "__main__":
         "commit",
         nargs="+",
         help="""
-            Commits to compare. Must be a git hash prefix. May optionally have a
-            friendly name after a comma, e.g. c0ffee,main
+            Commits to compare. Must be a git commit hash prefix. May optionally
+            have a friendly name after a comma, e.g. c0ffee,main.  If ends with
+            a "T", use the Tier 2 run for that commit.
         """,
     )
     parser.add_argument(
