@@ -167,11 +167,6 @@ def output_results_index(
             else:
                 versus.append("")
 
-        if result.is_tier2:
-            tier2 = " 2️⃣"
-        else:
-            tier2 = ""
-
         rows.append(
             [
                 table.md_link(
@@ -180,7 +175,7 @@ def output_results_index(
                 unquote(result.fork),
                 result.ref[:10],
                 result.version,
-                result.cpython_hash + tier2,
+                result.hash_and_flags,
                 *versus,
             ]
         )

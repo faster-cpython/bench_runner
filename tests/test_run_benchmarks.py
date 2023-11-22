@@ -213,6 +213,7 @@ def test_should_run_exists_noforce(tmp_path, benchmarks_checkout, capsys):
         "linux-x86_64-linux",
         False,
         False,
+        False,
         tmp_path / "cpython",
         repo / "results",
     )
@@ -232,6 +233,7 @@ def test_should_run_diff_machine_noforce(tmp_path, benchmarks_checkout, capsys):
         "python",
         "main",
         "darwin-x86_64-darwin",
+        False,
         False,
         False,
         tmp_path / "cpython",
@@ -255,6 +257,7 @@ def test_should_run_all_noforce(tmp_path, benchmarks_checkout, capsys):
         "all",
         False,
         False,
+        False,
         tmp_path / "cpython",
         repo / "results",
     )
@@ -275,6 +278,7 @@ def test_should_run_noexists_noforce(tmp_path, benchmarks_checkout, capsys):
         "python",
         "main",
         "linux-x86_64-linux",
+        False,
         False,
         False,
         tmp_path / "cpython",
@@ -308,6 +312,7 @@ def test_should_run_exists_force(tmp_path, benchmarks_checkout, capsys, monkeypa
         "linux-x86_64-linux",
         False,
         False,
+        False,
         tmp_path / "cpython",
         repo / "results",
     )
@@ -335,6 +340,7 @@ def test_should_run_noexists_force(tmp_path, benchmarks_checkout, capsys):
         "linux-x86_64-linux",
         False,
         False,
+        False,
         tmp_path / "cpython",
         repo / "results",
     )
@@ -356,6 +362,7 @@ def test_should_run_checkout_failed(tmp_path, capsys):
             "python",
             "main",
             "linux-x86_64-linux",
+            False,
             False,
             False,
             cpython_path,

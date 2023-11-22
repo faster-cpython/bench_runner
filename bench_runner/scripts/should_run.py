@@ -19,6 +19,7 @@ def main(
     machine: str,
     pystats: bool,
     tier2: bool,
+    jit: bool,
     cpython: Path = Path("cpython"),
     results_dir: Path = Path("results"),
 ) -> None:
@@ -49,6 +50,8 @@ def main(
     flags = []
     if tier2:
         flags.extend(["PYTHON_UOPS"])
+    if jit:
+        flags.extend(["JIT"])
 
     found_result = has_result(results_dir, commit_hash, machine, pystats, flags)
 
@@ -78,6 +81,7 @@ if __name__ == "__main__":
     parser.add_argument("machine")
     parser.add_argument("pystats")
     parser.add_argument("tier2")
+    parser.add_argument("jit")
     args = parser.parse_args()
 
     main(
@@ -87,4 +91,5 @@ if __name__ == "__main__":
         args.machine,
         args.pystats != "false",
         args.tier2 != "false",
+        args.jit != "false",
     )
