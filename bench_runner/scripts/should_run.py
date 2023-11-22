@@ -49,9 +49,9 @@ def main(
 
     flags = []
     if tier2:
-        flags.extend(["PYTHON_UOPS"])
+        flags.append("PYTHON_UOPS")
     if jit:
-        flags.extend(["JIT"])
+        flags.append("JIT")
 
     found_result = has_result(results_dir, commit_hash, machine, pystats, flags)
 

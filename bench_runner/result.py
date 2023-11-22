@@ -530,13 +530,12 @@ class Result:
     @property
     def hash_and_flags(self) -> str:
         # A representation for the user that combines the commit hash and other flags
-        return " ".join(
-            [
-                self.cpython_hash,
-                *(self.is_tier2 and ["2️⃣"] or []),
-                *(self.is_jit and ["*️⃣"] or []),
-            ]
-        )
+        parts = [self.cpython_hash]
+        if self.is_tier2:
+            parts.append("2️⃣")
+        if self.is_jit:
+            parts.append("*️⃣")
+        return " ".join(parts)
 
     @functools.cached_property
     def benchmark_names(self) -> set[str]:
