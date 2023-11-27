@@ -156,7 +156,7 @@ def output_results_index(
     for result in results:
         versus = []
         for base in bases:
-            if base in result.bases:
+            if base in result.bases and result.bases[base].valid_comparison:
                 versus.append(
                     table.md_link(
                         result.bases[base].summary,
