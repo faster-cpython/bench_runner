@@ -523,6 +523,20 @@ class Result:
     def is_tier2(self) -> bool:
         return "PYTHON_UOPS" in self.flags
 
+    @property
+    def is_jit(self) -> bool:
+        return "JIT" in self.flags
+
+    @property
+    def hash_and_flags(self) -> str:
+        # A representation for the user that combines the commit hash and other flags
+        parts = [self.cpython_hash]
+        if self.is_tier2:
+            parts.append("2️⃣")
+        if self.is_jit:
+            parts.append("*️⃣")
+        return " ".join(parts)
+
     @functools.cached_property
     def benchmark_names(self) -> set[str]:
         contents = self.fast_contents

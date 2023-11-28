@@ -3,3 +3,4 @@ def status(char: str) -> None:
 
 
 TIER2_FLAGS = ["PYTHON_UOPS"]
+JIT_FLAGS = ["JIT"]
