@@ -25,6 +25,9 @@ def parse_commit(commit: str) -> tuple[str, str, list[str]]:
     if commit.endswith("T"):
         commit = commit[:-1]
         flags = util.TIER2_FLAGS
+    elif commit.endswith("J"):
+        commit = commit[:-1]
+        flags = util.JIT_FLAGS
     else:
         flags = []
     return (commit, name, flags)
