@@ -162,6 +162,7 @@ jobs:
 
   benchmark-linux:
     runs-on: [self-hosted, linux, bare-metal]
+    timeout-minutes: 1440
 
     steps:
       - name: Checkout benchmarking
