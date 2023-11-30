@@ -15,7 +15,6 @@ from urllib.parse import unquote
 
 from bench_runner.bases import get_bases
 from bench_runner import plot
-from bench_runner import profiling_plot
 from bench_runner.result import (
     load_all_results,
     BenchmarkComparison,
@@ -432,10 +431,6 @@ def main(repo_dir: Path, force: bool = False, bases: Optional[list[str]] = None)
     generate_directory_indices(benchmarking_results)
     print("Generating longitudinal plot")
     plot.longitudinal_plot(benchmarking_results, repo_dir / "longitudinal.png")
-    print("Generating profiling plot")
-    profiling_plot.generate_results(
-        repo_dir / "profiling", repo_dir / "profiling" / "results"
-    )
 
 
 if __name__ == "__main__":
