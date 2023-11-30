@@ -4,6 +4,7 @@ Generate summary tables and a visualization of Linux perf profiling results.
 from __future__ import annotations
 
 
+import argparse
 from collections import defaultdict
 import csv
 import functools
@@ -16,70 +17,90 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 
-ROOT_DIR = Path(__file__).parents[2] / "profiling"
-RESULTS_DIR = ROOT_DIR / "results"
+SANITY_CHECK = True
 
 
 # Categories of functions, where each value is a list of regular expressions.
 # These are matched in-order.
 CATEGORIES: dict[str, list[str]] = {
     "interpreter": [
+        "_Py_GetBaseOpcode",
         "_PyCode_Quicken",
-        "_PyEvalFramePushAndInit",
-        "_PyEval_EvalFrameDefault",
-        "_PyEval_MakeFrameVector",
-        "_PyEval_Vector",
+        "_PyCode_Validate",
+        "_PyEval.+",
         "_PyFrame_ClearExceptCode",
         "_PyFrame_New_NoTrack",
+        "_PyFrame_Traverse",
+        "_PyPegen_.+",
         "_PyThreadState_PopFrame",
         "advance",
         "initialize_locals",
+        "intern_string_constants",
+        "PyAST_.+",
+        "PyEval_.+",
     ],
     "lookup": [
-        "_PyType_Lookup",
         "_Py_dict_lookup",
         "_Py_type_getattro",
+        "_PyType_Lookup",
+        "builtin_getattr",
         "find_name_in_mro",
         "lookdict_split",
-        "lookdict_unicode",
         "lookdict_unicode_nodummy",
+        "lookdict_unicode",
+        "PyMember_.*",
         "unicodekeys_lookup_unicode",
+        "update_one_slot",
     ],
     "gc": [
-        ".+MaybeUntrack",
-        ".+_traverse",
-        "PyObject_IS_GC",
         "_?PyObject_GC_.+",
         "_PyObject_Visit.+",
         "_PyTrash_.+",
+        ".+_traverse",
+        ".+MaybeUntrack",
         "gc_collect_main",
+        "PyObject_IS_GC",
         "type_is_gc",
         "visit_.+",
     ],
     "memory": [
-        ".+Alloc",
-        ".+Calloc",
-        ".+Dealloc",
-        ".+Realloc",
-        ".+_alloc",
-        ".+dealloc",
         "_?PyMem_.+",
         "_Py_NewReference",
         "_PyObject_Free",
         "_PyObject_Malloc",
+        ".+_alloc",
         ".+[Nn]ew.*",
+        ".+Alloc",
+        ".+Calloc",
+        ".+dealloc",
+        ".+Dealloc",
+        ".+Realloc",
     ],
     "dynamic": [
-        "PyType_IsSubtype",
         "_?PyMapping_.+",
         "_?PyNumber_.+",
         "_?PyObject_.+",
         "_?PySequence_.+",
+        "_Py_type_getattro_impl",
+        "_PySuper_Lookup",
+        "_PyType_GetDict",
+        "delitem_common",
+        "do_super_lookup",
+        "getset_get",
+        "method_get",
+        "object_.+",
+        "PyDescr_.+",
+        "PyIter_.+",
+        "PyType_GetModuleByDef",
+        "PyType_IsSubtype",
+        "slot_tp_richcompare",
+        "StopIteration.+",
         "type_.+",
     ],
     "library": ["_?sre_.+", "pattern_.+"],
     "int": [
         "_?PyLong_.+",
+        "Balloc",
         "k_.+",
         "l_.+",
         "long_.+",
@@ -92,28 +113,80 @@ CATEGORIES: dict[str, list[str]] = {
     "dict": [
         "_?PyDict_.+",
         "build_indices_unicode",
+        "clone_combined_dict_keys.+",
         "dict_.+",
+        "dictiter_.+",
+        "dictresize",
         "find_empty_slot",
         "free_keys_object",
         "insert_to_emptydict",
         "insertdict",
+        "new_keys_object",
+        "OrderedDict_.+",
     ],
-    "list": ["_?PyList_.+", "list_.+", "listiter_.+"],
-    "float": ["_?PyFloat_.+", "float_.+"],
-    "set": ["set_.+", "setiter_.+"],
+    "list": [
+        "_?PyList_.+",
+        "list_.+",
+        "listiter_.+",
+    ],
+    "float": [
+        "_?PyFloat_.+",
+        "float_.+",
+    ],
     "str": [
         "_?PyUnicode.+",
         "_copy_characters.+",
         "ascii_decode",
+        "bytes_.+",
+        "PyBytes_.+",
         "replace",
         "resize_compact",
         "siphash13",
+        "split",
+        "stringlib_.+",
         "unicode_.+",
     ],
-    "slice": [
+    "miscobj": [
         "_?PySlice_.+",
         "_PyBuildSlice_ConsumeRefs",
         "_PyEval_SliceIndex",
+        "bytearray_.+",
+        "deque_.+",
+        "dequeiter_.+",
+        "enum_.+",
+        "PyBool_.+",
+        "PyBuffer_.+",
+        "set_.+",
+        "setiter_.+",
+    ],
+    "exceptions": [
+        "_?PyErr_.*",
+        ".+Error_init",
+        "BaseException.*",
+        "PyCode_Addr2Line",
+        "PyException_.*",
+        "PyFrame_.*",
+        "PyTraceBack_.+",
+    ],
+    "gil": [
+        "drop_gil",
+        "PyGILState_.*",
+        "take_gil",
+    ],
+    "calls": [
+        "_?PyArg_.+",
+        "_Py_CheckFunctionResult",
+        "_PyFunction_Vectorcall",
+        "cfunction_call.*",
+        "cfunction_vectorcall.+",
+        "method_vectorcall.+",
+        "vectorcall_method",
+        "vgetargs1_impl",
+        "vgetargskeywords.constprop.0",
+    ],
+    "import": [
+        "PyImport.+",
+        "r_.+",
     ],
 }
 
@@ -138,7 +211,7 @@ def category_for_obj_sym(obj: str, sym: str) -> str:
     return "unknown"
 
 
-def generate_results(output_dir: Path = ROOT_DIR, input_dir: Path = RESULTS_DIR):
+def main(input_dir: Path, output_prefix: Path):
     results = defaultdict(lambda: defaultdict(float))
     categories = defaultdict(lambda: defaultdict(float))
 
@@ -146,7 +219,7 @@ def generate_results(output_dir: Path = ROOT_DIR, input_dir: Path = RESULTS_DIR)
         print("No profiling data. Skipping.")
         return
 
-    with open(output_dir / "profiling.md", "w") as md:
+    with open(output_prefix.with_suffix(".md"), "w") as md:
         for csv_path in sorted(input_dir.glob("*.csv")):
             stem = csv_path.stem.split(".", 1)[0]
 
@@ -232,8 +305,28 @@ def generate_results(output_dir: Path = ROOT_DIR, input_dir: Path = RESULTS_DIR)
     ax.legend(bbox_to_anchor=(1.05, 1.0), loc="upper left")
     ax.set_xlim([0, 1])
 
-    fig.savefig(output_dir / "profiling.png")
+    fig.savefig(output_prefix.with_suffix(".png"))
 
 
 if __name__ == "__main__":
-    generate_results()
+    parser = argparse.ArgumentParser(
+        "Generate graphs from profiling information",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+
+    parser.add_argument(
+        "input_dir",
+        type=Path,
+        default=Path(),
+        help="The location of the .csv files of profiling data",
+    )
+    parser.add_argument(
+        "output",
+        type=Path,
+        default=Path(),
+        help="The path and file prefix for the output files",
+    )
+
+    args = parser.parse_args()
+
+    main(args.input_dir, args.output)
