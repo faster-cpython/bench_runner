@@ -27,7 +27,7 @@ python -m pip install -r requirements.txt
 Run the install script to generate the files to make the Github Actions work (from the root of your repo):
 
 ```bash session
-python -m bench_runner.scripts.install
+python -m bench_runner install
 ```
 
 This will create some files in `.github/workflows` as well as some configuration files at the root of your repo.

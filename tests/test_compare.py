@@ -21,7 +21,7 @@ def test_compare_1_to_n(tmp_path, monkeypatch):
 
     hashes = ["9d38120", "eb0004c", "b0e1f9c"]
 
-    compare.main(hashes, output_path, "1:n")
+    compare._main(hashes, output_path, "1:n")
 
     files = list(output_path.iterdir())
     assert len(files) == 5
@@ -52,7 +52,7 @@ def test_compare_n_to_n(tmp_path, monkeypatch):
 
     hashes = ["9d38120", "eb0004c", "b0e1f9c"]
 
-    compare.main(hashes, output_path, "n:n")
+    compare._main(hashes, output_path, "n:n")
 
     files = list(output_path.iterdir())
     assert len(files) == 13

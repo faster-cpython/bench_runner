@@ -414,7 +414,7 @@ def generate_directory_indices(results: list[Result]) -> None:
     print()
 
 
-def main(repo_dir: Path, force: bool = False, bases: Optional[list[str]] = None):
+def _main(repo_dir: Path, force: bool = False, bases: Optional[list[str]] = None):
     results_dir = repo_dir / "results"
     if bases is None:
         bases = get_bases()
@@ -433,7 +433,7 @@ def main(repo_dir: Path, force: bool = False, bases: Optional[list[str]] = None)
     plot.longitudinal_plot(benchmarking_results, repo_dir / "longitudinal.png")
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(
         "Generate index tables and comparison plots for all of the results.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -458,4 +458,8 @@ if __name__ == "__main__":
         print(f"{args.repo_dir} is not a directory.")
         sys.exit(1)
 
-    main(args.repo_dir, force=args.force)
+    _main(args.repo_dir, force=args.force)
+
+
+if __name__ == "__main__":
+    main()

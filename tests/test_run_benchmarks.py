@@ -206,7 +206,7 @@ def test_should_run_exists_noforce(tmp_path, benchmarks_checkout, capsys):
     for dirname in ["cpython"]:
         shutil.copytree(benchmarks_checkout / dirname, tmp_path / dirname)
 
-    should_run.main(
+    should_run._main(
         False,
         "python",
         "main",
@@ -228,7 +228,7 @@ def test_should_run_diff_machine_noforce(tmp_path, benchmarks_checkout, capsys):
     for dirname in ["cpython"]:
         shutil.copytree(benchmarks_checkout / dirname, tmp_path / dirname)
 
-    should_run.main(
+    should_run._main(
         False,
         "python",
         "main",
@@ -250,7 +250,7 @@ def test_should_run_all_noforce(tmp_path, benchmarks_checkout, capsys):
     for dirname in ["cpython"]:
         shutil.copytree(benchmarks_checkout / dirname, tmp_path / dirname)
 
-    should_run.main(
+    should_run._main(
         False,
         "python",
         "main",
@@ -273,7 +273,7 @@ def test_should_run_noexists_noforce(tmp_path, benchmarks_checkout, capsys):
         shutil.copytree(benchmarks_checkout / dirname, tmp_path / dirname)
     shutil.rmtree(repo / "results" / "bm-20220323-3.10.4-9d38120")
 
-    should_run.main(
+    should_run._main(
         False,
         "python",
         "main",
@@ -304,8 +304,8 @@ def test_should_run_exists_force(tmp_path, benchmarks_checkout, capsys, monkeypa
 
     monkeypatch.setattr(git, "remove", remove)
 
-    generate_results.main(repo, force=False, bases=["3.11.0b3"])
-    should_run.main(
+    generate_results._main(repo, force=False, bases=["3.11.0b3"])
+    should_run._main(
         True,
         "python",
         "main",
@@ -333,7 +333,7 @@ def test_should_run_noexists_force(tmp_path, benchmarks_checkout, capsys):
         shutil.copytree(benchmarks_checkout / dirname, tmp_path / dirname)
     shutil.rmtree(repo / "results" / "bm-20220323-3.10.4-9d38120")
 
-    should_run.main(
+    should_run._main(
         True,
         "python",
         "main",
@@ -357,7 +357,7 @@ def test_should_run_checkout_failed(tmp_path, capsys):
     subprocess.check_call(["git", "init"], cwd=cpython_path)
 
     with pytest.raises(SystemExit):
-        should_run.main(
+        should_run._main(
             True,
             "python",
             "main",

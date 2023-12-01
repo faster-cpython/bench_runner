@@ -211,7 +211,7 @@ def category_for_obj_sym(obj: str, sym: str) -> str:
     return "unknown"
 
 
-def main(input_dir: Path, output_prefix: Path):
+def _main(input_dir: Path, output_prefix: Path):
     results = defaultdict(lambda: defaultdict(float))
     categories = defaultdict(lambda: defaultdict(float))
 
@@ -308,7 +308,7 @@ def main(input_dir: Path, output_prefix: Path):
     fig.savefig(output_prefix.with_suffix(".png"))
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(
         "Generate graphs from profiling information",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -329,4 +329,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    main(args.input_dir, args.output)
+    _main(args.input_dir, args.output)
+
+
+if __name__ == "__main__":
+    main()

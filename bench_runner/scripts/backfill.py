@@ -214,7 +214,7 @@ def format_runners(
     return "".join(result)
 
 
-def main(
+def _main(
     cpython: Path,
     all_with_prefix: Optional[Sequence[str]],
     latest_with_prefix: Optional[Sequence[str]],
@@ -265,7 +265,7 @@ def main(
                     gh.benchmark(ref=commit.hash, machine=runner.name)
 
 
-if __name__ == "__main__":
+def main():
     all_runners = [x for x in runners.get_runners() if x.available]
     runners_by_names = {x.nickname: x for x in all_runners}
 
@@ -314,17 +314,21 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.machine != "all":
-        runners = [runners_by_names[args.machine]]
+        use_runners = [runners_by_names[args.machine]]
     else:
-        runners = all_runners
+        use_runners = all_runners
 
-    main(
+    _main(
         args.cpython,
         args.all_with_prefix,
         args.latest_with_prefix,
         args.weekly_since,
         args.bisect,
-        runners,
+        use_runners,
         args.force,
         all_runners,
     )
+
+
+if __name__ == "__main__":
+    main()
