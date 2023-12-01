@@ -12,7 +12,7 @@ import sys
 # the error message that the version of Python is too old.
 
 
-def main(
+def _main(
     force: bool,
     fork: str,
     ref: str,
@@ -67,7 +67,7 @@ def main(
     print(f"should_run={str(should_run).lower()}")
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(
         "Do we need to run this commit?",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     parser.add_argument("jit")
     args = parser.parse_args()
 
-    main(
+    _main(
         args.force != "false",
         args.fork,
         args.ref,
@@ -93,3 +93,7 @@ if __name__ == "__main__":
         args.tier2 != "false",
         args.jit != "false",
     )
+
+
+if __name__ == "__main__":
+    main()

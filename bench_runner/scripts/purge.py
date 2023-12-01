@@ -11,10 +11,10 @@ from typing import Optional
 
 from bench_runner.bases import get_bases
 from bench_runner.result import load_all_results
-from bench_runner.scripts.generate_results import main as generate_results
+from bench_runner.scripts.generate_results import _main as generate_results
 
 
-def main(repo_dir: Path, days: int, dry_run: bool, bases: Optional[list[str]] = None):
+def _main(repo_dir: Path, days: int, dry_run: bool, bases: Optional[list[str]] = None):
     results_dir = repo_dir / "results"
     if bases is None:
         bases = get_bases()
@@ -55,7 +55,7 @@ def main(repo_dir: Path, days: int, dry_run: bool, bases: Optional[list[str]] = 
         generate_results(repo_dir, force=False, bases=bases)
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(
         "Purge old results that aren't associated with an exact tag. "
         "Should be run every few months to keep the repository size under control. ",
@@ -83,4 +83,8 @@ if __name__ == "__main__":
         print(f"{args.repo_dir} is not a directory.", file=sys.stderr)
         sys.exit(1)
 
-    main(args.repo_dir, args.days, args.dry_run)
+    _main(args.repo_dir, args.days, args.dry_run)
+
+
+if __name__ == "__main__":
+    main()

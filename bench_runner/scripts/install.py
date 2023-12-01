@@ -25,7 +25,7 @@ WORKFLOW_PATH = Path() / ".github" / "workflows"
 def fail_check(dst: Path):
     print(f"{dst.relative_to(ROOT_PATH)} needs to be regenerated.", file=sys.stderr)
     print(
-        "Run `python -m bench_runner.scripts.install` and commit the result.",
+        "Run `python -m bench_runner install` and commit the result.",
         file=sys.stderr,
     )
     sys.exit(1)
@@ -125,7 +125,7 @@ GENERATORS = {
 }
 
 
-def main(check: bool) -> None:
+def _main(check: bool) -> None:
     WORKFLOW_PATH.mkdir(parents=True, exist_ok=True)
 
     env = load_yaml(TEMPLATE_PATH / "env.yml")
@@ -149,7 +149,7 @@ def main(check: bool) -> None:
                 shutil.copyfile(path, ROOT_PATH / path.name)
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser("Install the Github Actions and other files")
     parser.add_argument(
         "--check",
@@ -158,4 +158,8 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    main(args.check)
+    _main(args.check)
+
+
+if __name__ == "__main__":
+    main()

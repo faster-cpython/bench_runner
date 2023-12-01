@@ -7,7 +7,7 @@ from bench_runner.result import has_result
 from bench_runner import util
 
 
-def main(
+def _main(
     need_to_run: bool,
     machine: str,
     pystats: bool,
@@ -41,7 +41,7 @@ def main(
             print(f"need_to_run={str(need_to_run).lower()}")
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(
         """
         Find the git merge-base in CPython main of a given commit, and also
@@ -55,10 +55,14 @@ if __name__ == "__main__":
     parser.add_argument("jit")
     args = parser.parse_args()
 
-    main(
+    _main(
         args.need_to_run != "false",
         args.machine,
         args.pystats != "false",
         args.tier2 != "false",
         args.jit != "false",
     )
+
+
+if __name__ == "__main__":
+    main()

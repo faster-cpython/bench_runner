@@ -318,7 +318,7 @@ def run_summarize_stats(
             )
 
 
-def main(
+def _main(
     mode: str,
     python: Path,
     fork: str,
@@ -339,7 +339,7 @@ def main(
         collect_pystats(python, benchmarks, fork, ref, individual, flags)
 
 
-if __name__ == "__main__":
+def main():
     print("Environment variables:")
     for var in ENV_VARS:
         print(f"{var}={os.environ.get(var, '<unset>')}")
@@ -384,7 +384,7 @@ if __name__ == "__main__":
 
         socket.gethostname = gethostname
 
-    main(
+    _main(
         args.mode,
         Path(args.python),
         args.fork,
@@ -395,3 +395,7 @@ if __name__ == "__main__":
         args.individual,
         args.flag or [],
     )
+
+
+if __name__ == "__main__":
+    main()

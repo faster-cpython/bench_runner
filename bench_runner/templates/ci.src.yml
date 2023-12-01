@@ -21,4 +21,4 @@ jobs:
           python -m pip install -r requirements.txt
       - name: Run sanity check
         run: |
-          python -m bench_runner.scripts.install --check
+          python -m bench_runner install --check

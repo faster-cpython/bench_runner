@@ -78,7 +78,7 @@ jobs:
         if: ${{ always() }}
         id: should_run
         run: |
-          python -m bench_runner.scripts.should_run ${{ inputs.force }} ${{ inputs.fork }} ${{ inputs.ref }} all true ${{ inputs.tier2 }} >> $GITHUB_OUTPUT
+          python -m bench_runner should_run ${{ inputs.force }} ${{ inputs.fork }} ${{ inputs.ref }} all true ${{ inputs.tier2 }} >> $GITHUB_OUTPUT
       - name: Checkout python-macrobenchmarks
         uses: actions/checkout@v3
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
@@ -117,7 +117,7 @@ jobs:
       - name: Running pyperformance
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
-          python -m bench_runner.scripts.run_benchmarks pystats cpython/python ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.benchmarks || 'all' }} --run_id ${{ github.run_id }} ${{ inputs.individual == true && '--individual' || '' }} ${{ inputs.tier2 == true && '--flag PYTHON_UOPS' || '' }}
+          python -m bench_runner run_benchmarks pystats cpython/python ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.benchmarks || 'all' }} --run_id ${{ github.run_id }} ${{ inputs.individual == true && '--individual' || '' }} ${{ inputs.tier2 == true && '--flag PYTHON_UOPS' || '' }}
       - name: Pull benchmarking
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |

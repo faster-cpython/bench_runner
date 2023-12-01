@@ -106,7 +106,7 @@ def do_many_to_many(
     fd.write("\n\nRows are 'bases', columns are 'heads'\n")
 
 
-def main(commits: list[str], output_dir: Path, comparison_type: str):
+def _main(commits: list[str], output_dir: Path, comparison_type: str):
     results = mod_result.load_all_results(None, Path("results"), sorted=False)
 
     if len(commits) < 2:
@@ -158,7 +158,7 @@ def main(commits: list[str], output_dir: Path, comparison_type: str):
     print()
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(
         """
         Generate a set of comparisons between arbitrary commits. The commits
@@ -191,7 +191,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     try:
-        main(args.commit, Path(args.output_dir), args.type)
+        _main(args.commit, Path(args.output_dir), args.type)
     except ValueError as e:
         print(str(e), file=sys.stderr)
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

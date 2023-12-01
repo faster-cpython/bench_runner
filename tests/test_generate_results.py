@@ -40,7 +40,7 @@ def _copy_repo(tmp_path):
 def _run_for_bases(bases, repo_path, force=False, has_base=[], check_readmes=True):
     results_path = repo_path / "results"
 
-    generate_results.main(repo_path, force=force, bases=bases)
+    generate_results._main(repo_path, force=force, bases=bases)
 
     for dirpath in results_path.iterdir():
         if not dirpath.is_dir():
@@ -159,7 +159,7 @@ def test_change_bases(tmp_path):
     ).unlink()
 
     with pytest.raises(ValueError):
-        generate_results.main(repo_path, bases=[])
+        generate_results._main(repo_path, bases=[])
 
 
 def test_fork_with_hyphen(tmp_path):
