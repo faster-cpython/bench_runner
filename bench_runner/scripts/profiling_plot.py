@@ -307,6 +307,26 @@ def main(input_dir: Path, output_prefix: Path):
 
     fig.savefig(output_prefix.with_suffix(".png"))
 
+    fig, ax = plt.subplots(figsize=(5, 3), layout="constrained")
+    values = [x[0] for x in sorted_categories]
+    labels = [
+        i < 10 and f"{x[1]} {x[0]:.2%}" or "" for i, x in enumerate(sorted_categories)
+    ]
+    colors = [f"C{i%10}" for i in range(len(values))]
+    hatches = [hatches[i // 10] for i in range(len(values))]
+
+    other = 1.0 - sum(values)
+    values.append(other)
+    labels.append("")
+    colors.append("#ddd")
+    hatches.append("")
+
+    ax.pie(
+        values, labels=labels, colors=colors, hatch=hatches, textprops={"fontsize": 6}
+    )
+
+    fig.savefig(output_prefix.with_suffix(".pie.png"), dpi=200)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
