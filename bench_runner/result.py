@@ -363,24 +363,24 @@ class Result:
 
     @functools.cached_property
     def result_info(self) -> tuple[Optional[str], Optional[str]]:
-        if self.extra == [] and self.suffix == ".json":
-            return ("raw results", None)
-        elif self.extra[0] == "pystats":
-            if len(self.extra) == 3 and self.extra[1] == "vs" and self.suffix == ".md":
-                return ("pystats diff", self.extra[2])
-            elif self.suffix == ".md":
-                if self.filename.name.endswith("pystats.md"):
-                    return ("pystats table", None)
-                else:
-                    return (None, None)
-            elif self.suffix == ".json":
+        match (self.extra, self.suffix):
+            case ([], ".json"):
+                return ("raw results", None)
+            case (["pystats", "vs", base], ".md"):
+                return ("pystats diff", base)
+            case (["pystats"], ".md"):
+                return ("pystats table", None)
+            case (["pystats", *_], ".md"):
+                return (None, None)
+            case (["pystats"], ".json"):
                 return ("pystats raw", None)
-        elif len(self.extra) == 2 and self.extra[0] == "vs":
-            if self.suffix == ".md":
-                return ("table", self.extra[1])
-            elif self.suffix == ".png":
-                return ("plot", self.extra[1])
-        raise ValueError("Unknown result type")
+            case (["vs", base], ".md"):
+                return ("table", base)
+            case (["vs", base], ".png"):
+                return ("plot", base)
+        raise ValueError(
+            f"Unknown result type (extra={self.extra} suffix={self.suffix})"
+        )
 
     @property
     def fast_contents(self) -> dict[str, Any]:
