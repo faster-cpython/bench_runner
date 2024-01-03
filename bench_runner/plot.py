@@ -233,6 +233,25 @@ def longitudinal_plot(
         ylim = ax.get_ylim()
         ax.set_ylim(top=ylim[1] + 0.1)
         ax.legend(loc="upper left")
+        ax.annotate(
+            "faster ⟶",
+            xy=(0.0, 1.0),
+            xycoords=("axes fraction", "data"),
+            xytext=(10, 10),
+            textcoords="offset pixels",
+            rotation=90,
+            clip_on=True,
+        )
+        ax.annotate(
+            "⟵ slower",
+            xy=(0.0, 1.0),
+            xycoords=("axes fraction", "data"),
+            xytext=(10, -10),
+            textcoords="offset pixels",
+            rotation=90,
+            clip_on=True,
+            verticalalignment="top",
+        )
 
         # Add a line for when Tier 2 was turned on
         if i == 2:
