@@ -631,7 +631,10 @@ def match_to_bases(results: list[Result], bases: Optional[list[str]]):
 
 
 def load_all_results(
-    bases: Optional[list[str]], results_dir: Path, sorted: bool = True
+    bases: Optional[list[str]],
+    results_dir: Path,
+    sorted: bool = True,
+    match: bool = True,
 ) -> list[Result]:
     results = []
 
@@ -639,11 +642,12 @@ def load_all_results(
         result = Result.from_filename(entry)
         if result.result_info[0] not in ["raw results", "pystats raw"]:
             continue
-        results.append(Result.from_filename(entry))
+        results.append(result)
     if len(results) == 0:
         raise ValueError("Didn't find any results.  That seems fishy.")
 
-    match_to_bases(results, bases)
+    if match:
+        match_to_bases(results, bases)
 
     if sorted:
         results.sort(

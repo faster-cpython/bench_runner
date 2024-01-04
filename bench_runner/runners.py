@@ -21,6 +21,10 @@ class Runner:
     def name(self) -> str:
         return f"{self.os}-{self.arch}-{self.nickname}"
 
+    @property
+    def display_name(self) -> str:
+        return f"{self.os} {self.arch} ({self.nickname})"
+
 
 @functools.cache
 def get_runners(path: Optional[Path] = None) -> list[Runner]:

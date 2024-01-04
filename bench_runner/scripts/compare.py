@@ -13,6 +13,7 @@ from typing import Iterable
 
 from bench_runner import result as mod_result
 from bench_runner import plot
+from bench_runner import runners as mod_runners
 from bench_runner import util
 
 
@@ -39,6 +40,7 @@ def get_machines(results: Iterable[mod_result.Result]) -> set[str]:
 
 def compare_pair(
     output_dir: Path,
+    machine: str,
     ref_name: str,
     ref: mod_result.Result,
     head_name: str,
@@ -47,7 +49,7 @@ def compare_pair(
 ) -> str:
     print(f"Comparing {counter[0]+1}/{counter[1]}", end="\r")
     counter[0] += 1
-    name = f"{head_name}-vs-{ref_name}"
+    name = f"{machine}-{head_name}-vs-{ref_name}"
     comparison = mod_result.BenchmarkComparison(ref, head, "")
     if comparison.contents is None:
         raise RuntimeError()
@@ -75,7 +77,9 @@ def do_one_to_many(
     write_row(fd, ["--"] * 2)
     for hash, _, name, results in parsed_commits[1:]:
         result = [result for result in results if result.nickname == machine][0]
-        link = compare_pair(output_dir, first_name, first_result, name, result, counter)
+        link = compare_pair(
+            output_dir, machine, first_name, first_result, name, result, counter
+        )
         write_row(fd, [f"{name} ({hash})", link])
 
 
@@ -99,7 +103,9 @@ def do_many_to_many(
                 result2 = [result for result in results2 if result.nickname == machine][
                     0
                 ]
-                link = compare_pair(output_dir, name1, result1, name2, result2, counter)
+                link = compare_pair(
+                    output_dir, machine, name1, result1, name2, result2, counter
+                )
                 columns.append(link)
         write_row(fd, columns)
 
@@ -107,7 +113,9 @@ def do_many_to_many(
 
 
 def _main(commits: list[str], output_dir: Path, comparison_type: str):
-    results = mod_result.load_all_results(None, Path("results"), sorted=False)
+    results = mod_result.load_all_results(
+        None, Path("results"), sorted=False, match=False
+    )
 
     if len(commits) < 2:
         raise ValueError("Must provide at least 2 commits")
@@ -150,10 +158,13 @@ def _main(commits: list[str], output_dir: Path, comparison_type: str):
         case _:
             raise ValueError(f"Unknown comparison type {comparison_type}")
 
+    runners = mod_runners.get_runners_by_nickname()
+
+    counter = [0, total]
     with open(output_dir_path / "README.md", "w", encoding="utf-8") as fd:
         for machine in machines:
-            fd.write(f"# {machine}\n\n")
-            func(fd, parsed_commits, machine, output_dir_path, [0, total])
+            fd.write(f"# {runners[machine].display_name}\n\n")
+            func(fd, parsed_commits, machine, output_dir_path, counter)
             fd.write("\n")
     print()
 
@@ -175,7 +186,8 @@ def main():
         help="""
             Commits to compare. Must be a git commit hash prefix. May optionally
             have a friendly name after a comma, e.g. c0ffee,main.  If ends with
-            a "T", use the Tier 2 run for that commit.
+            a "T", use the Tier 2 run for that commit. If ends with a "J", use the
+            JIT run for that commit.
         """,
     )
     parser.add_argument(
