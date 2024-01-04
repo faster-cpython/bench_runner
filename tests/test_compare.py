@@ -28,18 +28,18 @@ def test_compare_1_to_n(tmp_path, monkeypatch):
     expected_files = {"README.md"}
     for hash in hashes[1:]:
         for suffix in ["md", "png"]:
-            expected_files.add(f"{hash}-vs-{hashes[0]}.{suffix}")
+            expected_files.add(f"linux-{hash}-vs-{hashes[0]}.{suffix}")
     assert set(x.name for x in files) == expected_files
 
     content = (output_path / "README.md").read_text()
     expected = textwrap.dedent(
         """
-        # linux
+        # linux x86_64 (linux)
 
         | commit | change |
         | -- | -- |
-        | eb0004c (eb0004c) | 1.57x faster (94% rel.) [table](eb0004c-vs-9d38120.md) [plot](eb0004c-vs-9d38120.png) |
-        | b0e1f9c (b0e1f9c) | 1.70x faster \* (94% rel.) [table](b0e1f9c-vs-9d38120.md) [plot](b0e1f9c-vs-9d38120.png) |
+        | eb0004c (eb0004c) | 1.57x faster (94% rel.) [table](linux-eb0004c-vs-9d38120.md) [plot](linux-eb0004c-vs-9d38120.png) |
+        | b0e1f9c (b0e1f9c) | 1.70x faster \\* (94% rel.) [table](linux-b0e1f9c-vs-9d38120.md) [plot](linux-b0e1f9c-vs-9d38120.png) |
         """  # noqa
     ).strip()
     assert expected in content
@@ -62,19 +62,19 @@ def test_compare_n_to_n(tmp_path, monkeypatch):
             if hash1 == hash2:
                 continue
             for suffix in ["md", "png"]:
-                expected_files.add(f"{hash2}-vs-{hash1}.{suffix}")
+                expected_files.add(f"linux-{hash2}-vs-{hash1}.{suffix}")
     assert set(x.name for x in files) == expected_files
 
     content = (output_path / "README.md").read_text()
     expected = textwrap.dedent(
         """
-        # linux
+        # linux x86_64 (linux)
 
         |  | 9d38120 (9d38120) | eb0004c (eb0004c) | b0e1f9c (b0e1f9c) |
         | -- | -- | -- | -- |
-        | 9d38120 |  | 1.57x faster (94% rel.) [table](eb0004c-vs-9d38120.md) [plot](eb0004c-vs-9d38120.png) | 1.70x faster \* (94% rel.) [table](b0e1f9c-vs-9d38120.md) [plot](b0e1f9c-vs-9d38120.png) |
-        | eb0004c | 1.57x slower (94% rel.) [table](9d38120-vs-eb0004c.md) [plot](9d38120-vs-eb0004c.png) |  | 1.08x faster \* (94% rel.) [table](b0e1f9c-vs-eb0004c.md) [plot](b0e1f9c-vs-eb0004c.png) |
-        | b0e1f9c | 1.70x slower \* (94% rel.) [table](9d38120-vs-b0e1f9c.md) [plot](9d38120-vs-b0e1f9c.png) | 1.08x slower \* (94% rel.) [table](eb0004c-vs-b0e1f9c.md) [plot](eb0004c-vs-b0e1f9c.png) |  |
+        | 9d38120 |  | 1.57x faster (94% rel.) [table](linux-eb0004c-vs-9d38120.md) [plot](linux-eb0004c-vs-9d38120.png) | 1.70x faster \* (94% rel.) [table](linux-b0e1f9c-vs-9d38120.md) [plot](linux-b0e1f9c-vs-9d38120.png) |
+        | eb0004c | 1.57x slower (94% rel.) [table](linux-9d38120-vs-eb0004c.md) [plot](linux-9d38120-vs-eb0004c.png) |  | 1.08x faster \* (94% rel.) [table](linux-b0e1f9c-vs-eb0004c.md) [plot](linux-b0e1f9c-vs-eb0004c.png) |
+        | b0e1f9c | 1.70x slower \\* (94% rel.) [table](linux-9d38120-vs-b0e1f9c.md) [plot](linux-9d38120-vs-b0e1f9c.png) | 1.08x slower \* (94% rel.) [table](linux-eb0004c-vs-b0e1f9c.md) [plot](linux-eb0004c-vs-b0e1f9c.png) |  |
         """  # noqa
     ).strip()
     assert expected in content
