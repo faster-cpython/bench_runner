@@ -49,6 +49,7 @@ def compare_pair(
 ) -> str:
     print(f"Comparing {counter[0]+1}/{counter[1]}", end="\r")
     counter[0] += 1
+
     name = f"{machine}-{head_name}-vs-{ref_name}"
     comparison = mod_result.BenchmarkComparison(ref, head, "")
     if comparison.contents is None:
@@ -72,11 +73,13 @@ def do_one_to_many(
     counter: list[int],
 ) -> None:
     _, _, first_name, first_results = parsed_commits[0]
-    first_result = [result for result in first_results if result.nickname == machine][0]
+    first_result = next(
+        result for result in first_results if result.nickname == machine
+    )
     write_row(fd, ["commit", "change"])
     write_row(fd, ["--"] * 2)
     for hash, _, name, results in parsed_commits[1:]:
-        result = [result for result in results if result.nickname == machine][0]
+        result = next(result for result in results if result.nickname == machine)
         link = compare_pair(
             output_dir, machine, first_name, first_result, name, result, counter
         )
@@ -94,15 +97,14 @@ def do_many_to_many(
     write_row(fd, ["--"] * (len(parsed_commits) + 1))
     for hash1, flags1, name1, results1 in parsed_commits:
         columns = [name1]
-        result1 = [result for result in results1 if result.nickname == machine][0]
+        result1 = next(result for result in results1 if result.nickname == machine)
         for hash2, flags2, name2, results2 in parsed_commits:
             if hash1 == hash2 and flags1 == flags2:
                 columns.append("")
-                continue
             else:
-                result2 = [result for result in results2 if result.nickname == machine][
-                    0
-                ]
+                result2 = next(
+                    result for result in results2 if result.nickname == machine
+                )
                 link = compare_pair(
                     output_dir, machine, name1, result1, name2, result2, counter
                 )
@@ -126,10 +128,11 @@ def _main(commits: list[str], output_dir: Path, comparison_type: str):
     for commit in commits:
         commit_hash, name, flags = parse_commit(commit)
 
-        subresults = []
-        for result in results:
-            if result.cpython_hash.startswith(commit_hash) and result.flags == flags:
-                subresults.append(result)
+        subresults = [
+            result
+            for result in results
+            if result.cpython_hash.startswith(commit_hash) and result.flags == flags
+        ]
 
         if len(subresults) == 0:
             raise ValueError(f"Couldn't find commit {commit_hash}")
