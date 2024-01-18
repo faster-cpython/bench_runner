@@ -12,6 +12,7 @@ from typing import Any
 
 
 from ruamel.yaml import YAML
+from ruamel.yaml.scalarstring import LiteralScalarString
 
 
 from bench_runner import runners
@@ -89,6 +90,20 @@ def generate__benchmark(src: Any) -> Any:
     dst["jobs"] = {}
     for runner in available_runners:
         runner_template = copy.deepcopy(src["jobs"][f"benchmark-{runner.os}"])
+
+        vars = copy.copy(runner.env)
+        vars["BENCHMARK_MACHINE_NICKNAME"] = runner.nickname
+        setup_environment = {
+            "name": "Setup environment",
+            "run": LiteralScalarString(
+                "\n".join(
+                    f'echo "{key}={val}" >> $env:GITHUB_ENV'
+                    for key, val in vars.items()
+                )
+            ),
+        }
+
+        runner_template["steps"].insert(0, setup_environment)
         runner_template["runs-on"].append(runner.name)
         runner_template[
             "if"
