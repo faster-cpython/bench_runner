@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import datetime
+import os
 from pathlib import Path
 import shutil
 import sys
@@ -12,6 +13,15 @@ from typing import Optional
 from bench_runner.bases import get_bases
 from bench_runner.result import load_all_results
 from bench_runner.scripts.generate_results import _main as generate_results
+
+
+def dir_size(path: Path) -> int:
+    total = 0
+    for root, _, files in os.walk(path):
+        root = Path(root)
+        for file in files:
+            total += os.stat(root / file).st_size
+    return total
 
 
 def _main(repo_dir: Path, days: int, dry_run: bool, bases: Optional[list[str]] = None):
@@ -43,11 +53,15 @@ def _main(repo_dir: Path, days: int, dry_run: bool, bases: Optional[list[str]] =
         "results directories"
     )
 
+    total = 0
     for d in all_dirs:
         if d not in keep_dirs:
             print(f"Removing {d}")
+            total += dir_size(d)
             if not dry_run:
                 shutil.rmtree(d)
+
+    print(f"Saved {total:,} bytes")
 
     if not dry_run:
         print("Regenerating results")
