@@ -32,7 +32,7 @@ def _main(repo_dir: Path, days: int, dry_run: bool, bases: Optional[list[str]] =
         raise ValueError("Must have at least one base specified")
 
     print("Loading results")
-    results = load_all_results(bases, results_dir)
+    results = load_all_results(bases, results_dir, sorted=False, match=False)
     all_dirs = [d for d in results_dir.iterdir() if d.is_dir()]
     keep_dirs = set()
 
