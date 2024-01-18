@@ -51,10 +51,9 @@ def get_runners(path: Optional[Path] = None) -> list[Runner]:
     for nickname in config.sections():
         section = config[nickname]
 
-        envvars = {}
-        for key, val in section.items():
-            if key.startswith("env-"):
-                envvars[key[4:]] = val
+        envvars = {
+            key[4:]: val for key, val in section.items() if key.startswith("env-")
+        }
 
         runners.append(
             Runner(
