@@ -17,6 +17,7 @@ class Runner:
         hostname: str,
         available: bool,
         env: dict[str, str],
+        github_runner_name: Optional[str],
     ):
         self.nickname = nickname
         self.os = os
@@ -24,6 +25,9 @@ class Runner:
         self.hostname = hostname
         self.available = available
         self.env = env
+        if github_runner_name is None:
+            github_runner_name = self.name
+        self.github_runner_name = github_runner_name
 
     @property
     def name(self) -> str:
@@ -60,6 +64,7 @@ def get_runners(path: Optional[Path] = None) -> list[Runner]:
                 section["hostname"],
                 section.getboolean("available", True),
                 envvars,
+                section.get("github-runner-name"),
             )
         )
 

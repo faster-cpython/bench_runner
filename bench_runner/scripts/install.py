@@ -104,7 +104,7 @@ def generate__benchmark(src: Any) -> Any:
         }
 
         runner_template["steps"].insert(0, setup_environment)
-        runner_template["runs-on"].append(runner.name)
+        runner_template["runs-on"].append(runner.github_runner_name)
         runner_template[
             "if"
         ] = f"${{{{ (inputs.machine == '{runner.name}' || inputs.machine == 'all') }}}}"
