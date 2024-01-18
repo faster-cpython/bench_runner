@@ -91,9 +91,12 @@ def generate__benchmark(src: Any) -> Any:
     for runner in available_runners:
         runner_template = copy.deepcopy(src["jobs"][f"benchmark-{runner.os}"])
 
+        # Set environment variables for the runner
         if runner.os == "windows":
+            # Powershell syntax
             github_env = "$env:GITHUB_ENV"
         else:
+            # sh syntax
             github_env = "$GITHUB_ENV"
         vars = copy.copy(runner.env)
         vars["BENCHMARK_MACHINE_NICKNAME"] = runner.nickname
@@ -105,8 +108,8 @@ def generate__benchmark(src: Any) -> Any:
                 )
             ),
         }
-
         runner_template["steps"].insert(0, setup_environment)
+
         runner_template["runs-on"].append(runner.github_runner_name)
         runner_template[
             "if"

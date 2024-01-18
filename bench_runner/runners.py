@@ -17,6 +17,8 @@ class Runner:
         hostname: str,
         available: bool,
         env: dict[str, str],
+        # Override the Github self-hosted runner name if different from
+        # os-arch-nickname
         github_runner_name: Optional[str],
     ):
         self.nickname = nickname
@@ -45,7 +47,7 @@ def get_runners(path: Optional[Path] = None) -> list[Runner]:
 
     config = configparser.ConfigParser()
     # Don't convert keys to lowercase
-    config.optionxform = str
+    config.optionxform = str  # type: ignore
     config.read(path)
     runners = []
     for nickname in config.sections():
@@ -81,6 +83,8 @@ def get_runners_by_nickname() -> dict[str, Runner]:
 
 
 def get_nickname_for_hostname(hostname: str) -> str:
+    # The envvar BENCHMARK_MACHINE_NICKNAME is used to override the machine that
+    # results are reported for.
     if "BENCHMARK_MACHINE_NICKNAME" in os.environ:
         return os.environ["BENCHMARK_MACHINE_NICKNAME"]
     return get_runners_by_hostname()[hostname].nickname

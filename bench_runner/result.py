@@ -37,6 +37,7 @@ def _clean_for_url(string: str) -> str:
     return string.replace("-", "%2d")
 
 
+@functools.lru_cache
 def _get_platform_value(python: Path, item: str) -> str:
     """
     Get a value from the platform module of the given Python interpreter.
@@ -45,6 +46,16 @@ def _get_platform_value(python: Path, item: str) -> str:
         [python, "-c", f"import platform; print(platform.{item}())"], encoding="utf-8"
     )
     return output.strip().lower()
+
+
+def _get_architecture(python: Path) -> str:
+    machine = _get_platform_value(python, "machine")
+    bits = eval(_get_platform_value(python, "architecture"))[0]
+    if bits == "32bit":
+        return {"x86_64": "i686", "amd64": "i686", "arm64": "arm32"}.get(
+            machine, machine
+        )
+    return machine
 
 
 class Comparison:
@@ -315,7 +326,7 @@ class Result:
     ) -> "Result":
         result = cls(
             _clean(runners.get_nickname_for_hostname(socket.gethostname())),
-            _clean(_get_platform_value(python, "machine")),
+            _clean(_get_architecture(python)),
             _clean_for_url(fork),
             _clean(ref[:20]),
             _clean(_get_platform_value(python, "python_version")),
