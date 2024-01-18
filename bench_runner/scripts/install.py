@@ -91,14 +91,17 @@ def generate__benchmark(src: Any) -> Any:
     for runner in available_runners:
         runner_template = copy.deepcopy(src["jobs"][f"benchmark-{runner.os}"])
 
+        if runner.os == "windows":
+            github_env = "$env:GITHUB_ENV"
+        else:
+            github_env = "$GITHUB_ENV"
         vars = copy.copy(runner.env)
         vars["BENCHMARK_MACHINE_NICKNAME"] = runner.nickname
         setup_environment = {
             "name": "Setup environment",
             "run": LiteralScalarString(
                 "\n".join(
-                    f'echo "{key}={val}" >> $env:GITHUB_ENV'
-                    for key, val in vars.items()
+                    f'echo "{key}={val}" >> {github_env}' for key, val in vars.items()
                 )
             ),
         }
