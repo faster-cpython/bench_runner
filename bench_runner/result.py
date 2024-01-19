@@ -47,6 +47,14 @@ def _get_platform_value(python: Path, item: str) -> str:
     return output.strip().lower()
 
 
+def _get_architecture(python: Path) -> str:
+    machine = _get_platform_value(python, "machine")
+    bits = eval(_get_platform_value(python, "architecture"))[0]
+    if bits == "32bit":
+        return {"x86_64": "x86", "amd64": "x86", "arm64": "arm32"}.get(machine, machine)
+    return machine
+
+
 class Comparison:
     def __init__(self, ref: "Result", head: "Result", base: str):
         self.ref = ref
@@ -315,7 +323,7 @@ class Result:
     ) -> "Result":
         result = cls(
             _clean(runners.get_nickname_for_hostname(socket.gethostname())),
-            _clean(_get_platform_value(python, "machine")),
+            _clean(_get_architecture(python)),
             _clean_for_url(fork),
             _clean(ref[:20]),
             _clean(_get_platform_value(python, "python_version")),

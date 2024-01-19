@@ -3,19 +3,33 @@ from __future__ import annotations
 
 import configparser
 import functools
+import os
 from pathlib import Path
 from typing import Optional
 
 
 class Runner:
     def __init__(
-        self, nickname: str, os: str, arch: str, hostname: str, available: bool
+        self,
+        nickname: str,
+        os: str,
+        arch: str,
+        hostname: str,
+        available: bool,
+        env: dict[str, str],
+        # Override the Github self-hosted runner name if different from
+        # os-arch-nickname
+        github_runner_name: Optional[str],
     ):
         self.nickname = nickname
         self.os = os
         self.arch = arch
         self.hostname = hostname
         self.available = available
+        self.env = env
+        if github_runner_name is None:
+            github_runner_name = self.name
+        self.github_runner_name = github_runner_name
 
     @property
     def name(self) -> str:
@@ -32,10 +46,17 @@ def get_runners(path: Optional[Path] = None) -> list[Runner]:
         path = Path("runners.ini")
 
     config = configparser.ConfigParser()
+    # Don't convert keys to lowercase
+    config.optionxform = str  # type: ignore
     config.read(path)
     runners = []
     for nickname in config.sections():
         section = config[nickname]
+
+        envvars = {
+            key[4:]: val for key, val in section.items() if key.startswith("env-")
+        }
+
         runners.append(
             Runner(
                 nickname,
@@ -43,6 +64,8 @@ def get_runners(path: Optional[Path] = None) -> list[Runner]:
                 section["arch"],
                 section["hostname"],
                 section.getboolean("available", True),
+                envvars,
+                section.get("github-runner-name"),
             )
         )
 
@@ -60,6 +83,10 @@ def get_runners_by_nickname() -> dict[str, Runner]:
 
 
 def get_nickname_for_hostname(hostname: str) -> str:
+    # The envvar BENCHMARK_MACHINE_NICKNAME is used to override the machine that
+    # results are reported for.
+    if "BENCHMARK_MACHINE_NICKNAME" in os.environ:
+        return os.environ["BENCHMARK_MACHINE_NICKNAME"]
     return get_runners_by_hostname()[hostname].nickname
 
 
