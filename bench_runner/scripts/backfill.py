@@ -222,6 +222,7 @@ def _main(
     bisect: Optional[Sequence[Sequence[str]]],
     runners: Sequence[RunnerType],
     force: bool,
+    tier2: bool,
     all_runners: Sequence[RunnerType],
 ) -> None:
     all_with_prefix = all_with_prefix or []
@@ -262,7 +263,7 @@ def _main(
                 gh.benchmark(ref=commit.hash, machine="all")
             else:
                 for runner in commit.runners:
-                    gh.benchmark(ref=commit.hash, machine=runner.name)
+                    gh.benchmark(ref=commit.hash, machine=runner.name, tier2=tier2)
 
 
 def main():
@@ -309,6 +310,11 @@ def main():
         action="store_true",
         help="Re-run benchmark, even if we already have results for that commit hash.",
     )
+    parser.add_argument(
+        "--tier2",
+        action="store_true",
+        help="Enable the tier2 interpreter",
+    )
     parser.add_argument("cpython", type=Path, help="The path to a checkout of CPython")
 
     args = parser.parse_args()
@@ -326,6 +332,7 @@ def main():
         args.bisect,
         use_runners,
         args.force,
+        args.tier2,
         all_runners,
     )
 

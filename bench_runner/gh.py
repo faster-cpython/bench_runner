@@ -34,6 +34,7 @@ def benchmark(
     ref: Optional[str] = None,
     machine: Optional[str] = None,
     benchmark_base: Optional[bool] = None,
+    tier2: Optional[bool] = None,
     _runner_path: Optional[Path] = None,
 ) -> None:
     if not (fork is None or isinstance(fork, str)):
@@ -49,12 +50,16 @@ def benchmark(
     if not (benchmark_base is None or isinstance(benchmark_base, bool)):
         raise TypeError(f"benchmark_base must be bool, got {type(benchmark_base)}")
 
+    if tier2 is None:
+        tier2 = False
+
     flags = _get_flags(
         {
             "fork": fork,
             "ref": ref,
             "machine": machine,
             "benchmark_base": benchmark_base,
+            "tier2": str(tier2).lower(),
         }
     )
 
