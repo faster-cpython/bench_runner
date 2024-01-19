@@ -52,4 +52,6 @@ def test_benchmark_cmdline(monkeypatch):
         "fork=myfork",
         "-f",
         "benchmark_base=true",
+        "-f",
+        "tier2=false",
     ]

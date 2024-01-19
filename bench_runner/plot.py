@@ -140,8 +140,10 @@ def longitudinal_plot(
     results: Iterable[result.Result],
     output_filename: Path,
     bases=["3.10.4", "3.11.0", "3.12.0"],
-    runners=["linux", "pythonperf2", "darwin", "pythonperf1"],
-    names=["linux", "linux2", "macos", "windows"],
+    runners=["linux", "pythonperf2", "darwin", "pythonperf1", "pythonperf1_win32"],
+    names=["linux", "linux2", "macos", "win64", "win32"],
+    colors=["C0", "C0", "C2", "C3", "C3"],
+    styles=["-", ":", "-", "-", ":"],
     versions=[(3, 11), (3, 12), (3, 13)],
 ):
     tier2_date = datetime.datetime.fromisoformat("2023-11-11T00:00:00Z")
@@ -172,7 +174,9 @@ def longitudinal_plot(
         ax.yaxis.set_major_formatter(formatter)
         ax.grid()
 
-        for runner_i, (runner, name) in enumerate(zip(runners, names)):
+        for runner_i, (runner, name, color, style) in enumerate(
+            zip(runners, names, colors, styles)
+        ):
             runner_results = [r for r in ver_results if r.nickname == runner]
 
             # For 3.13, only use Tier 2 results after 2023-11-11
@@ -203,7 +207,8 @@ def longitudinal_plot(
             ax.plot(
                 dates,
                 changes,
-                "o-",
+                color=color,
+                linestyle=style,
                 markersize=2.5,
                 label=name,
                 alpha=0.9,
@@ -231,7 +236,7 @@ def longitudinal_plot(
                     text.arrow_patch.set_color("#888")
 
         ylim = ax.get_ylim()
-        ax.set_ylim(top=ylim[1] + 0.1)
+        ax.set_ylim(top=ylim[1] + 0.01)
         ax.legend(loc="upper left")
         ax.annotate(
             "faster ⟶",
