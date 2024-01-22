@@ -170,7 +170,7 @@ def longitudinal_plot(
         version_str = ".".join(str(x) for x in version)
         ver_results = [r for r in results if r.parsed_version.release[0:2] == version]
 
-        ax.set_title(f"Python {version_str} vs. {base}")
+        ax.set_title(f"Python {version_str}.x vs. {base}")
         ax.yaxis.set_major_formatter(formatter)
         ax.grid()
 
