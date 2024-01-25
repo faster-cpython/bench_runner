@@ -27,18 +27,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout benchmarking
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           # We need to explicitly specify "main" because it might be more recent
           # than when the entire workflow was kicked off.
           ref: main
       - name: Checkout CPython
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: python/cpython
           path: cpython
       - name: Setup system Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: pip
