@@ -59,13 +59,13 @@ jobs:
     runs-on: [self-hosted, linux, azure]
     steps:
       - name: Checkout benchmarking
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup system Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - name: Checkout CPython
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: ${{ inputs.fork }}/cpython
           ref: ${{ inputs.ref }}
@@ -80,14 +80,14 @@ jobs:
         run: |
           python -m bench_runner should_run ${{ inputs.force }} ${{ inputs.fork }} ${{ inputs.ref }} all true ${{ inputs.tier2 }} false >> $GITHUB_OUTPUT
       - name: Checkout python-macrobenchmarks
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         with:
           repository: pyston/python-macrobenchmarks
           path: pyston-benchmarks
           ref: ${{ env.PYSTON_BENCHMARKS_HASH }}
       - name: Checkout pyperformance
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         with:
           repository: python/pyperformance

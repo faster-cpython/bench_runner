@@ -54,14 +54,14 @@ jobs:
       need_to_run: ${{ steps.base.outputs.need_to_run }}
     steps:
       - name: Checkout benchmarking
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup system Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: pip
       - name: Checkout CPython
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         if: ${{ inputs.benchmark_base }}
         with:
           repository: ${{ inputs.fork }}/cpython
