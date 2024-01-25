@@ -11,11 +11,11 @@ from bench_runner.scripts import generate_results
 from bench_runner import util
 
 
-def remove_benchmark(filename: Path, remove: list[str], benchmark_hash: str):
+def remove_benchmark(filename: Path, remove: set[str], keep_hash: set[str], dry_run: bool):
     with open(filename) as fd:
         data = json.load(fd)
 
-    if data["metadata"]["benchmark_hash"] == benchmark_hash:
+    if data["metadata"]["benchmark_hash"] in keep_hash:
         util.status("/")
         return
 
@@ -32,12 +32,16 @@ def remove_benchmark(filename: Path, remove: list[str], benchmark_hash: str):
 
     util.status(".")
 
-    with open(filename, "w") as fd:
-        json.dump(data, fd, indent=2)
+    if not dry_run:
+        with open(filename, "w") as fd:
+            json.dump(data, fd, indent=2)
 
 
-def _main(benchmarks: list[str], benchmark_hash: str, dry_run: bool = False):
+def _main(benchmarks: list[str], keep_hash: list[str], dry_run: bool = False):
     print(f"Removing benchmarks {benchmarks} from all results")
+
+    keep_hash_set = set(keep_hash)
+    benchmarks_set = set(benchmarks)
 
     if not dry_run:
         if Path("longitudinal.json").is_file():
@@ -49,13 +53,13 @@ def _main(benchmarks: list[str], benchmark_hash: str, dry_run: bool = False):
         if filename.name != "README.md":
             res = result.Result.from_filename(filename)
             if res.result_info[0] == "raw results":
-                if not dry_run:
-                    remove_benchmark(filename, benchmarks, benchmark_hash)
-    print()
+                remove_benchmark(filename, benchmarks_set, keep_hash_set, dry_run)
 
+    print()
     print("Regenerating all derived results. This will take quite some time.")
 
-    generate_results._main(Path(), force=True)
+    if not dry_run:
+        generate_results._main(Path(), force=True)
 
 
 def main():
@@ -65,12 +69,14 @@ def main():
     )
 
     parser.add_argument(
-        "benchmark_hash", type=str, help="The benchmark hash to leave alone"
-    )
-    parser.add_argument(
         "benchmark",
         nargs="+",
         help="Benchmark to remove",
+    )
+    parser.add_argument(
+        "--keep-hash",
+        action="append",
+        help="The benchmark hash(es) to leave alone"
     )
     parser.add_argument(
         "--dry-run",
@@ -79,7 +85,12 @@ def main():
 
     args = parser.parse_args()
 
-    _main(args.benchmark, args.benchmark_hash, args.dry_run)
+    if args.keep_hash is None:
+        keep_hash = []
+    else:
+        keep_hash = args.keep_hash
+
+    _main(args.benchmark, keep_hash, args.dry_run)
 
 
 if __name__ == "__main__":
