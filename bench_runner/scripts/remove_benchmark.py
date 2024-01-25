@@ -8,11 +8,16 @@ from pathlib import Path
 
 from bench_runner import result
 from bench_runner.scripts import generate_results
+from bench_runner import util
 
 
-def remove_benchmark(filename: Path, remove: list[str]):
+def remove_benchmark(filename: Path, remove: list[str], benchmark_hash: str):
     with open(filename) as fd:
         data = json.load(fd)
+
+    if data["metadata"]["benchmark_hash"] == benchmark_hash:
+        util.status("/")
+        return
 
     benchmarks = []
     for benchmark in data["benchmarks"]:
@@ -25,35 +30,32 @@ def remove_benchmark(filename: Path, remove: list[str]):
 
     data["benchmarks"] = benchmarks
 
+    util.status(".", end="")
+
     with open(filename, "w") as fd:
         json.dump(data, fd, indent=2)
 
 
-def _main(benchmarks: list[str], dry_run: bool = False):
+def _main(benchmarks: list[str], benchmark_hash: str, dry_run: bool = False):
     print(f"Removing benchmarks {benchmarks} from all results")
+
+    if not dry_run:
+        if Path("longitudinal.json").is_file():
+            Path("longitudinal.json").unlink()
+
     for filename in Path("results").glob("**/*"):
-        print(".", end="")
         if filename.is_dir():
             continue
-        if filename.name == "README.md":
-            if not dry_run:
-                filename.unlink()
-        else:
+        if filename.name != "README.md":
             res = result.Result.from_filename(filename)
-            match res.result_info[0]:
-                case "raw results":
-                    if not dry_run:
-                        remove_benchmark(filename, benchmarks)
-                case "plot" | "table":
-                    if not dry_run:
-                        filename.unlink()
-                case _:
-                    pass
+            if res.result_info[0] == "raw results":
+                if not dry_run:
+                    remove_benchmark(filename, benchmarks, benchmark_hash)
     print()
 
     print("Regenerating all derived results. This will take quite some time.")
 
-    generate_results._main(Path())
+    generate_results._main(Path(), force=True)
 
 
 def main():
@@ -62,6 +64,11 @@ def main():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
+    parser.add_argument(
+        "benchmark_hash",
+        type=str,
+        help="The benchmark hash to leave alone"
+    )
     parser.add_argument(
         "benchmark",
         nargs="+",
@@ -74,7 +81,7 @@ def main():
 
     args = parser.parse_args()
 
-    _main(args.benchmark, args.dry_run)
+    _main(args.benchmark, args.benchmark_hash, args.dry_run)
 
 
 if __name__ == "__main__":
