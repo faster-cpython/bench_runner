@@ -11,7 +11,9 @@ from bench_runner.scripts import generate_results
 from bench_runner import util
 
 
-def remove_benchmark(filename: Path, remove: set[str], keep_hash: set[str], dry_run: bool):
+def remove_benchmark(
+    filename: Path, remove: set[str], keep_hash: set[str], dry_run: bool
+):
     with open(filename) as fd:
         data = json.load(fd)
 
@@ -74,9 +76,7 @@ def main():
         help="Benchmark to remove",
     )
     parser.add_argument(
-        "--keep-hash",
-        action="append",
-        help="The benchmark hash(es) to leave alone"
+        "--keep-hash", action="append", help="The benchmark hash(es) to leave alone"
     )
     parser.add_argument(
         "--dry-run",
