@@ -30,7 +30,7 @@ def remove_benchmark(filename: Path, remove: list[str], benchmark_hash: str):
 
     data["benchmarks"] = benchmarks
 
-    util.status(".", end="")
+    util.status(".")
 
     with open(filename, "w") as fd:
         json.dump(data, fd, indent=2)
