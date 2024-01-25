@@ -27,7 +27,7 @@ dynamic = ["version"]
 test = [
     "black==23.12.1",
     "flake8==7.0.0",
-    "pyright==1.1.347",
+    "pyright==1.1.348",
     "pytest==7.4.4",
 ]
 
