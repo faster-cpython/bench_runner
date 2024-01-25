@@ -65,9 +65,7 @@ def main():
     )
 
     parser.add_argument(
-        "benchmark_hash",
-        type=str,
-        help="The benchmark hash to leave alone"
+        "benchmark_hash", type=str, help="The benchmark hash to leave alone"
     )
     parser.add_argument(
         "benchmark",
