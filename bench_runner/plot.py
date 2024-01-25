@@ -157,8 +157,11 @@ def longitudinal_plot(
             data[key] = value
             return value
 
-    with open(output_filename.parent / "longitudinal.json") as fd:
-        data = json.load(fd)
+    if (output_filename.parent / "longitudinal.json").is_file():
+        with open(output_filename.parent / "longitudinal.json") as fd:
+            data = json.load(fd)
+    else:
+        data = {}
 
     fig, axs = plt.subplots(
         len(versions), 1, figsize=(10, 5 * len(versions)), layout="constrained"
