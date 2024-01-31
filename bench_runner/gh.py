@@ -1,6 +1,7 @@
 """
 Utilities to use the `gh` CLI for workflow automation.
 """
+
 from __future__ import annotations
 
 

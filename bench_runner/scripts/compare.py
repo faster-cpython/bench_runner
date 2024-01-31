@@ -2,6 +2,7 @@
 Utility to compare a matrix of arbitrary commits, for when the usual key
 versions or git merge base aren't enough.
 """
+
 from __future__ import annotations
 
 
