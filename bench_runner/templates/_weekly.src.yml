@@ -59,7 +59,7 @@ jobs:
       machine: all
       benchmarks: all
       pgo: true
-      tier2: true
+      tier2: false
       jit: true
     secrets: inherit
 
