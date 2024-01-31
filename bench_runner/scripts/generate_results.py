@@ -316,6 +316,7 @@ def get_directory_indices_entries(
         entries.append((dirpath, None, None, f"fork: {unquote(result.fork)}"))
         entries.append((dirpath, None, None, f"version: {result.version}"))
         entries.append((dirpath, None, None, f"tier 2: {result.is_tier2}"))
+        entries.append((dirpath, None, None, f"jit: {result.is_jit}"))
         link = table.link_to_hash(result.cpython_hash, result.fork)
         entries.append((dirpath, None, None, f"commit hash: {link}"))
         entries.append((dirpath, None, None, f"commit date: {result.commit_datetime}"))
