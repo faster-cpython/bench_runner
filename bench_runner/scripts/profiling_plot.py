@@ -1,6 +1,7 @@
 """
 Generate summary tables and a visualization of Linux perf profiling results.
 """
+
 from __future__ import annotations
 
 

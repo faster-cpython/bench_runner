@@ -2,7 +2,6 @@
 Utilities to generate markdown tables.
 """
 
-
 from pathlib import Path
 from typing import Iterable, Optional, Sequence, TextIO
 from urllib.parse import quote

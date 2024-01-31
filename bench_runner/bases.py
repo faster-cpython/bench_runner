@@ -1,6 +1,7 @@
 """
 Handling the list of base versions defined in bases.txt.
 """
+
 from __future__ import annotations
 
 
