@@ -50,6 +50,19 @@ jobs:
       tier2: true
     secrets: inherit
 
+  weekly-jit:
+    uses: ./.github/workflows/_benchmark.yml
+    needs: determine_head
+    with:
+      fork: python
+      ref: ${{ needs.determine_head.outputs.commit }}
+      machine: all
+      benchmarks: all
+      pgo: true
+      tier2: true
+      jit: true
+    secrets: inherit
+
   pystats:
     uses: ./.github/workflows/_pystats.yml
     needs: determine_head
@@ -76,7 +89,7 @@ jobs:
     uses: ./.github/workflows/_generate.yml
     with:
       force: false
-    needs: [weekly, weekly-tier2, pystats, pystats-tier2]
+    needs: [weekly, weekly-tier2, weekly-jit, pystats, pystats-tier2]
     secrets: inherit
 
   publish:
