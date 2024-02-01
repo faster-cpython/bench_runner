@@ -349,11 +349,11 @@ def flag_effect_plot(
         ax.set_title(f"Effect of {config} vs. Tier 1 (same commit)")
 
         for runner, name, color, style in zip(runners, names, colors, styles):
-            runner_results = commits[runner]
-            base_results = runner_results[""]
+            runner_results = commits.get(runner, {})
+            base_results = runner_results.get("", {})
 
             line = []
-            for cpython_hash, r in runner_results[flag].items():
+            for cpython_hash, r in runner_results.get(flag, {}).items():
                 if cpython_hash in base_results:
                     line.append(
                         (
@@ -362,9 +362,6 @@ def flag_effect_plot(
                         )
                     )
             line.sort()
-
-            if len(line) == 1:
-                line = line + line
 
             dates = [datetime.datetime.fromisoformat(x[0]) for x in line]
             changes = [x[1] for x in line]
