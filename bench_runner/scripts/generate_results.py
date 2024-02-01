@@ -432,6 +432,8 @@ def _main(repo_dir: Path, force: bool = False, bases: Optional[list[str]] = None
     generate_directory_indices(benchmarking_results)
     print("Generating longitudinal plot")
     plot.longitudinal_plot(benchmarking_results, repo_dir / "longitudinal.png")
+    print("Generating configurations plot")
+    plot.flag_effect_plot(benchmarking_results, repo_dir / "configs.png")
 
 
 def main():

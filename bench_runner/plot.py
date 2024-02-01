@@ -135,6 +135,65 @@ def get_micro_version(version):
     return micro
 
 
+def annotate_y_axis(ax):
+    ax.yaxis.set_major_formatter(formatter)
+    ax.grid()
+    ylim = ax.get_ylim()
+    ax.set_ylim(top=ylim[1] + 0.01)
+    ax.legend(loc="upper left")
+    ax.annotate(
+        "faster ⟶",
+        xy=(0.0, 1.0),
+        xycoords=("axes fraction", "data"),
+        xytext=(10, 10),
+        textcoords="offset pixels",
+        rotation=90,
+        clip_on=True,
+    )
+    ax.annotate(
+        "⟵ slower",
+        xy=(0.0, 1.0),
+        xycoords=("axes fraction", "data"),
+        xytext=(10, -10),
+        textcoords="offset pixels",
+        rotation=90,
+        clip_on=True,
+        verticalalignment="top",
+    )
+
+
+tier2_date = datetime.datetime.fromisoformat("2023-11-11T00:00:00Z")
+jit_date = datetime.datetime.fromisoformat("2024-01-31T00:00:00Z")
+
+
+def filter_by_config(results):
+    correct_results = []
+    for r in results:
+        dt = datetime.datetime.fromisoformat(r.commit_datetime)
+        if dt < tier2_date:
+            if not r.is_tier2 and not r.is_jit:
+                correct_results.append(r)
+        elif dt < jit_date:
+            if r.is_tier2 and not r.is_jit:
+                correct_results.append(r)
+        else:
+            if r.is_jit:
+                correct_results.append(r)
+    return correct_results
+
+
+def add_axvline(ax, dt, name):
+    ax.axvline(dt)
+    ax.annotate(
+        name,
+        xy=(dt, 0.9),
+        xycoords=("data", "axes fraction"),
+        xytext=(10, 0),
+        textcoords="offset pixels",
+        rotation=90,
+    )
+
+
 # TODO: Make this configurable
 def longitudinal_plot(
     results: Iterable[result.Result],
@@ -146,8 +205,6 @@ def longitudinal_plot(
     styles=["-", ":", "-", "-", ":"],
     versions=[(3, 11), (3, 12), (3, 13)],
 ):
-    tier2_date = datetime.datetime.fromisoformat("2023-11-11T00:00:00Z")
-
     def get_comparison_value(ref, r, base):
         key = ",".join((str(ref.filename)[8:], str(r.filename)[8:], base))
         if key in data:
@@ -174,24 +231,16 @@ def longitudinal_plot(
         ver_results = [r for r in results if r.parsed_version.release[0:2] == version]
 
         ax.set_title(f"Python {version_str}.x vs. {base}")
-        ax.yaxis.set_major_formatter(formatter)
-        ax.grid()
 
         for runner_i, (runner, name, color, style) in enumerate(
             zip(runners, names, colors, styles)
         ):
             runner_results = [r for r in ver_results if r.nickname == runner]
 
-            # For 3.13, only use Tier 2 results after 2023-11-11
+            # For 3.13, only use Tier 2 results after 2023-11-11 and JIT results
+            # after 2024-01-30
             if version == (3, 13):
-                runner_results = [
-                    r
-                    for r in runner_results
-                    if not (
-                        datetime.datetime.fromisoformat(r.commit_datetime) > tier2_date
-                        and not r.is_tier2
-                    )
-                ]
+                runner_results = filter_by_config(runner_results)
 
             for r in results:
                 if r.nickname == runner and r.version == base:
@@ -238,40 +287,12 @@ def longitudinal_plot(
                     text.set_size(8)
                     text.arrow_patch.set_color("#888")
 
-        ylim = ax.get_ylim()
-        ax.set_ylim(top=ylim[1] + 0.01)
-        ax.legend(loc="upper left")
-        ax.annotate(
-            "faster ⟶",
-            xy=(0.0, 1.0),
-            xycoords=("axes fraction", "data"),
-            xytext=(10, 10),
-            textcoords="offset pixels",
-            rotation=90,
-            clip_on=True,
-        )
-        ax.annotate(
-            "⟵ slower",
-            xy=(0.0, 1.0),
-            xycoords=("axes fraction", "data"),
-            xytext=(10, -10),
-            textcoords="offset pixels",
-            rotation=90,
-            clip_on=True,
-            verticalalignment="top",
-        )
+        annotate_y_axis(ax)
 
-        # Add a line for when Tier 2 was turned on
+        # Add a line for when Tier 2 and JIT were turned on
         if i == 2:
-            ax.axvline(tier2_date)
-            ax.annotate(
-                "TIER 2",
-                xy=(tier2_date, 0.9),
-                xycoords=("data", "axes fraction"),
-                xytext=(10, 0),
-                textcoords="offset pixels",
-                rotation=90,
-            )
+            add_axvline(ax, tier2_date, "TIER 2")
+            add_axvline(ax, jit_date, "JIT")
 
     fig.suptitle("Performance improvement by major version")
 
@@ -279,6 +300,91 @@ def longitudinal_plot(
     plt.close()
 
     with open(output_filename.parent / "longitudinal.json", "w") as fd:
+        json.dump(data, fd, indent=2)
+
+
+def flag_effect_plot(
+    results: Iterable[result.Result],
+    output_filename: Path,
+    flags=["JIT", "PYTHON_UOPS"],
+    configs=["JIT compiler", "Tier 2 interpreter"],
+    runners=["linux", "pythonperf2", "darwin", "pythonperf1", "pythonperf1_win32"],
+    names=["linux", "linux2", "macos", "win64", "win32"],
+    colors=["C0", "C0", "C2", "C3", "C3"],
+    styles=["-", ":", "-", "-", ":"],
+):
+    def get_comparison_value(ref, r):
+        key = ",".join((str(ref.filename)[8:], str(r.filename)[8:]))
+        if key in data:
+            return data[key]
+        else:
+            value = result.BenchmarkComparison(ref, r, "default").hpt_percentile_float(
+                99
+            )
+            data[key] = value
+            return value
+
+    if (output_filename.parent / "configs.json").is_file():
+        with open(output_filename.parent / "configs.json") as fd:
+            data = json.load(fd)
+    else:
+        data = {}
+
+    fig, axs = plt.subplots(
+        len(flags), 1, figsize=(10, 5 * len(flags)), layout="constrained"
+    )
+
+    results = [r for r in results if r.fork == "python"]
+
+    commits: dict[str, dict[str, dict[str, result.Result]]] = {}
+    for r in results:
+        for flag in flags:
+            if flag in r.flags:
+                break
+        else:
+            flag = ""
+        commits.setdefault(r.nickname, {}).setdefault(flag, {})[r.cpython_hash] = r
+
+    for config, flag, ax in zip(configs, flags, axs):
+        ax.set_title(f"Effect of {config} vs. Tier 1 (same commit)")
+
+        for runner, name, color, style in zip(runners, names, colors, styles):
+            runner_results = commits.get(runner, {})
+            base_results = runner_results.get("", {})
+
+            line = []
+            for cpython_hash, r in runner_results.get(flag, {}).items():
+                if cpython_hash in base_results:
+                    line.append(
+                        (
+                            r.commit_datetime,
+                            get_comparison_value(base_results[cpython_hash], r),
+                        )
+                    )
+            line.sort()
+
+            dates = [datetime.datetime.fromisoformat(x[0]) for x in line]
+            changes = [x[1] for x in line]
+
+            ax.plot(
+                dates,
+                changes,
+                color=color,
+                linestyle=style,
+                marker="o",
+                markersize=2.5,
+                label=name,
+                alpha=0.9,
+            )
+
+        annotate_y_axis(ax)
+
+    fig.suptitle("Performance improvement by configuration")
+
+    plt.savefig(output_filename, dpi=150)
+    plt.close()
+
+    with open(output_filename.parent / "configs.json", "w") as fd:
         json.dump(data, fd, indent=2)
 
 
