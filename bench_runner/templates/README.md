@@ -17,6 +17,8 @@ Here are some recent and important revisions. 👉 [Complete list of results](RE
 Improvement of the geometric mean of key merged benchmarks, computed with `pyperf compare`.
 The results have a resolution of 0.01 (1%).
 
+![Configuration speed improvement](/configs.png)
+
 ## Documentation
 
 ### Running benchmarks from the GitHub web UI
