@@ -60,6 +60,7 @@ def run_benchmarks(
     benchmarks: str,
     command_prefix: list[str] = [],
     test_mode: bool = False,
+    extra_args: list[str] = [],
 ) -> None:
     if benchmarks.strip() == "":
         benchmarks = "all"
@@ -90,6 +91,7 @@ def run_benchmarks(
             python,
             "--inherit-environ",
             ",".join(ENV_VARS),
+            *extra_args,
         ]
     )
 
@@ -118,6 +120,8 @@ def collect_pystats(
 
     all_benchmarks = get_benchmark_names(benchmarks)
 
+    extra_args = ["--same-loops", "loops.json"]
+
     # We could technically run each benchmark in parallel (since we don't care
     # about performance timings), however, since the stats are written to the
     # same directory, they would get intertwined. At some point, specifying an
@@ -126,7 +130,7 @@ def collect_pystats(
     with tempfile.TemporaryDirectory() as tempdir:
         for benchmark in all_benchmarks:
             try:
-                run_benchmarks(python, benchmark)
+                run_benchmarks(python, benchmark, extra_args=extra_args)
             except NoBenchmarkError:
                 pass
             else:

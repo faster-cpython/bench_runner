@@ -72,7 +72,7 @@ def get_git_merge_base(dirname: Path) -> Optional[str]:
             cwd=dirname,
         )
     except subprocess.CalledProcessError as e:
-        if e.returncode == 3:
+        if e.returncode in (3, 128):
             # Remote may already exist, that's ok
             pass
         else:
