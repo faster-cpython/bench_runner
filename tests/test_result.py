@@ -39,7 +39,7 @@ def test_load_all_results(tmp_path):
     assert result_310.commit_datetime == "2022-03-23T20:12:04+00:00"
     assert result_310.commit_date == "2022-03-23"
     assert result_310.commit_merge_base is None
-    assert result_310.benchmark_hash == "aea5ad"
+    assert result_310.benchmark_hash == "215d35"
 
 
 def test_merge_base(tmp_path):

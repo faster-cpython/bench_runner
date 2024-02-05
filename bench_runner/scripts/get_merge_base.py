@@ -33,7 +33,14 @@ def _main(
 
             need_to_run = (
                 machine == "all"
-                or has_result(Path("results"), merge_base, machine, pystats, flags)
+                or has_result(
+                    Path("results"),
+                    merge_base,
+                    machine,
+                    pystats,
+                    flags,
+                    util.get_benchmark_hash(),
+                )
                 is None
             )
 

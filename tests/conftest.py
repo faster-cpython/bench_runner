@@ -1,0 +1,5 @@
+import os
+
+
+os.environ["PYPERFORMANCE_HASH"] = "f7f36509e2e81e9a20cfeadddd6608f2378ff26c"
+os.environ["PYSTON_BENCHMARKS_HASH"] = "d4868ff7825f3996e0005197643ed56eba4fb567"

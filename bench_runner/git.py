@@ -3,10 +3,9 @@ from __future__ import annotations
 
 
 import datetime
-import hashlib
 from pathlib import Path
 import subprocess
-from typing import Iterable, Optional
+from typing import Optional
 
 
 def get_log(
@@ -110,15 +109,6 @@ def get_tags(dirname: Path) -> list[str]:
     return subprocess.check_output(
         ["git", "tag"], cwd=dirname, encoding="utf-8"
     ).splitlines()
-
-
-def generate_combined_hash(dirs: Iterable[Path]) -> str:
-    hash = hashlib.sha256()
-    for dirname in dirs:
-        if dirname.is_dir():
-            subhash = get_git_hash(dirname)
-            hash.update(subhash.encode("ascii"))
-    return hash.hexdigest()[:6]
 
 
 def get_commits_between(dirname: Path, ref1: str, ref2: str) -> list[str]:
