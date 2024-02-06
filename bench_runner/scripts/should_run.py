@@ -34,6 +34,7 @@ def _main(
     # parts of our library.
     from bench_runner import git
     from bench_runner.result import has_result
+    from bench_runner import util
 
     try:
         commit_hash = git.get_git_hash(cpython)
@@ -53,7 +54,9 @@ def _main(
     if jit:
         flags.append("JIT")
 
-    found_result = has_result(results_dir, commit_hash, machine, pystats, flags)
+    found_result = has_result(
+        results_dir, commit_hash, machine, pystats, flags, util.get_benchmark_hash()
+    )
 
     if force:
         if found_result is not None:

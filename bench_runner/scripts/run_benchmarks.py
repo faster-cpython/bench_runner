@@ -18,6 +18,7 @@ from typing import Iterable, Optional, Union
 from bench_runner import git
 from bench_runner.result import Result
 from bench_runner.table import md_link
+from bench_runner import util
 
 
 REPO_ROOT = Path()
@@ -237,9 +238,7 @@ def update_metadata(
     merge_base = git.get_git_merge_base(cpython)
     if merge_base is not None:
         metadata["commit_merge_base"] = merge_base
-    metadata["benchmark_hash"] = git.generate_combined_hash(
-        [Path("pyperformance"), Path("pyston-benchmarks")]
-    )
+    metadata["benchmark_hash"] = util.get_benchmark_hash()
     if run_id is not None:
         metadata["github_action_url"] = f"{GITHUB_URL}/actions/runs/{run_id}"
 

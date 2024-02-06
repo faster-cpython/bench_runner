@@ -13,6 +13,7 @@ from bench_runner import git
 from bench_runner.scripts import generate_results
 from bench_runner.scripts import run_benchmarks
 from bench_runner.scripts import should_run
+from bench_runner import util
 
 
 DATA_PATH = Path(__file__).parent / "data"
@@ -115,7 +116,7 @@ def test_update_metadata(tmp_path, benchmarks_checkout):
     assert metadata["commit_branch"] == "myref"
     assert metadata["commit_date"] == "2022-03-23T20:12:04+00:00"
     assert "commit_merge_base" not in metadata
-    assert metadata["benchmark_hash"] == "e3b0c4"
+    assert metadata["benchmark_hash"] == "215d35"
     assert (
         metadata["github_action_url"]
         == "https://github.com/faster-cpython/bench_runner/actions/runs/12345"
@@ -414,3 +415,7 @@ def test_run_benchmarks_flags(tmp_path, benchmarks_checkout):
         f"python-main-{platform.python_version()}-9d38120.json"
     ) as fd:
         json.load(fd)
+
+
+def test_get_benchmark_hash():
+    assert util.get_benchmark_hash() == "215d35"

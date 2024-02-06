@@ -554,7 +554,12 @@ class Result:
 
 
 def has_result(
-    results_dir: Path, commit_hash: str, machine: str, pystats: bool, flags: list[str]
+    results_dir: Path,
+    commit_hash: str,
+    machine: str,
+    pystats: bool,
+    flags: list[str],
+    benchmark_hash: str,
 ) -> Optional[Result]:
     if machine == "all":
         nickname = None
@@ -569,6 +574,7 @@ def has_result(
                 commit_hash.startswith(result.cpython_hash)
                 and result.result_info[0] == "pystats raw"
                 and result.flags == flags
+                and result.benchmark_hash == benchmark_hash
             ):
                 return result
     else:
@@ -577,6 +583,7 @@ def has_result(
                 commit_hash.startswith(result.cpython_hash)
                 and (nickname is None or result.nickname == nickname)
                 and result.flags == flags
+                and result.benchmark_hash == benchmark_hash
             ):
                 return result
 
