@@ -121,6 +121,9 @@ def plot_diff(
     axs.set_ylim(0, len(names) + 1)
     axs.tick_params(axis="x", bottom=True, top=True, labelbottom=True, labeltop=True)
     axs.xaxis.set_major_formatter(formatter)
+    xlim = axs.get_xlim()
+    if xlim[0] > 0.75 and xlim[1] < 1.25:
+        axs.set_xlim(0.75, 1.25)
     axs.grid()
     axs.set_title(title)
 
@@ -138,8 +141,7 @@ def get_micro_version(version):
 def annotate_y_axis(ax):
     ax.yaxis.set_major_formatter(formatter)
     ax.grid()
-    ylim = ax.get_ylim()
-    ax.set_ylim(top=ylim[1] + 0.01)
+    ax.set_ylim([0.9, 1.3])
     ax.legend(loc="upper left")
     ax.annotate(
         "faster ⟶",
