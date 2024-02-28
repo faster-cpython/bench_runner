@@ -226,10 +226,10 @@ class BenchmarkComparison(Comparison):
         reliability = self.hpt_reliability
         if reliability is not None:
             reliability = reliability[:-4]
-            result += f" ({reliability}% rel.)"
+            result += f" ({reliability}%)"
         memory_change = self.memory_change
-        if memory_change is not None:
-            result += f" (mem {memory_change})"
+        if memory_change not in (None, "unknown"):
+            result += f" ({memory_change} m)"
 
         return result
 
