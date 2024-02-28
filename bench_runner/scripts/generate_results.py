@@ -153,17 +153,6 @@ def save_generated_results(results: Iterable[Result], force: bool = False) -> No
                     else:
                         util.status("/")
 
-        # # Remove any outdated comparison files if the bases have changed.
-        # for filename in result.filename.parent.iterdir():
-        #     match = re.match(r"(?P<root>.*)-vs-(?P<base>.*)", filename.stem)
-        #     if match is not None:
-        #         if (
-        #             match.group("root") == result.filename.stem
-        #             and match.group("base") not in result.bases
-        #         ) or not (filename.parent / (match.group("root") + ".json")).exists():
-        #             util.status("x")
-        #             filename.unlink()
-
     print()
 
 
