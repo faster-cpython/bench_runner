@@ -147,15 +147,7 @@ def save_generated_results(results: Iterable[Result], force: bool = False) -> No
                     filename = compare.filename.parent / (
                         compare.filename.stem + suffix
                     )
-                    if (
-                        not filename.exists()
-                        or force
-                        # TODO: Remove this special "hard force"
-                        or (
-                            result.result_info[0] == "raw results"
-                            and suffix in (".md", "-mem.png")
-                        )
-                    ):
+                    if not filename.exists() or force:
                         util.status(".")
                         func(filename, compare)
                     else:
