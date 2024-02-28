@@ -57,7 +57,13 @@ def compare_pair(
         raise RuntimeError()
     with open(output_dir / f"{name}.md", "w", encoding="utf-8") as fd:
         fd.write(comparison.contents)
-    plot.plot_diff(ref, head, output_dir / f"{name}.png", f"{head_name} vs. {ref_name}")
+    compare = mod_result.BenchmarkComparison(ref, head, "base")
+    plot.plot_diff(
+        compare.get_timing_diff(),
+        output_dir / f"{name}.png",
+        f"{head_name} vs. {ref_name}",
+        ("slower", "faster"),
+    )
 
     return f"{comparison.summary} [table]({name}.md) [plot]({name}.png)"
 

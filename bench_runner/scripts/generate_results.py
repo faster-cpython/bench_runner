@@ -6,7 +6,6 @@ from collections import defaultdict
 import datetime
 import io
 from pathlib import Path
-import re
 import sys
 import textwrap
 from typing import Iterable, Optional, TextIO
@@ -53,37 +52,61 @@ def write_markdown_results(filename: Path, compare: BenchmarkComparison) -> None
     if contents is None:
         return
 
-    header = textwrap.dedent(
-        f"""
-    # Results vs. {compare.base}
+    entries = [
+        ("fork", unquote(compare.head.fork)),
+        ("ref", compare.head.ref),
+        ("machine", f"{compare.head.system}-{compare.head.machine}"),
+        ("commit hash", compare.head.cpython_hash),
+        ("commit date", compare.head.commit_date),
+        ("overall geometric mean", compare.geometric_mean),
+        ("HPT reliability", compare.hpt_reliability),
+        ("HPT 99th percentile", compare.hpt_percentile(99)),
+    ]
 
-    - fork: {unquote(compare.head.fork)}
-    - ref: {compare.head.ref}
-    - machine: {compare.head.system}-{compare.head.machine}
-    - commit hash: {compare.head.cpython_hash}
-    - commit date: {compare.head.commit_date}
-    - overall geometric mean: {compare.geometric_mean}
-    - HPT reliability: {compare.hpt_reliability}
-    - HPT 99th percentile: {compare.hpt_percentile(99)}
-
-    """
-    )
+    if compare.memory_change is not None:
+        entries.append("Memory change", compare.memory_change)
 
     with open(filename, "w") as fd:
-        fd.write(header)
+        fd.write(f"# Results vs. {compare.base}\n\n")
+        for key, val in entries:
+            fd.write(f"- {key}: {val}\n")
+        fd.write("\n")
         fd.write(contents)
 
 
-def write_plot_results(filename: Path, compare: Comparison) -> None:
+def write_time_plot_results(filename: Path, compare: BenchmarkComparison) -> None:
     plot.plot_diff(
-        compare.ref,
-        compare.head,
+        compare.get_timing_diff(),
         filename,
         (
+            "Timings of "
             f"{unquote(compare.head.fork)}-{compare.head.ref}-"
             f"{compare.head.cpython_hash}"
             f" vs. {compare.ref.version}"
         ),
+        ("slower", "faster"),
+    )
+
+
+def write_memory_plot_results(filename: Path, compare: BenchmarkComparison) -> None:
+    if compare.head.system == "windows":
+        # Windows doesn't have memory data
+        return
+
+    if compare.base != "base":
+        # Only generate the graphs for base comparisons
+        return
+
+    plot.plot_diff(
+        compare.get_memory_diff(),
+        filename,
+        (
+            "Memory usage of "
+            f"{unquote(compare.head.fork)}-{compare.head.ref}-"
+            f"{compare.head.cpython_hash}"
+            f" vs. {compare.ref.version}"
+        ),
+        ("less", "more"),
     )
 
 
@@ -101,7 +124,11 @@ def write_pystats_diff(filename: Path, compare: Comparison) -> None:
 
 
 RESULT_TYPES = {
-    "raw results": {".md": write_markdown_results, ".png": write_plot_results},
+    "raw results": {
+        ".md": write_markdown_results,
+        ".png": write_time_plot_results,
+        "-mem.png": write_memory_plot_results,
+    },
     "pystats raw": {".md": write_pystats_diff},
     None: {},
 }
@@ -118,23 +145,33 @@ def save_generated_results(results: Iterable[Result], force: bool = False) -> No
         for compare in result.bases.values():
             if compare.filename is not None:
                 for suffix, func in RESULT_TYPES[result.result_info[0]].items():
-                    filename = compare.filename.with_suffix(suffix)
-                    if not filename.exists() or force:
+                    filename = compare.filename.parent / (
+                        compare.filename.stem + suffix
+                    )
+                    if (
+                        not filename.exists()
+                        or force
+                        # TODO: Remove this special "hard force"
+                        or (
+                            result.result_info[0] == "raw results"
+                            and suffix in (".md", "-mem.png")
+                        )
+                    ):
                         util.status(".")
                         func(filename, compare)
                     else:
                         util.status("/")
 
-        # Remove any outdated comparison files if the bases have changed.
-        for filename in result.filename.parent.iterdir():
-            match = re.match(r"(?P<root>.*)-vs-(?P<base>.*)", filename.stem)
-            if match is not None:
-                if (
-                    match.group("root") == result.filename.stem
-                    and match.group("base") not in result.bases
-                ) or not (filename.parent / (match.group("root") + ".json")).exists():
-                    util.status("x")
-                    filename.unlink()
+        # # Remove any outdated comparison files if the bases have changed.
+        # for filename in result.filename.parent.iterdir():
+        #     match = re.match(r"(?P<root>.*)-vs-(?P<base>.*)", filename.stem)
+        #     if match is not None:
+        #         if (
+        #             match.group("root") == result.filename.stem
+        #             and match.group("base") not in result.bases
+        #         ) or not (filename.parent / (match.group("root") + ".json")).exists():
+        #             util.status("x")
+        #             filename.unlink()
 
     print()
 
@@ -335,6 +372,7 @@ def get_directory_indices_entries(
         if result.result_info[0] == "raw results":
             for base, compare in result.bases.items():
                 entries.append((dirpath, result.runner, base, compare.long_summary))
+                entries.append((dirpath, result.runner, base, compare.memory_summary))
                 missing_benchmarks, new_benchmarks = find_different_benchmarks(
                     result, compare.ref
                 )
@@ -434,6 +472,21 @@ def _main(repo_dir: Path, force: bool = False, bases: Optional[list[str]] = None
     plot.longitudinal_plot(benchmarking_results, repo_dir / "longitudinal.png")
     print("Generating configurations plot")
     plot.flag_effect_plot(benchmarking_results, repo_dir / "configs.png")
+    print("Generating memory plots")
+    plot.longitudinal_plot(
+        benchmarking_results,
+        repo_dir / "memory_long.png",
+        getter=lambda r: r.memory_change_float,
+        differences=("less", "more"),
+        title="Memory usage change by major version",
+    )
+    plot.flag_effect_plot(
+        benchmarking_results,
+        repo_dir / "memory_configs.png",
+        getter=lambda r: r.memory_change_float,
+        differences=("less", "more"),
+        title="Memory usage change by configuration",
+    )
 
 
 def main():

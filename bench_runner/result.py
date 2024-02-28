@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import defaultdict
 import functools
 import json
+from operator import itemgetter
 from pathlib import Path
 import re
 import socket
@@ -13,9 +14,16 @@ import sys
 from typing import Any, Optional
 
 
+import numpy as np
+import pyperf
+
+
 from . import git
 from . import hpt
 from . import runners
+
+
+CombinedData = list[tuple[str, Optional[np.ndarray], float]]
 
 
 def _clean(string: str) -> str:
@@ -129,6 +137,43 @@ class BenchmarkComparison(Comparison):
 
         return geometric_mean
 
+    def _calculate_memory_change(self):
+        # Windows doesn't have memory data
+        if self.head.system == "windows":
+            return "unknown"
+
+        combined_data = self.get_memory_diff()
+        points = np.array([x[2] for x in combined_data if x[1] is not None])
+        if len(points) == 0:
+            return "unknown"
+        else:
+            change = np.mean(points)
+            return f"{change:.02f}x"
+
+    @functools.cached_property
+    def memory_change(self) -> Optional[str]:
+        if not self.valid_comparison:
+            return ""
+
+        for line in self.contents_lines:
+            if line.startswith("- memory change:"):
+                return line[line.find(":") + 1 :].strip()
+
+        return None
+
+    @property
+    def memory_change_float(self) -> Optional[float]:
+        memory_change = self.memory_change
+        if memory_change in (None, "unknown"):
+            return None
+        else:
+            return float(memory_change.strip().strip("x"))
+
+    @property
+    def memory_summary(self) -> str:
+        memory_change = self.memory_change or "unknown"
+        return f"Memory usage: {memory_change}"
+
     @functools.cached_property
     def hpt_reliability(self) -> Optional[str]:
         if not self.valid_comparison:
@@ -182,6 +227,9 @@ class BenchmarkComparison(Comparison):
         if reliability is not None:
             reliability = reliability[:-4]
             result += f" ({reliability}% rel.)"
+        memory_change = self.memory_change
+        if memory_change is not None:
+            result += f" (mem {memory_change})"
 
         return result
 
@@ -218,7 +266,52 @@ class BenchmarkComparison(Comparison):
             )
             + "\n\n"
             + hpt.make_report(self.ref.filename, self.head.filename)
+            + "\n\n"
+            + "# Memory\n\n"
+            + f"- memory change: {self._calculate_memory_change()}"
         )
+
+    def _get_combined_data(
+        self, ref_data: dict[str, np.ndarray], head_data: dict[str, np.ndarray]
+    ) -> CombinedData:
+        def remove_outliers(values, m=2):
+            return values[
+                abs(values - np.mean(values)) < np.multiply(m, np.std(values))
+            ]
+
+        def calculate_diffs(
+            ref_values, head_values
+        ) -> tuple[Optional[np.ndarray], float]:
+            sig, t_score = pyperf._utils.is_significant(ref_values, head_values)
+
+            if not sig:
+                return None, 0.0
+            else:
+                ref_values = remove_outliers(ref_values)
+                head_values = remove_outliers(head_values)
+                values = np.outer(ref_values, 1.0 / head_values).flatten()
+                values.sort()
+                return values, float(values.mean())
+
+        combined_data = []
+        for name, ref in ref_data.items():
+            if len(ref) != 0 and name in head_data:
+                head = head_data[name]
+                if len(ref) == len(head):
+                    combined_data.append((name, *calculate_diffs(ref, head)))
+        combined_data.sort(key=itemgetter(2))
+        return combined_data
+
+    def get_timing_diff(self) -> CombinedData:
+        ref_data = self.ref.get_timing_data()
+        head_data = self.head.get_timing_data()
+        return self._get_combined_data(ref_data, head_data)
+
+    def get_memory_diff(self) -> CombinedData:
+        ref_data = self.ref.get_memory_data()
+        head_data = self.head.get_memory_data()
+        # Explicitly reversed so higher is bigger
+        return self._get_combined_data(head_data, ref_data)
 
 
 class PystatsComparison(Comparison):
@@ -385,7 +478,9 @@ class Result:
             case (["vs", base], ".md"):
                 return ("table", base)
             case (["vs", base], ".png"):
-                return ("plot", base)
+                return ("time plot", base)
+            case (["vs", base, "mem"], ".png"):
+                return ("memory plot", base)
         raise ValueError(
             f"Unknown result type (extra={self.extra} suffix={self.suffix})"
         )
@@ -551,6 +646,34 @@ class Result:
         from packaging import version as pkg_version
 
         return pkg_version.parse(self.version.replace("+", "0"))
+
+    def get_timing_data(self) -> dict[str, np.ndarray]:
+        data = {}
+
+        for benchmark in self.contents["benchmarks"]:
+            name = benchmark.get("metadata", self.contents["metadata"])["name"]
+            row = []
+            for run in benchmark["runs"]:
+                row.extend(run.get("values", []))
+            data[name] = np.array(row, dtype=np.float64)
+
+        return data
+
+    def get_memory_data(self) -> dict[str, np.ndarray]:
+        data = {}
+
+        for benchmark in self.contents["benchmarks"]:
+            name = benchmark.get("metadata", self.contents["metadata"])["name"]            if "metadata" in benchmark:
+            row = []
+            for run in benchmark["runs"]:
+                metadata = run.get("metadata", {})
+                for key in ("command_max_rss", "mem_max_rss"):
+                    if key in metadata:
+                        row.append(metadata[key])
+                        break
+            data[name] = np.array(row, dtype=np.float64)
+
+        return data
 
 
 def has_result(
