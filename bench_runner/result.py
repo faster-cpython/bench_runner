@@ -663,7 +663,7 @@ class Result:
         data = {}
 
         for benchmark in self.contents["benchmarks"]:
-            name = benchmark.get("metadata", self.contents["metadata"])["name"]            if "metadata" in benchmark:
+            name = benchmark.get("metadata", self.contents["metadata"])["name"]
             row = []
             for run in benchmark["runs"]:
                 metadata = run.get("metadata", {})

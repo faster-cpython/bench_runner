@@ -7,7 +7,6 @@ import datetime
 import io
 from pathlib import Path
 import sys
-import textwrap
 from typing import Iterable, Optional, TextIO
 from urllib.parse import unquote
 
@@ -64,7 +63,7 @@ def write_markdown_results(filename: Path, compare: BenchmarkComparison) -> None
     ]
 
     if compare.memory_change is not None:
-        entries.append("Memory change", compare.memory_change)
+        entries.append(("Memory change", compare.memory_change))
 
     with open(filename, "w") as fd:
         fd.write(f"# Results vs. {compare.base}\n\n")
