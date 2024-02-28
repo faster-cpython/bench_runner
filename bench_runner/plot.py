@@ -4,16 +4,15 @@ from __future__ import annotations
 import argparse
 import datetime
 import json
-from operator import attrgetter, itemgetter
+from operator import attrgetter
 from pathlib import Path
 import re
-from typing import Any, Iterable, Optional
+from typing import Callable, Iterable, Optional
 
 
 from matplotlib import pyplot as plt
 import matplotlib
 import numpy as np
-import pyperf
 
 
 matplotlib.use("agg")
@@ -22,27 +21,10 @@ matplotlib.use("agg")
 from . import result
 
 
-def get_data(result: result.Result) -> dict[str, Any]:
-    results = {}
-
-    for benchmark in result.contents["benchmarks"]:
-        if "metadata" in benchmark:
-            name = benchmark["metadata"]["name"]
-        else:
-            name = result.contents["metadata"]["name"]
-        data = []
-        for run in benchmark["runs"]:
-            data.extend(run.get("values", []))
-        results[name] = np.array(data, dtype=np.float64)
-
-    return results
-
-
-def remove_outliers(values, m=2):
-    return values[abs(values - np.mean(values)) < np.multiply(m, np.std(values))]
-
-
 def plot_diff_pair(ax, data):
+    if not len(data):
+        return []
+
     all_data = []
     violins = []
 
@@ -81,35 +63,12 @@ def formatter(val, pos):
     return f"{val:.02f}×"
 
 
-def calculate_diffs(
-    ref_values, head_values, outlier_rejection=True
-) -> tuple[Optional[np.ndarray], float]:
-    sig, t_score = pyperf._utils.is_significant(ref_values, head_values)
-
-    if not sig:
-        return None, 0.0
-    else:
-        if outlier_rejection:
-            ref_values = remove_outliers(ref_values)
-            head_values = remove_outliers(head_values)
-        values = np.outer(ref_values, 1.0 / head_values).flatten()
-        values.sort()
-        return values, float(values.mean())
-
-
 def plot_diff(
-    ref: result.Result, head: result.Result, output_filename: Path, title: str
+    combined_data: result.CombinedData,
+    output_filename: Path,
+    title: str,
+    differences: tuple[str, str],
 ) -> None:
-    ref_data = get_data(ref)
-    head_data = get_data(head)
-
-    combined_data = [
-        (name, *calculate_diffs(ref, head_data[name]))
-        for name, ref in ref_data.items()
-        if name in head_data
-    ]
-    combined_data.sort(key=itemgetter(2))
-
     _, axs = plt.subplots(
         figsize=(8, 2 + len(combined_data) * 0.3), layout="constrained"
     )
@@ -124,6 +83,21 @@ def plot_diff(
     xlim = axs.get_xlim()
     if xlim[0] > 0.75 and xlim[1] < 1.25:
         axs.set_xlim(0.75, 1.25)
+    axs.annotate(
+        f"{differences[1]} ⟶",
+        xy=(1.0, 1.0),
+        xycoords=("data", "axes fraction"),
+        xytext=(10, 0),
+        textcoords="offset pixels",
+    )
+    axs.annotate(
+        f"⟵ {differences[0]}",
+        xy=(1.0, 1.0),
+        xycoords=("data", "axes fraction"),
+        xytext=(-10, 0),
+        textcoords="offset pixels",
+        horizontalalignment="right",
+    )
     axs.grid()
     axs.set_title(title)
 
@@ -138,13 +112,15 @@ def get_micro_version(version):
     return micro
 
 
-def annotate_y_axis(ax):
+def annotate_y_axis(ax, differences: tuple[str, str]):
     ax.yaxis.set_major_formatter(formatter)
     ax.grid()
-    ax.set_ylim([0.9, 1.3])
+    ylim = ax.get_ylim()
+    if ylim[0] > 0.9 and ylim[1] < 1.3:
+        ax.set_ylim([0.9, 1.3])
     ax.legend(loc="upper left")
     ax.annotate(
-        "faster ⟶",
+        f"{differences[1]} ⟶",
         xy=(0.0, 1.0),
         xycoords=("axes fraction", "data"),
         xytext=(10, 10),
@@ -153,7 +129,7 @@ def annotate_y_axis(ax):
         clip_on=True,
     )
     ax.annotate(
-        "⟵ slower",
+        f"⟵ {differences[0]}",
         xy=(0.0, 1.0),
         xycoords=("axes fraction", "data"),
         xytext=(10, -10),
@@ -206,18 +182,24 @@ def longitudinal_plot(
     colors=["C0", "C0", "C2", "C3", "C3"],
     styles=["-", ":", "-", "-", ":"],
     versions=[(3, 11), (3, 12), (3, 13)],
+    getter: Callable[
+        [result.BenchmarkComparison], Optional[float]
+    ] = lambda r: r.hpt_percentile_float(99),
+    differences: tuple[str, str] = ("slower", "faster"),
+    title="Performance improvement by configuration",
 ):
     def get_comparison_value(ref, r, base):
         key = ",".join((str(ref.filename)[8:], str(r.filename)[8:], base))
         if key in data:
             return data[key]
         else:
-            value = result.BenchmarkComparison(ref, r, base).hpt_percentile_float(99)
+            value = getter(result.BenchmarkComparison(ref, r, base))
             data[key] = value
             return value
 
-    if (output_filename.parent / "longitudinal.json").is_file():
-        with open(output_filename.parent / "longitudinal.json") as fd:
+    data_cache = output_filename.with_suffix(".json")
+    if data_cache.is_file():
+        with open(data_cache) as fd:
             data = json.load(fd)
     else:
         data = {}
@@ -289,19 +271,19 @@ def longitudinal_plot(
                     text.set_size(8)
                     text.arrow_patch.set_color("#888")
 
-        annotate_y_axis(ax)
+        annotate_y_axis(ax, differences)
 
         # Add a line for when Tier 2 and JIT were turned on
         if i == 2:
             add_axvline(ax, tier2_date, "TIER 2")
             add_axvline(ax, jit_date, "JIT")
 
-    fig.suptitle("Performance improvement by major version")
+    fig.suptitle(title)
 
     plt.savefig(output_filename, dpi=150)
     plt.close()
 
-    with open(output_filename.parent / "longitudinal.json", "w") as fd:
+    with open(data_cache, "w") as fd:
         json.dump(data, fd, indent=2)
 
 
@@ -314,20 +296,24 @@ def flag_effect_plot(
     names=["linux", "linux2", "macos", "win64", "win32"],
     colors=["C0", "C0", "C2", "C3", "C3"],
     styles=["-", ":", "-", "-", ":"],
+    getter: Callable[
+        [result.BenchmarkComparison], Optional[float]
+    ] = lambda r: r.hpt_percentile_float(99),
+    differences: tuple[str, str] = ("slower", "faster"),
+    title="Performance improvement by configuration",
 ):
     def get_comparison_value(ref, r):
         key = ",".join((str(ref.filename)[8:], str(r.filename)[8:]))
         if key in data:
             return data[key]
         else:
-            value = result.BenchmarkComparison(ref, r, "default").hpt_percentile_float(
-                99
-            )
+            value = getter(result.BenchmarkComparison(ref, r, "default"))
             data[key] = value
             return value
 
-    if (output_filename.parent / "configs.json").is_file():
-        with open(output_filename.parent / "configs.json") as fd:
+    data_cache = output_filename.with_suffix(".json")
+    if data_cache.is_file():
+        with open(data_cache) as fd:
             data = json.load(fd)
     else:
         data = {}
@@ -379,14 +365,14 @@ def flag_effect_plot(
                 alpha=0.9,
             )
 
-        annotate_y_axis(ax)
+        annotate_y_axis(ax, differences)
 
-    fig.suptitle("Performance improvement by configuration")
+    fig.suptitle(title)
 
     plt.savefig(output_filename, dpi=150)
     plt.close()
 
-    with open(output_filename.parent / "configs.json", "w") as fd:
+    with open(data_cache, "w") as fd:
         json.dump(data, fd, indent=2)
 
 
@@ -398,9 +384,10 @@ if __name__ == "__main__":
     parser.add_argument("title", help="Title of plot")
     args = parser.parse_args()
 
+    ref = result.Result.from_filename(Path(args.ref))
+    head = result.Result.from_filename(Path(args.head))
+    compare = result.BenchmarkComparison(ref, head, "base")
+
     plot_diff(
-        result.Result.from_filename(Path(args.ref)),
-        result.Result.from_filename(Path(args.head)),
-        Path(args.output),
-        args.title,
+        compare.get_timing_diff(), Path(args.output), args.title, ("slower", "faster")
     )
