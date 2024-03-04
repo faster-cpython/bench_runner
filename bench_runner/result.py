@@ -15,6 +15,7 @@ from typing import Any, Optional
 
 
 import numpy as np
+from packaging import version
 import pyperf
 
 
@@ -662,15 +663,25 @@ class Result:
     def get_memory_data(self) -> dict[str, np.ndarray]:
         data = {}
 
+        # On MacOS, there was a bug in pyperf where the `mem_max_rss` value was
+        # erroneously multiplied by 1024.  (BSD defines maxrss in bytes, Linux
+        # in kilobytes).
+
+        needs_correction = self.system == "darwin" and version.parse(
+            self.contents["metadata"]["perf_version"]
+        ) < version.parse("2.6.3")
+
         for benchmark in self.contents["benchmarks"]:
             name = benchmark.get("metadata", self.contents["metadata"])["name"]
             row = []
             for run in benchmark["runs"]:
                 metadata = run.get("metadata", {})
-                for key in ("command_max_rss", "mem_max_rss"):
-                    if key in metadata:
-                        row.append(metadata[key])
-                        break
+                if mem := metadata.get("command_max_rss"):
+                    row.append(mem)
+                elif mem := metadata.get("mem_max_rss"):
+                    if needs_correction:
+                        mem /= 1024
+                    row.append(mem)
             data[name] = np.array(row, dtype=np.float64)
 
         return data
