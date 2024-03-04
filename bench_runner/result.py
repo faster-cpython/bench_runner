@@ -766,15 +766,14 @@ def match_to_bases(results: list[Result], bases: Optional[list[str]]):
                 ),
             )
 
-        if not found_base and result.fork == "python":
-            # Compare Tier 1 and Tier 2 of the same commit
+        if not found_base and result.fork == "python" and result.flags != []:
+            # Compare builds with flags with builds with no flags
             find_match(
                 result,
                 candidates,
                 "base",
                 lambda ref: (
-                    ref.cpython_hash == result.cpython_hash
-                    and ref.flags != result.flags
+                    ref.cpython_hash == result.cpython_hash and ref.flags == []
                 ),
             )
 
