@@ -186,6 +186,7 @@ def longitudinal_plot(
         [result.BenchmarkComparison], Optional[float]
     ] = lambda r: r.hpt_percentile_float(99),
     differences: tuple[str, str] = ("slower", "faster"),
+    markers=["s", "s", "^", ".", "."],
     title="Performance improvement by configuration",
 ):
     def get_comparison_value(ref, r, base):
@@ -216,8 +217,8 @@ def longitudinal_plot(
 
         ax.set_title(f"Python {version_str}.x vs. {base}")
 
-        for runner_i, (runner, name, color, style) in enumerate(
-            zip(runners, names, colors, styles)
+        for runner_i, (runner, name, color, style, marker) in enumerate(
+            zip(runners, names, colors, styles, markers)
         ):
             runner_results = [r for r in ver_results if r.nickname == runner]
 
@@ -245,7 +246,8 @@ def longitudinal_plot(
                 changes,
                 color=color,
                 linestyle=style,
-                markersize=2.5,
+                marker=marker,
+                markersize=5,
                 label=name,
                 alpha=0.9,
             )
@@ -300,6 +302,7 @@ def flag_effect_plot(
         [result.BenchmarkComparison], Optional[float]
     ] = lambda r: r.hpt_percentile_float(99),
     differences: tuple[str, str] = ("slower", "faster"),
+    markers=["s", "s", "^", ".", "."],
     title="Performance improvement by configuration",
 ):
     def get_comparison_value(ref, r):
@@ -336,7 +339,9 @@ def flag_effect_plot(
     for config, flag, ax in zip(configs, flags, axs):
         ax.set_title(f"Effect of {config} vs. Tier 1 (same commit)")
 
-        for runner, name, color, style in zip(runners, names, colors, styles):
+        for runner, name, color, style, marker in zip(
+            runners, names, colors, styles, markers
+        ):
             runner_results = commits.get(runner, {})
             base_results = runner_results.get("", {})
 
@@ -359,8 +364,8 @@ def flag_effect_plot(
                 changes,
                 color=color,
                 linestyle=style,
-                marker="o",
-                markersize=2.5,
+                marker=marker,
+                markersize=5,
                 label=name,
                 alpha=0.9,
             )
