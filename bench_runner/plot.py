@@ -376,6 +376,11 @@ def flag_effect_plot(
 
     fig.suptitle(title)
 
+    minx = min(ax.get_xlim()[0] for ax in axs)
+    maxx = max(ax.get_xlim()[1] for ax in axs)
+    for ax in axs:
+        ax.set_xlim((minx, maxx))
+
     plt.savefig(output_filename, dpi=150)
     plt.close()
 
