@@ -241,16 +241,17 @@ def longitudinal_plot(
             ]
             changes = [get_comparison_value(ref, r, base) for r in runner_results]
 
-            ax.plot(
-                dates,
-                changes,
-                color=color,
-                linestyle=style,
-                marker=marker,
-                markersize=5,
-                label=name,
-                alpha=0.9,
-            )
+            if any(x is not None for x in changes):
+                ax.plot(
+                    dates,
+                    changes,
+                    color=color,
+                    linestyle=style,
+                    marker=marker,
+                    markersize=5,
+                    label=name,
+                    alpha=0.9,
+                )
 
             if runner_i > 0:
                 continue
@@ -359,16 +360,17 @@ def flag_effect_plot(
             dates = [datetime.datetime.fromisoformat(x[0]) for x in line]
             changes = [x[1] for x in line]
 
-            ax.plot(
-                dates,
-                changes,
-                color=color,
-                linestyle=style,
-                marker=marker,
-                markersize=5,
-                label=name,
-                alpha=0.9,
-            )
+            if any(x is not None for x in changes):
+                ax.plot(
+                    dates,
+                    changes,
+                    color=color,
+                    linestyle=style,
+                    marker=marker,
+                    markersize=5,
+                    label=name,
+                    alpha=0.9,
+                )
 
         annotate_y_axis(ax, differences)
 
