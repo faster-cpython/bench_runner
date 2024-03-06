@@ -243,7 +243,7 @@ def _main(input_dir: Path, output_prefix: Path):
                     if obj == "python3.8":
                         continue
 
-                    self_time = float(self_time) / 100.0
+                    self_time = float(self_time)
                     if self_time <= 0.0:
                         break
 
