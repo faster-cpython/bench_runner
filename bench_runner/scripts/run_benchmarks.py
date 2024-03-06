@@ -168,6 +168,8 @@ def perf_to_csv(lines: Iterable[str], output: Path):
             continue
         if line.startswith("#") or line == "":
             continue
+        if total is None:
+            raise ValueError("Could not find total sample count")
         children, _, period, _, shared, _, symbol = line.split(maxsplit=6)
         children = float(children[:-1])
         self_time = float(int(period)) / total
