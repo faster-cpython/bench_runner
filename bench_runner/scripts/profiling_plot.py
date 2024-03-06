@@ -298,10 +298,11 @@ def _main(input_dir: Path, output_prefix: Path):
             label=f"{category} {val:.2%}",
             left=bottom,
             hatch=hatches[i // 10],
-            color=f"C{i%10}",
+            color=f"C{i % 10}",
         )
         bottom += values
 
+    assert bottom <= 1.0
     values = 1.0 - bottom
     ax.barh(names, values, 0.5, label="(other functions)", left=bottom, color="#ddd")
 
@@ -316,9 +317,10 @@ def _main(input_dir: Path, output_prefix: Path):
     labels = [
         i < 10 and f"{x[1]} {x[0]:.2%}" or "" for i, x in enumerate(sorted_categories)
     ]
-    colors = [f"C{i%10}" for i in range(len(values))]
+    colors = [f"C{i % 10}" for i in range(len(values))]
     hatches = [hatches[i // 10] for i in range(len(values))]
 
+    assert sum(values) <= 1.0
     other = 1.0 - sum(values)
     values.append(other)
     labels.append("")
