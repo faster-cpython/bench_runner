@@ -157,16 +157,22 @@ def collect_pystats(
 
 
 def perf_to_csv(lines: Iterable[str], output: Path):
+    event_count_prefix = "# Event count (approx.): "
+    total = None
+
     rows = []
     for line in lines:
         line = line.strip()
+        if line.startswith(event_count_prefix):
+            total = int(line[len(event_count_prefix) :].strip())
+            continue
         if line.startswith("#") or line == "":
             continue
-        children, self_time, _, shared, _, symbol = line.split(maxsplit=5)
+        children, _, period, _, shared, _, symbol = line.split(maxsplit=6)
         children = float(children[:-1])
-        self = float(self_time[:-1])
-        if children > 0.0 or self > 0.0:
-            rows.append([self, children, shared, symbol])
+        self_time = float(int(period)) / total
+        if children > 0.0 and self_time > 0.0:
+            rows.append([self_time, children, shared, symbol])
 
     rows.sort(key=itemgetter(0), reverse=True)
 
@@ -209,6 +215,7 @@ def collect_perf(python: Path, benchmarks: str):
                         "--stdio",
                         "-g",
                         "none",
+                        "--show-total-period",
                         "-i",
                         "perf.data",
                     ],

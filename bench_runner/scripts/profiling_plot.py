@@ -200,6 +200,9 @@ def category_for_obj_sym(obj: str, sym: str) -> str:
     if obj.startswith("libc"):
         return "libc"
 
+    if obj == "[JIT]":
+        return "jit"
+
     if re.match(r".+\.so(\..+)?$", obj):
         return "library"
 
