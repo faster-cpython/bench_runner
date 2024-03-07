@@ -170,11 +170,10 @@ def perf_to_csv(lines: Iterable[str], output: Path):
             continue
         if total is None:
             raise ValueError("Could not find total sample count")
-        children, _, period, _, shared, _, symbol = line.split(maxsplit=6)
-        children = float(children[:-1])
+        _, period, _, shared, _, symbol = line.split(maxsplit=5)
         self_time = float(int(period)) / total
-        if children > 0.0 and self_time > 0.0:
-            rows.append([self_time, children, shared, symbol])
+        if self_time > 0.0:
+            rows.append([self_time, 0.0, shared, symbol])
 
     rows.sort(key=itemgetter(0), reverse=True)
 
@@ -200,7 +199,6 @@ def collect_perf(python: Path, benchmarks: str):
                 command_prefix=[
                     "perf",
                     "record",
-                    "--call-graph=dwarf",
                     "-o",
                     "perf.data",
                     "--",
