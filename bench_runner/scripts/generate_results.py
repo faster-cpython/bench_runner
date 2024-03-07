@@ -164,22 +164,35 @@ def output_results_index(
     """
     bases = [*bases, "base"]
 
-    head = ["date", "fork", "ref", "version", "hash"] + [
-        f"vs. {base}:" for base in bases
-    ]
+    head = ["date", "fork/ref", "hash/flags"] + [f"vs. {base}:" for base in bases]
 
     rows = []
     for result in results:
         versus = []
         for base in bases:
             if base in result.bases and result.bases[base].valid_comparison:
-                versus.append(
-                    table.md_link(
-                        result.bases[base].summary,
-                        result.bases[base].filename.with_suffix(".md"),
+                compare = result.bases[base]
+                entry = (
+                    compare.summary
+                    + "<br>"
+                    + table.md_link(
+                        TYPE_TO_ICON["table"],
+                        compare.filename.with_suffix(".md"),
+                        filename,
+                    )
+                    + table.md_link(
+                        TYPE_TO_ICON["time plot"],
+                        compare.filename.with_suffix(".png"),
                         filename,
                     )
                 )
+                if base == "base" and compare.memory_change not in (None, "unknown"):
+                    entry += table.md_link(
+                        TYPE_TO_ICON["memory plot"],
+                        compare.filename.parent / (compare.filename.stem + "-mem.png"),
+                        filename,
+                    )
+                versus.append(entry)
             else:
                 versus.append("")
 
@@ -188,9 +201,7 @@ def output_results_index(
                 table.md_link(
                     result.commit_date, str(result.filename.parent), filename
                 ),
-                unquote(result.fork),
-                result.ref[:10],
-                result.version,
+                f"{unquote(result.fork)}/{result.ref}",
                 result.hash_and_flags,
                 *versus,
             ]
@@ -320,6 +331,13 @@ def find_different_benchmarks(head: Result, ref: Result) -> tuple[list[str], lis
     )
 
 
+TYPE_TO_ICON = {
+    "table": "📄",
+    "time plot": "📈",
+    "memory plot": "🧠",
+}
+
+
 def get_directory_indices_entries(
     results: list[Result],
 ) -> list[tuple[Path, Optional[str], Optional[str], str]]:
@@ -393,7 +411,9 @@ def get_directory_indices_entries(
                         dirpath,
                         result.runner,
                         base,
-                        table.md_link(type, result.filename.name),
+                        table.md_link(
+                            TYPE_TO_ICON.get(type, "") + type, result.filename.name
+                        ),
                     )
                 )
 
