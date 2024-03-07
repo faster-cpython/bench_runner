@@ -236,14 +236,25 @@ def _main(input_dir: Path, output_prefix: Path):
                 for row in csvreader:
                     break
 
+                # Add up all the JIT entries into a single row
+                rows = []
+                jit_time = 0.0
                 for row in csvreader:
                     self_time, _, obj, sym = row
+                    self_time = float(self_time)
+                    if obj == "[JIT]":
+                        jit_time += self_time
+                    else:
+                        rows.append((self_time, obj, sym))
+                if jit_time != 0.0:
+                    rows.append((jit_time, "[JIT]", "jit"))
+                rows.sort(reverse=True)
 
+                for self_time, obj, sym in rows:
                     # python3.8 is the "parent" python orchestrating pyperformance
                     if obj == "python3.8":
                         continue
 
-                    self_time = float(self_time)
                     if self_time <= 0.0:
                         break
 
@@ -302,7 +313,6 @@ def _main(input_dir: Path, output_prefix: Path):
         )
         bottom += values
 
-    assert bottom <= 1.0
     values = 1.0 - bottom
     ax.barh(names, values, 0.5, label="(other functions)", left=bottom, color="#ddd")
 
@@ -320,8 +330,10 @@ def _main(input_dir: Path, output_prefix: Path):
     colors = [f"C{i % 10}" for i in range(len(values))]
     hatches = [hatches[i // 10] for i in range(len(values))]
 
-    assert sum(values) <= 1.0
-    other = 1.0 - sum(values)
+    if sum(values) < 1.0:
+        other = 1.0 - sum(values)
+    else:
+        other = 0.0
     values.append(other)
     labels.append("")
     colors.append("#ddd")
