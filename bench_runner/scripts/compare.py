@@ -65,7 +65,11 @@ def compare_pair(
         ("slower", "faster"),
     )
 
-    return f"{comparison.summary} [table]({name}.md) [plot]({name}.png)"
+    return (
+        comparison.summary
+        + f" [{util.TYPE_TO_ICON['table']}]({name}.md)"
+        + f" [{util.TYPE_TO_ICON['time plot']}]({name}.png)"
+    )
 
 
 def write_row(fd, columns: list[str]):

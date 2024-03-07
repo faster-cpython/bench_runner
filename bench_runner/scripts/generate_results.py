@@ -176,19 +176,19 @@ def output_results_index(
                     compare.summary
                     + "<br>"
                     + table.md_link(
-                        TYPE_TO_ICON["table"],
+                        util.TYPE_TO_ICON["table"],
                         compare.filename.with_suffix(".md"),
                         filename,
                     )
                     + table.md_link(
-                        TYPE_TO_ICON["time plot"],
+                        util.TYPE_TO_ICON["time plot"],
                         compare.filename.with_suffix(".png"),
                         filename,
                     )
                 )
                 if base == "base" and compare.memory_change not in (None, "unknown"):
                     entry += table.md_link(
-                        TYPE_TO_ICON["memory plot"],
+                        util.TYPE_TO_ICON["memory plot"],
                         compare.filename.parent / (compare.filename.stem + "-mem.png"),
                         filename,
                     )
@@ -331,13 +331,6 @@ def find_different_benchmarks(head: Result, ref: Result) -> tuple[list[str], lis
     )
 
 
-TYPE_TO_ICON = {
-    "table": "📄",
-    "time plot": "📈",
-    "memory plot": "🧠",
-}
-
-
 def get_directory_indices_entries(
     results: list[Result],
 ) -> list[tuple[Path, Optional[str], Optional[str], str]]:
@@ -412,7 +405,7 @@ def get_directory_indices_entries(
                         result.runner,
                         base,
                         table.md_link(
-                            TYPE_TO_ICON.get(type, "") + type, result.filename.name
+                            util.TYPE_TO_ICON.get(type, "") + type, result.filename.name
                         ),
                     )
                 )
