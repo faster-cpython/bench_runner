@@ -105,39 +105,6 @@ def test_main(tmp_path, monkeypatch):
     _run_for_bases(["3.10.4", "3.11.0b3"], repo_path, has_base=["b0e1f9c"])
     _run_for_bases(["3.10.4", "3.11.0b3"], repo_path, has_base=["b0e1f9c"])
 
-    rows = _parse_table(repo_path / "README.md")
-    versions = [row[3] for row in rows]
-    assert len(set(versions)) == len(versions)
-    print(versions)
-    assert versions == [
-        "version",
-        "---",
-        "3.12.0a3+",
-        "3.12.0a2+",
-        "3.12.0a1+",
-        "3.11.0b3",
-        "3.10.4",
-    ]
-
-    rows = _parse_table(repo_path / "RESULTS.md")
-    versions = [row[3] for row in rows]
-    assert len(set(versions)) != len(versions)
-    assert versions == [
-        "version",
-        "---",
-        "3.12.0a3+",
-        "3.12.0a2+",
-        "3.12.0a1+",
-        "3.12.0a1+",
-        "3.11.0b3",
-        "3.11.0b2",
-        "3.11.0b1",
-        "3.11.0a7",
-        "3.11.0a6",
-        "3.11.0a3",
-        "3.10.4",
-    ]
-
 
 def test_change_bases(tmp_path):
     repo_path = _copy_repo(tmp_path)

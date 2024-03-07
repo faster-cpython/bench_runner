@@ -70,7 +70,7 @@ def test_merge_base(tmp_path):
     assert head.commit_merge_base == "9d38120e335357a3b294277fd5eff0a10e46e043"
     assert comparison.ref.version == "3.10.4"
     assert comparison.head is head
-    assert comparison.geometric_mean == "1.70x faster \\*"
+    assert comparison.geometric_mean == "1.70x faster"
 
 
 def test_from_scratch(monkeypatch):

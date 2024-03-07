@@ -119,19 +119,11 @@ class BenchmarkComparison(Comparison):
 
         lines = self.contents_lines
 
-        if (
-            self.head.benchmark_hash is None
-            or self.ref.benchmark_hash != self.head.benchmark_hash
-        ):
-            suffix = r" \*"
-        else:
-            suffix = ""
-
         # We want to get the *last* geometric mean in the file, in case
         # it's divided by tags
         for line in lines[::-1]:
             if "Geometric mean" in line:
-                geometric_mean = line.split("|")[3].strip() + suffix
+                geometric_mean = line.split("|")[3].strip()
                 break
         else:
             geometric_mean = "not sig"
@@ -224,13 +216,8 @@ class BenchmarkComparison(Comparison):
             return ""
 
         result = self.geometric_mean
-        reliability = self.hpt_reliability
-        if reliability is not None:
-            reliability = reliability[:-4]
-            result += f" ({reliability}%)"
-        memory_change = self.memory_change
-        if memory_change not in (None, "unknown"):
-            result += f" ({memory_change} m)"
+        result = result.replace("faster", "↑")
+        result = result.replace("slower", "↓")
 
         return result
 
@@ -626,9 +613,9 @@ class Result:
         # A representation for the user that combines the commit hash and other flags
         parts = [self.cpython_hash]
         if self.is_tier2:
-            parts.append("2️⃣")
+            parts.append("️(T2)")
         if self.is_jit:
-            parts.append("*️⃣")
+            parts.append("(JIT)")
         return " ".join(parts)
 
     @functools.cached_property
