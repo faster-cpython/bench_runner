@@ -200,6 +200,9 @@ def category_for_obj_sym(obj: str, sym: str) -> str:
     if obj.startswith("libc"):
         return "libc"
 
+    if obj == "[JIT]":
+        return "jit"
+
     if re.match(r".+\.so(\..+)?$", obj):
         return "library"
 
@@ -233,14 +236,25 @@ def _main(input_dir: Path, output_prefix: Path):
                 for row in csvreader:
                     break
 
+                # Add up all the JIT entries into a single row
+                rows = []
+                jit_time = 0.0
                 for row in csvreader:
                     self_time, _, obj, sym = row
+                    self_time = float(self_time)
+                    if obj == "[JIT]":
+                        jit_time += self_time
+                    else:
+                        rows.append((self_time, obj, sym))
+                if jit_time != 0.0:
+                    rows.append((jit_time, "[JIT]", "jit"))
+                rows.sort(reverse=True)
 
+                for self_time, obj, sym in rows:
                     # python3.8 is the "parent" python orchestrating pyperformance
                     if obj == "python3.8":
                         continue
 
-                    self_time = float(self_time) / 100.0
                     if self_time <= 0.0:
                         break
 
@@ -295,7 +309,7 @@ def _main(input_dir: Path, output_prefix: Path):
             label=f"{category} {val:.2%}",
             left=bottom,
             hatch=hatches[i // 10],
-            color=f"C{i%10}",
+            color=f"C{i % 10}",
         )
         bottom += values
 
@@ -313,10 +327,13 @@ def _main(input_dir: Path, output_prefix: Path):
     labels = [
         i < 10 and f"{x[1]} {x[0]:.2%}" or "" for i, x in enumerate(sorted_categories)
     ]
-    colors = [f"C{i%10}" for i in range(len(values))]
+    colors = [f"C{i % 10}" for i in range(len(values))]
     hatches = [hatches[i // 10] for i in range(len(values))]
 
-    other = 1.0 - sum(values)
+    if sum(values) < 1.0:
+        other = 1.0 - sum(values)
+    else:
+        other = 0.0
     values.append(other)
     labels.append("")
     colors.append("#ddd")
