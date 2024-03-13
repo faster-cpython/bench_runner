@@ -191,6 +191,18 @@ CATEGORIES: dict[str, list[str]] = {
     ],
 }
 
+COLOR_ORDER = ["jit", "kernel", "libc", "library"] + list(CATEGORIES.keys())
+
+
+def get_color_and_hatch(category: str) -> tuple[str, str]:
+    hatches = ["", "//", "\\\\"]
+    try:
+        index = COLOR_ORDER.index(category)
+    except ValueError:
+        return "#ddd", ""
+
+    return f"C{index % 10}", hatches[index // 10]
+
 
 @functools.cache
 def category_for_obj_sym(obj: str, sym: str) -> str:
@@ -227,6 +239,9 @@ def _main(input_dir: Path, output_prefix: Path):
         for csv_path in sorted(input_dir.glob("*.csv")):
             stem = csv_path.stem.split(".", 1)[0]
 
+            if stem.startswith("sqlalchemy"):
+                continue
+
             md.write(f"\n## {stem}\n\n")
             md.write("| percentage | object | symbol | category |\n")
             md.write("| ---: | :--- | :--- | :--- |\n")
@@ -242,6 +257,8 @@ def _main(input_dir: Path, output_prefix: Path):
                 for row in csvreader:
                     self_time, _, obj, sym = row
                     self_time = float(self_time)
+                    if self_time > 100.0:
+                        print(f"{stem} Invalid data")
                     if obj == "[JIT]":
                         jit_time += self_time
                     else:
@@ -295,21 +312,21 @@ def _main(input_dir: Path, output_prefix: Path):
     bottom = np.zeros(len(results))
     names = list(results.keys())[::-1]
 
-    hatches = ["", "//", "\\\\"]
     for i, (val, category) in enumerate(sorted_categories):
         if category == "unknown":
             continue
         values = np.array(
             [results[name].get(category, 0.0) for name in names], np.float64
         )
+        color, hatch = get_color_and_hatch(category)
         ax.barh(
             names,
             values,
             0.5,
             label=f"{category} {val:.2%}",
             left=bottom,
-            hatch=hatches[i // 10],
-            color=f"C{i % 10}",
+            hatch=hatch,
+            color=color,
         )
         bottom += values
 
@@ -327,8 +344,8 @@ def _main(input_dir: Path, output_prefix: Path):
     labels = [
         i < 10 and f"{x[1]} {x[0]:.2%}" or "" for i, x in enumerate(sorted_categories)
     ]
-    colors = [f"C{i % 10}" for i in range(len(values))]
-    hatches = [hatches[i // 10] for i in range(len(values))]
+    colors = [get_color_and_hatch(cat[1])[0] for cat in sorted_categories]
+    hatches = [get_color_and_hatch(cat[1])[1] for cat in sorted_categories]
 
     if sum(values) < 1.0:
         other = 1.0 - sum(values)
