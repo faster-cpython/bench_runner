@@ -59,6 +59,7 @@ CATEGORIES: dict[str, list[str]] = {
         "_PyTrash_.+",
         ".+_traverse",
         ".+MaybeUntrack",
+        "deduce_unreachable",
         "gc_collect_main",
         "PyObject_IS_GC",
         "type_is_gc",
@@ -189,6 +190,7 @@ CATEGORIES: dict[str, list[str]] = {
         "PyImport.+",
         "r_.+",
     ],
+    "compiler": ["uop_optimize", "_PyJIT_.+"],
 }
 
 COLOR_ORDER = ["jit", "kernel", "libc", "library"] + list(CATEGORIES.keys())
