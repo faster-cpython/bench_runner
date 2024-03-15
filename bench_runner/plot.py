@@ -21,21 +21,49 @@ matplotlib.use("agg")
 from . import result
 
 
+INTERPRETER_HEAVY = {
+    "chaos",
+    "coroutines",
+    "deepcopy",
+    "deltablue",
+    "generators",
+    "go",
+    "hexiom",
+    "logging",
+    "nbody",
+    "pickle_pure_python",
+    "pprint",
+    "raytrace",
+    "richards",
+    "richards_super",
+    "sqlglot_parse",
+    "tomli_loads",
+    "unpack_sequence",
+    "unpickle_pure_python",
+}
+
+
 def plot_diff_pair(ax, data):
     if not len(data):
         return []
 
     all_data = []
     violins = []
+    colors = []
 
     for i, (name, values, mean) in enumerate(data):
         if values is not None:
             idx = np.round(np.linspace(0, len(values) - 1, 100)).astype(int)
             violins.append(values[idx])
             all_data.extend(values)
+            if name in INTERPRETER_HEAVY:
+                colors.append("red")
+            else:
+                colors.append("C0")
         else:
             violins.append([1.0])
             all_data.extend([1.0])
+            colors.append("C0")
             ax.text(1.01, i + 1, "insignificant")
 
     violins.append(all_data)
@@ -50,6 +78,8 @@ def plot_diff_pair(ax, data):
     )
 
     violin["cquantiles"].set_linestyle(":")
+    for body, color in zip(violin["bodies"], colors):
+        body.set_facecolor(color)
 
     for i, values in enumerate(violins):
         if not np.all(values == [1.0]):
