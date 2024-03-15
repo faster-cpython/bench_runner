@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections import defaultdict
 import functools
-import json
 from operator import itemgetter
 from pathlib import Path
 import re
@@ -17,6 +16,7 @@ from typing import Any, Optional
 import numpy as np
 from packaging import version
 import pyperf
+import ujson
 
 
 from . import git
@@ -538,11 +538,11 @@ class Result:
         if hasattr(self, "_full_contents"):
             return self._full_contents
 
-        with open(self.filename, "rb") as fd:
-            self._full_contents = json.load(fd)
-
         if hasattr(self, "_fast_contents"):
             del self._fast_contents
+
+        with open(self.filename, "rb") as fd:
+            self._full_contents = ujson.load(fd)
 
         return self._full_contents
 

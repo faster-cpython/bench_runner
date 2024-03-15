@@ -2,8 +2,10 @@ from __future__ import annotations
 
 
 import argparse
-import json
 from pathlib import Path
+
+
+import ujson
 
 
 from bench_runner import result
@@ -15,7 +17,7 @@ def remove_benchmark(
     filename: Path, remove: set[str], keep_hash: set[str], dry_run: bool
 ):
     with open(filename) as fd:
-        data = json.load(fd)
+        data = ujson.load(fd)
 
     if data["metadata"]["benchmark_hash"] in keep_hash:
         util.status("/")
@@ -36,7 +38,7 @@ def remove_benchmark(
 
     if not dry_run:
         with open(filename, "w") as fd:
-            json.dump(data, fd, indent=2)
+            ujson.dump(data, fd, indent=2)
 
 
 def _main(benchmarks: list[str], keep_hash: list[str], dry_run: bool = False):

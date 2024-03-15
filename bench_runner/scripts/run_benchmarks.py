@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import json
 import os
 from operator import itemgetter
 from pathlib import Path
@@ -13,6 +12,9 @@ import sys
 import tempfile
 import textwrap
 from typing import Iterable, Optional, Union
+
+
+import ujson
 
 
 from bench_runner import git
@@ -104,7 +106,7 @@ def run_benchmarks(
             f"No benchmark file created at {BENCHMARK_JSON.resolve()}."
         )
     with open(BENCHMARK_JSON) as fd:
-        contents = json.load(fd)
+        contents = ujson.load(fd)
     if len(contents.get("benchmarks", [])) == 0:
         raise NoBenchmarkError("No benchmarks were run.")
 
@@ -234,7 +236,7 @@ def update_metadata(
     run_id: Optional[str] = None,
 ) -> None:
     with open(filename) as fd:
-        content = json.load(fd)
+        content = ujson.load(fd)
 
     metadata = content.setdefault("metadata", {})
 
@@ -250,7 +252,7 @@ def update_metadata(
         metadata["github_action_url"] = f"{GITHUB_URL}/actions/runs/{run_id}"
 
     with open(filename, "w") as fd:
-        json.dump(content, fd, indent=2)
+        ujson.dump(content, fd, indent=2)
 
 
 def copy_to_directory(
