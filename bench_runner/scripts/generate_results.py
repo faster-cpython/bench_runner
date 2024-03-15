@@ -5,6 +5,7 @@ import argparse
 from collections import defaultdict
 import datetime
 import io
+import multiprocessing
 from pathlib import Path
 import sys
 from typing import Iterable, Optional, TextIO
@@ -133,6 +134,11 @@ RESULT_TYPES = {
 }
 
 
+def _worker(args):
+    func, output_filename, compare = args
+    func(output_filename, compare)
+
+
 def save_generated_results(results: Iterable[Result], force: bool = False) -> None:
     """
     Write out the comparison tables and plots for every result.
@@ -140,6 +146,7 @@ def save_generated_results(results: Iterable[Result], force: bool = False) -> No
     By default, files are only written out if they don't already exist. To force
     regeneration, pass ``force=True``.
     """
+    work = []
     for result in results:
         for compare in result.bases.values():
             if compare.filename is not None:
@@ -147,13 +154,12 @@ def save_generated_results(results: Iterable[Result], force: bool = False) -> No
                     filename = compare.filename.parent / (
                         compare.filename.stem + suffix
                     )
-                    if not filename.exists() or force:
-                        util.status(".")
-                        func(filename, compare)
-                    else:
-                        util.status("/")
+                    if not filename.exists() or force:  # or suffix == ".png":
+                        work.append((func, filename, compare))
 
-    print()
+    pool = multiprocessing.Pool()
+    for i, _ in enumerate(pool.imap_unordered(_worker, work)):
+        print(f"{i:04d}/{len(work):04d}", end="\r")
 
 
 def output_results_index(
