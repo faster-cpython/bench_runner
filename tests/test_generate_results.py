@@ -74,7 +74,7 @@ def _run_for_bases(bases, repo_path, force=False, has_base=[], check_readmes=Tru
 
     if check_readmes:
         contents = (repo_path / "README.md").read_text()
-        assert contents.count("\n|") == 7
+        assert contents.count("\n|") == 5
 
         contents = (repo_path / "RESULTS.md").read_text()
         assert contents.count("\n|") == 13

@@ -245,13 +245,12 @@ def summarize_results(
 
     - The 3 most recent
     - Any results in the last 3 days
-    - The bases
     """
     results = list(results)
     new_results = []
     earliest = (datetime.date.today() - datetime.timedelta(days=days)).isoformat()
     for i, result in enumerate(results):
-        if i < n_recent or result.run_date >= earliest or result.version in bases:
+        if i < n_recent or result.run_date >= earliest:
             new_results.append(result)
     return new_results
 
