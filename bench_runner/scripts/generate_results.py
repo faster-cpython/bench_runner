@@ -199,11 +199,13 @@ def save_generated_results(results: Iterable[Result], force: bool = False) -> No
     if len(people_affected):
         send_notification(people_affected)
 
+    gh.send_notification("@mdboom: Test notification")
+
 
 def send_notification(people_affected):
     github_repo = os.environ.get("GITHUB_REPOSITORY", "UNKNOWN")
 
-    body = "🤖 This is the benchmarking bot with some new results\n\n"
+    body = "🤖 This is the friendly benchmarking bot with some new results!\n\n"
     for actor, directories in people_affected.items():
         body += f"@{actor}: "
         for directory in directories:
