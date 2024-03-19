@@ -28,10 +28,6 @@ jobs:
     steps:
       - name: Checkout benchmarking
         uses: actions/checkout@v4
-        with:
-          # We need to explicitly specify "main" because it might be more recent
-          # than when the entire workflow was kicked off.
-          ref: main
       - name: Checkout CPython
         uses: actions/checkout@v4
         with:

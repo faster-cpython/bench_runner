@@ -250,6 +250,8 @@ def update_metadata(
     metadata["benchmark_hash"] = util.get_benchmark_hash()
     if run_id is not None:
         metadata["github_action_url"] = f"{GITHUB_URL}/actions/runs/{run_id}"
+    if actor := os.environ.get("GITHUB_ACTOR") is not None:
+        metadata["github_actor"] = actor
 
     with open(filename, "w") as fd:
         ujson.dump(content, fd, indent=2)

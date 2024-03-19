@@ -67,3 +67,11 @@ def benchmark(
     subprocess.check_call(
         ["gh", "workflow", "run", "benchmark.yml", *flags],
     )
+
+
+def send_notification(body):
+    print("Sending Github notification:")
+    print("---")
+    print(body)
+    print("---")
+    subprocess.check_call(["gh", "issue", "comment", "182", "--body", body])
