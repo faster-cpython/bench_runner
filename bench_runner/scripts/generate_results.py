@@ -199,8 +199,6 @@ def save_generated_results(results: Iterable[Result], force: bool = False) -> No
     if len(people_affected):
         send_notification(people_affected)
 
-    gh.send_notification("@mdboom: Test notification")
-
 
 def send_notification(people_affected):
     github_repo = os.environ.get("GITHUB_REPOSITORY", "UNKNOWN")
