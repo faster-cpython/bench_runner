@@ -28,6 +28,8 @@ jobs:
     steps:
       - name: Checkout benchmarking
         uses: actions/checkout@v4
+        with:
+          ref: main
       - name: Checkout CPython
         uses: actions/checkout@v4
         with:
