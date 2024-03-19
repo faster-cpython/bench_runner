@@ -23,13 +23,13 @@ nothing about the method itself that should require that).
 
 import io
 import functools
-import json
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
 
 import numpy as np
 from numpy.typing import NDArray
+import ujson
 
 
 ACC_MAXSU = 2
@@ -39,7 +39,7 @@ def load_from_json(
     json_path: Path,
 ) -> Dict[str, NDArray[np.float64]]:
     with open(json_path) as fd:
-        content = json.load(fd)
+        content = ujson.load(fd)
 
     return load_data(content)
 

@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import argparse
 import datetime
-import json
 from operator import attrgetter
 from pathlib import Path
 import re
@@ -13,6 +12,7 @@ from typing import Callable, Iterable, Optional
 from matplotlib import pyplot as plt
 import matplotlib
 import numpy as np
+import ujson
 
 
 matplotlib.use("agg")
@@ -231,7 +231,7 @@ def longitudinal_plot(
     data_cache = output_filename.with_suffix(".json")
     if data_cache.is_file():
         with open(data_cache) as fd:
-            data = json.load(fd)
+            data = ujson.load(fd)
     else:
         data = {}
 
@@ -317,7 +317,7 @@ def longitudinal_plot(
     plt.close()
 
     with open(data_cache, "w") as fd:
-        json.dump(data, fd, indent=2)
+        ujson.dump(data, fd, indent=2)
 
 
 def flag_effect_plot(
@@ -348,7 +348,7 @@ def flag_effect_plot(
     data_cache = output_filename.with_suffix(".json")
     if data_cache.is_file():
         with open(data_cache) as fd:
-            data = json.load(fd)
+            data = ujson.load(fd)
     else:
         data = {}
 
@@ -415,7 +415,7 @@ def flag_effect_plot(
     plt.close()
 
     with open(data_cache, "w") as fd:
-        json.dump(data, fd, indent=2)
+        ujson.dump(data, fd, indent=2)
 
 
 if __name__ == "__main__":
