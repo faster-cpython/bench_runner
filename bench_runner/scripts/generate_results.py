@@ -14,6 +14,7 @@ from urllib.parse import unquote
 
 
 from bench_runner.bases import get_bases
+from bench_runner import gh
 from bench_runner import plot
 from bench_runner.result import (
     load_all_results,
@@ -166,6 +167,7 @@ def save_generated_results(results: Iterable[Result], force: bool = False) -> No
     """
     work = []
     directories_affected = set()
+    people_affected = defaultdict(set)
     for result in results:
         for compare in result.bases.values():
             if compare.filename is not None:
@@ -178,6 +180,9 @@ def save_generated_results(results: Iterable[Result], force: bool = False) -> No
                     ):
                         work.append((writer, filename, compare))
                         directories_affected.add(filename.parent)
+                        actor = compare.head.metadata.get("github_actor")
+                        if actor is not None:
+                            people_affected[actor].add(filename.parent)
 
     with multiprocessing.Pool() as pool:
         for i, _ in enumerate(pool.imap_unordered(_worker, work)):
@@ -190,6 +195,24 @@ def save_generated_results(results: Iterable[Result], force: bool = False) -> No
             "::notice ::New results at "
             f"https://github.com/{github_repo}-public/tree/main/{directory}"
         )
+
+    if len(people_affected):
+        send_notification(people_affected)
+
+
+def send_notification(people_affected):
+    github_repo = os.environ.get("GITHUB_REPOSITORY", "UNKNOWN")
+
+    body = "🤖 This is the friendly benchmarking bot with some new results!\n\n"
+    for actor, directories in people_affected.items():
+        body += f"@{actor}: "
+        for directory in directories:
+            body += "[New results]"
+            body += f"(https://github.com/{github_repo}-public/tree/main/{directory}) "
+        body += "\n"
+    body += "\nNOTE: It may take up to 5 minutes before results are published."
+
+    gh.send_notification(body)
 
 
 def output_results_index(
