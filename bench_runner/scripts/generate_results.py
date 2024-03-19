@@ -17,7 +17,6 @@ from bench_runner.bases import get_bases
 from bench_runner import plot
 from bench_runner.result import (
     load_all_results,
-    BenchmarkComparison,
     Comparison,
     Result,
 )
@@ -50,7 +49,7 @@ class ResultWriter:
         return False
 
     @staticmethod
-    def generate(filename: Path, compare: Comparison) -> None:
+    def generate(filename: Path, compare) -> None:
         pass
 
 
@@ -60,7 +59,7 @@ class MarkdownResultWriter(ResultWriter):
         return compare.contents is not None
 
     @staticmethod
-    def generate(filename: Path, compare: BenchmarkComparison) -> None:
+    def generate(filename: Path, compare) -> None:
         if filename.exists():
             filename.unlink()
             compare = compare.copy()
@@ -93,7 +92,7 @@ class TimePlotResultWriter(ResultWriter):
         return True
 
     @staticmethod
-    def generate(filename: Path, compare: BenchmarkComparison) -> None:
+    def generate(filename: Path, compare) -> None:
         plot.plot_diff(
             compare.get_timing_diff(),
             filename,
@@ -113,7 +112,7 @@ class MemoryPlotResultWriter(ResultWriter):
         return compare.head.system != "windows" and compare.base == "base"
 
     @staticmethod
-    def generate(filename: Path, compare: BenchmarkComparison) -> None:
+    def generate(filename: Path, compare) -> None:
         plot.plot_diff(
             compare.get_memory_diff(),
             filename,
@@ -133,7 +132,7 @@ class PystatsDiffResultWriter(ResultWriter):
         return compare.contents is not None
 
     @staticmethod
-    def generate(filename: Path, compare: Comparison) -> None:
+    def generate(filename: Path, compare) -> None:
         if filename.exists():
             filename.unlink()
             compare = compare.copy()
