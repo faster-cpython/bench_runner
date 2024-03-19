@@ -188,7 +188,7 @@ def save_generated_results(results: Iterable[Result], force: bool = False) -> No
     for directory in directories_affected:
         print(
             "::notice ::New results at "
-            f"https://github.com/{github_repo}_public/tree/main/{directory}"
+            f"https://github.com/{github_repo}-public/tree/main/{directory}"
         )
 
 
