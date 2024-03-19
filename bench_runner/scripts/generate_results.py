@@ -207,7 +207,8 @@ def send_notification(people_affected):
     for actor, directories in people_affected.items():
         body += f"@{actor}: "
         for directory in directories:
-            body += f"[New results](https://github.com/{github_repo}-public/tree/main/{directory}) "
+            body += "[New results]"
+            body += f"(https://github.com/{github_repo}-public/tree/main/{directory}) "
         body += "\n"
     body += "\nNOTE: It may take up to 5 minutes before results are published."
 
