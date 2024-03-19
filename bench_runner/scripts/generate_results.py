@@ -179,10 +179,10 @@ def save_generated_results(results: Iterable[Result], force: bool = False) -> No
                         work.append((writer, filename, compare))
                         directories_affected.add(filename.parent)
 
-    pool = multiprocessing.Pool()
-    for i, _ in enumerate(pool.imap_unordered(_worker, work)):
-        print(f"{i + 1:04d}/{len(work):04d}", end="\r")
-    print()
+    with multiprocessing.Pool() as pool:
+        for i, _ in enumerate(pool.imap_unordered(_worker, work)):
+            print(f"{i + 1:04d}/{len(work):04d}", end="\r")
+        print()
 
     github_repo = os.environ.get("GITHUB_REPOSITORY", "UNKNOWN")
     for directory in directories_affected:
