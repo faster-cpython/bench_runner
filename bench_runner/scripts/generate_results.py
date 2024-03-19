@@ -6,6 +6,7 @@ from collections import defaultdict
 import datetime
 import io
 import multiprocessing
+import os
 from pathlib import Path
 import sys
 from typing import Iterable, Optional, TextIO
@@ -16,7 +17,6 @@ from bench_runner.bases import get_bases
 from bench_runner import plot
 from bench_runner.result import (
     load_all_results,
-    BenchmarkComparison,
     Comparison,
     Result,
 )
@@ -43,100 +43,118 @@ def _tuple_to_nested_dicts(entries: list[tuple], d: Optional[dict] = None) -> di
     return d
 
 
-def write_markdown_results(filename: Path, compare: BenchmarkComparison) -> None:
-    if filename.exists():
-        filename.unlink()
-        compare = compare.copy()
+class ResultWriter:
+    @staticmethod
+    def need_to_generate(compare: Comparison) -> bool:
+        return False
 
-    contents = compare.contents
-    if contents is None:
-        return
-
-    entries = [
-        ("fork", unquote(compare.head.fork)),
-        ("ref", compare.head.ref),
-        ("machine", f"{compare.head.system}-{compare.head.machine}"),
-        ("commit hash", compare.head.cpython_hash),
-        ("commit date", compare.head.commit_date),
-        ("overall geometric mean", compare.geometric_mean),
-        ("HPT reliability", compare.hpt_reliability),
-        ("HPT 99th percentile", compare.hpt_percentile(99)),
-    ]
-
-    if compare.memory_change is not None:
-        entries.append(("Memory change", compare.memory_change))
-
-    with open(filename, "w") as fd:
-        fd.write(f"# Results vs. {compare.base}\n\n")
-        for key, val in entries:
-            fd.write(f"- {key}: {val}\n")
-        fd.write("\n")
-        fd.write(contents)
+    @staticmethod
+    def generate(filename: Path, compare) -> None:
+        pass
 
 
-def write_time_plot_results(filename: Path, compare: BenchmarkComparison) -> None:
-    plot.plot_diff(
-        compare.get_timing_diff(),
-        filename,
-        (
-            "Timings of "
-            f"{unquote(compare.head.fork)}-{compare.head.ref}-"
-            f"{compare.head.cpython_hash}"
-            f" vs. {compare.ref.version}"
-        ),
-        ("slower", "faster"),
-    )
+class MarkdownResultWriter(ResultWriter):
+    @staticmethod
+    def need_to_generate(compare: Comparison) -> bool:
+        return compare.contents is not None
+
+    @staticmethod
+    def generate(filename: Path, compare) -> None:
+        if filename.exists():
+            filename.unlink()
+            compare = compare.copy()
+
+        entries = [
+            ("fork", unquote(compare.head.fork)),
+            ("ref", compare.head.ref),
+            ("machine", f"{compare.head.system}-{compare.head.machine}"),
+            ("commit hash", compare.head.cpython_hash),
+            ("commit date", compare.head.commit_date),
+            ("overall geometric mean", compare.geometric_mean),
+            ("HPT reliability", compare.hpt_reliability),
+            ("HPT 99th percentile", compare.hpt_percentile(99)),
+        ]
+
+        if compare.memory_change is not None:
+            entries.append(("Memory change", compare.memory_change))
+
+        with open(filename, "w") as fd:
+            fd.write(f"# Results vs. {compare.base}\n\n")
+            for key, val in entries:
+                fd.write(f"- {key}: {val}\n")
+            fd.write("\n")
+            fd.write(compare.contents or "")
 
 
-def write_memory_plot_results(filename: Path, compare: BenchmarkComparison) -> None:
-    if compare.head.system == "windows":
-        # Windows doesn't have memory data
-        return
+class TimePlotResultWriter(ResultWriter):
+    @staticmethod
+    def need_to_generate(compare: Comparison) -> bool:
+        return True
 
-    if compare.base != "base":
-        # Only generate the graphs for base comparisons
-        return
-
-    plot.plot_diff(
-        compare.get_memory_diff(),
-        filename,
-        (
-            "Memory usage of "
-            f"{unquote(compare.head.fork)}-{compare.head.ref}-"
-            f"{compare.head.cpython_hash}"
-            f" vs. {compare.ref.version}"
-        ),
-        ("less", "more"),
-    )
+    @staticmethod
+    def generate(filename: Path, compare) -> None:
+        plot.plot_diff(
+            compare.get_timing_diff(),
+            filename,
+            (
+                "Timings of "
+                f"{unquote(compare.head.fork)}-{compare.head.ref}-"
+                f"{compare.head.cpython_hash}"
+                f" vs. {compare.ref.version}"
+            ),
+            ("slower", "faster"),
+        )
 
 
-def write_pystats_diff(filename: Path, compare: Comparison) -> None:
-    if filename.exists():
-        filename.unlink()
-        compare = compare.copy()
+class MemoryPlotResultWriter(ResultWriter):
+    @staticmethod
+    def need_to_generate(compare: Comparison) -> bool:
+        return compare.head.system != "windows" and compare.base == "base"
 
-    contents = compare.contents
-    if contents is None:
-        return
+    @staticmethod
+    def generate(filename: Path, compare) -> None:
+        plot.plot_diff(
+            compare.get_memory_diff(),
+            filename,
+            (
+                "Memory usage of "
+                f"{unquote(compare.head.fork)}-{compare.head.ref}-"
+                f"{compare.head.cpython_hash}"
+                f" vs. {compare.ref.version}"
+            ),
+            ("less", "more"),
+        )
 
-    with open(filename, "w") as fd:
-        fd.write(contents)
+
+class PystatsDiffResultWriter(ResultWriter):
+    @staticmethod
+    def need_to_generate(compare: Comparison) -> bool:
+        return compare.contents is not None
+
+    @staticmethod
+    def generate(filename: Path, compare) -> None:
+        if filename.exists():
+            filename.unlink()
+            compare = compare.copy()
+
+        with open(filename, "w") as fd:
+            fd.write(compare.contents or "")
 
 
 RESULT_TYPES = {
     "raw results": {
-        ".md": write_markdown_results,
-        ".png": write_time_plot_results,
-        "-mem.png": write_memory_plot_results,
+        ".md": MarkdownResultWriter,
+        ".png": TimePlotResultWriter,
+        "-mem.png": MemoryPlotResultWriter,
     },
-    "pystats raw": {".md": write_pystats_diff},
+    "pystats raw": {".md": PystatsDiffResultWriter},
     None: {},
 }
 
 
-def _worker(args):
-    func, output_filename, compare = args
-    func(output_filename, compare)
+def _worker(args) -> None:
+    writer, output_filename, compare = args
+    writer.generate(output_filename, compare)
 
 
 def save_generated_results(results: Iterable[Result], force: bool = False) -> None:
@@ -147,19 +165,31 @@ def save_generated_results(results: Iterable[Result], force: bool = False) -> No
     regeneration, pass ``force=True``.
     """
     work = []
+    directories_affected = set()
     for result in results:
         for compare in result.bases.values():
             if compare.filename is not None:
-                for suffix, func in RESULT_TYPES[result.result_info[0]].items():
+                for suffix, writer in RESULT_TYPES[result.result_info[0]].items():
                     filename = compare.filename.parent / (
                         compare.filename.stem + suffix
                     )
-                    if not filename.exists() or force:  # or suffix == ".png":
-                        work.append((func, filename, compare))
+                    if writer.need_to_generate(compare) and (
+                        not filename.exists() or force
+                    ):
+                        work.append((writer, filename, compare))
+                        directories_affected.add(filename.parent)
 
-    pool = multiprocessing.Pool()
-    for i, _ in enumerate(pool.imap_unordered(_worker, work)):
-        print(f"{i:04d}/{len(work):04d}", end="\r")
+    with multiprocessing.Pool() as pool:
+        for i, _ in enumerate(pool.imap_unordered(_worker, work)):
+            print(f"{i + 1:04d}/{len(work):04d}", end="\r")
+        print()
+
+    github_repo = os.environ.get("GITHUB_REPOSITORY", "UNKNOWN")
+    for directory in directories_affected:
+        print(
+            "::notice ::New results at "
+            f"https://github.com/{github_repo}_public/tree/main/{directory}"
+        )
 
 
 def output_results_index(
