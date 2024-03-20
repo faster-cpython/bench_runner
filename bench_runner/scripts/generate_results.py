@@ -182,7 +182,9 @@ def save_generated_results(results: Iterable[Result], force: bool = False) -> No
                         directories_affected.add(filename.parent)
                         actor = compare.head.metadata.get("github_actor")
                         if actor is not None:
-                            people_affected[actor].add(filename.parent)
+                            people_affected[actor].add(
+                                (filename.parent, compare.head.fork, compare.head.ref)
+                            )
 
     with multiprocessing.Pool() as pool:
         for i, _ in enumerate(pool.imap_unordered(_worker, work)):
@@ -204,10 +206,10 @@ def send_notification(people_affected):
     github_repo = os.environ.get("GITHUB_REPOSITORY", "UNKNOWN")
 
     body = "🤖 This is the friendly benchmarking bot with some new results!\n\n"
-    for actor, directories in people_affected.items():
+    for actor, entries in people_affected.items():
         body += f"@{actor}: "
-        for directory in directories:
-            body += "[New results]"
+        for directory, fork, ref in entries:
+            body += f"[{fork}/{ref}]"
             body += f"(https://github.com/{github_repo}-public/tree/main/{directory}) "
         body += "\n"
     body += "\nNOTE: It may take up to 5 minutes before results are published."
