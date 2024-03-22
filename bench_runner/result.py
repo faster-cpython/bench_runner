@@ -4,13 +4,15 @@ from __future__ import annotations
 
 from collections import defaultdict
 import functools
+import io
 from operator import itemgetter
 from pathlib import Path
 import re
 import socket
 import subprocess
 import sys
-from typing import Any, Optional
+from typing import Any, Callable, Iterable, Optional
+from urllib.parse import unquote
 
 
 import numpy as np
@@ -21,6 +23,7 @@ import ujson
 
 from . import git
 from . import hpt
+from . import plot
 from . import runners
 
 
@@ -81,7 +84,7 @@ class Comparison:
         return type(self)(self.ref, self.head, self.base)
 
     @property
-    def filename(self) -> Optional[Path]:
+    def base_filename(self) -> Optional[Path]:
         if not self.valid_comparison:
             return None
 
@@ -89,35 +92,162 @@ class Comparison:
             f"{self.head.filename.stem}-vs-{self.base}.txt"
         )
 
+    def get_files(self) -> Iterable[tuple[Callable, str, str]]:
+        return []
+
+
+class BenchmarkComparison(Comparison):
+    def get_files(self) -> Iterable[tuple[Callable, str, str]]:
+        if self.base_filename is None:
+            return
+        yield (self.write_table, ".md", "table")
+        yield (self.write_timing_plot, ".png", "time plot")
+        if self.head.system != "windows" and self.base == "base":
+            yield (self.write_memory_plot, "-mem.png", "memory plot")
+
     @functools.cached_property
-    def contents(self) -> Optional[str]:
-        if self.filename is None:
+    def _contents(self) -> Optional[str]:
+        if self.base_filename is None:
             return None
 
-        if self.filename.with_suffix(".md").is_file():
-            with open(self.filename.with_suffix(".md"), "r", encoding="utf-8") as fd:
+        if self.base_filename.with_suffix(".md").is_file():
+            with open(
+                self.base_filename.with_suffix(".md"), "r", encoding="utf-8"
+            ) as fd:
                 return fd.read()
         else:
             return self._generate_contents()
 
     @property
-    def contents_lines(self) -> list[str]:
-        if self.contents is None:
+    def _contents_lines(self) -> list[str]:
+        if self._contents is None:
             return []
         else:
-            return self.contents.splitlines()
+            return self._contents.splitlines()
 
-    def _generate_contents(self) -> Optional[str]:
-        return None
+    def _generate_contents(self) -> str:
+        fd = io.StringIO()
+        fd.write(
+            subprocess.check_output(
+                [
+                    "pyperf",
+                    "compare_to",
+                    "-G",
+                    "--table",
+                    "--table-format",
+                    "md",
+                    self.ref.filename,
+                    self.head.filename,
+                ],
+                encoding="utf-8",
+            )
+        )
+        fd.write("\n")
+        fd.write(hpt.make_report(self.ref.filename, self.head.filename))
+        fd.write("\n")
+        fd.write("# Memory\n")
+        fd.write(f"- memory change: {self._calculate_memory_change()}")
+        return fd.getvalue()
 
+    def write_table(self, filename: Path) -> Optional[str]:
+        entries = [
+            ("fork", unquote(self.head.fork)),
+            ("ref", self.head.ref),
+            ("machine", f"{self.head.system}-{self.head.machine}"),
+            ("commit hash", self.head.cpython_hash),
+            ("commit date", self.head.commit_date),
+            ("overall geometric mean", self.geometric_mean),
+            ("HPT reliability", self.hpt_reliability),
+            ("HPT 99th percentile", self.hpt_percentile(99)),
+        ]
 
-class BenchmarkComparison(Comparison):
+        if self.memory_change is not None:
+            entries.append(("Memory change", self.memory_change))
+
+        contents = self._contents
+        assert contents is not None
+
+        with open(filename, "w") as fd:
+            fd.write(f"# Results vs. {self.base}\n\n")
+            for key, val in entries:
+                fd.write(f"- {key}: {val}\n")
+            fd.write("\n")
+            fd.write(contents)
+
+    def _get_combined_data(
+        self, ref_data: dict[str, np.ndarray], head_data: dict[str, np.ndarray]
+    ) -> CombinedData:
+        def remove_outliers(values, m=2):
+            return values[
+                abs(values - np.mean(values)) < np.multiply(m, np.std(values))
+            ]
+
+        def calculate_diffs(
+            ref_values, head_values
+        ) -> tuple[Optional[np.ndarray], float]:
+            sig, t_score = pyperf._utils.is_significant(ref_values, head_values)
+
+            if not sig:
+                return None, 0.0
+            else:
+                ref_values = remove_outliers(ref_values)
+                head_values = remove_outliers(head_values)
+                values = np.outer(ref_values, 1.0 / head_values).flatten()
+                values.sort()
+                return values, float(values.mean())
+
+        combined_data = []
+        for name, ref in ref_data.items():
+            if len(ref) != 0 and name in head_data:
+                head = head_data[name]
+                if len(ref) == len(head):
+                    combined_data.append((name, *calculate_diffs(ref, head)))
+        combined_data.sort(key=itemgetter(2))
+        return combined_data
+
+    def get_timing_diff(self) -> CombinedData:
+        ref_data = self.ref.get_timing_data()
+        head_data = self.head.get_timing_data()
+        return self._get_combined_data(ref_data, head_data)
+
+    def write_timing_plot(self, filename: Path) -> None:
+        plot.plot_diff(
+            self.get_timing_diff(),
+            filename,
+            (
+                "Timings of "
+                f"{unquote(self.head.fork)}-{self.head.ref}-"
+                f"{self.head.cpython_hash}"
+                f" vs. {self.ref.version}"
+            ),
+            ("slower", "faster"),
+        )
+
+    def get_memory_diff(self) -> CombinedData:
+        ref_data = self.ref.get_memory_data()
+        head_data = self.head.get_memory_data()
+        # Explicitly reversed so higher is bigger
+        return self._get_combined_data(head_data, ref_data)
+
+    def write_memory_plot(self, filename: Path) -> None:
+        plot.plot_diff(
+            self.get_memory_diff(),
+            filename,
+            (
+                "Memory usage of "
+                f"{unquote(self.head.fork)}-{self.head.ref}-"
+                f"{self.head.cpython_hash}"
+                f" vs. {self.ref.version}"
+            ),
+            ("less", "more"),
+        )
+
     @functools.cached_property
     def geometric_mean(self) -> str:
         if not self.valid_comparison:
             return ""
 
-        lines = self.contents_lines
+        lines = self._contents_lines
 
         # We want to get the *last* geometric mean in the file, in case
         # it's divided by tags
@@ -148,7 +278,7 @@ class BenchmarkComparison(Comparison):
         if not self.valid_comparison:
             return ""
 
-        for line in self.contents_lines:
+        for line in self._contents_lines:
             if line.startswith("- memory change:"):
                 return line[line.find(":") + 1 :].strip()
 
@@ -172,7 +302,7 @@ class BenchmarkComparison(Comparison):
         if not self.valid_comparison:
             return ""
 
-        lines = self.contents_lines
+        lines = self._contents_lines
 
         for line in lines:
             m = re.match(r"- Reliability score: (\S+)", line)
@@ -185,7 +315,7 @@ class BenchmarkComparison(Comparison):
         if not self.valid_comparison:
             return ""
 
-        lines = self.contents_lines
+        lines = self._contents_lines
 
         for line in lines:
             m = re.match(r"- ([0-9]+)% likely to have a (\S+) of (\S+)", line)
@@ -237,75 +367,16 @@ class BenchmarkComparison(Comparison):
 
         return result
 
-    def _generate_contents(self) -> Optional[str]:
-        return (
-            subprocess.check_output(
-                [
-                    "pyperf",
-                    "compare_to",
-                    "-G",
-                    "--table",
-                    "--table-format",
-                    "md",
-                    self.ref.filename,
-                    self.head.filename,
-                ],
-                encoding="utf-8",
-            )
-            + "\n\n"
-            + hpt.make_report(self.ref.filename, self.head.filename)
-            + "\n\n"
-            + "# Memory\n\n"
-            + f"- memory change: {self._calculate_memory_change()}"
-        )
-
-    def _get_combined_data(
-        self, ref_data: dict[str, np.ndarray], head_data: dict[str, np.ndarray]
-    ) -> CombinedData:
-        def remove_outliers(values, m=2):
-            return values[
-                abs(values - np.mean(values)) < np.multiply(m, np.std(values))
-            ]
-
-        def calculate_diffs(
-            ref_values, head_values
-        ) -> tuple[Optional[np.ndarray], float]:
-            sig, t_score = pyperf._utils.is_significant(ref_values, head_values)
-
-            if not sig:
-                return None, 0.0
-            else:
-                ref_values = remove_outliers(ref_values)
-                head_values = remove_outliers(head_values)
-                values = np.outer(ref_values, 1.0 / head_values).flatten()
-                values.sort()
-                return values, float(values.mean())
-
-        combined_data = []
-        for name, ref in ref_data.items():
-            if len(ref) != 0 and name in head_data:
-                head = head_data[name]
-                if len(ref) == len(head):
-                    combined_data.append((name, *calculate_diffs(ref, head)))
-        combined_data.sort(key=itemgetter(2))
-        return combined_data
-
-    def get_timing_diff(self) -> CombinedData:
-        ref_data = self.ref.get_timing_data()
-        head_data = self.head.get_timing_data()
-        return self._get_combined_data(ref_data, head_data)
-
-    def get_memory_diff(self) -> CombinedData:
-        ref_data = self.ref.get_memory_data()
-        head_data = self.head.get_memory_data()
-        # Explicitly reversed so higher is bigger
-        return self._get_combined_data(head_data, ref_data)
-
 
 class PystatsComparison(Comparison):
-    def _generate_contents(self) -> Optional[str]:
+    def get_files(self) -> Iterable[tuple[Callable, str, str]]:
+        if self.base_filename is None:
+            return
+        yield (self.write_pystats_diff, ".md", "pystats diff")
+
+    def write_pystats_diff(self, filename: Path) -> None:
         try:
-            return subprocess.check_output(
+            contents = subprocess.check_output(
                 [
                     sys.executable,
                     Path("cpython") / "Tools" / "scripts" / "summarize_stats.py",
@@ -316,6 +387,8 @@ class PystatsComparison(Comparison):
             )
         except subprocess.CalledProcessError:
             return None
+        with open(filename, "w") as fd:
+            fd.write(contents)
 
 
 def comparison_factory(ref: "Result", head: "Result", base: str) -> Comparison:

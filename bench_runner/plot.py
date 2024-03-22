@@ -423,13 +423,10 @@ if __name__ == "__main__":
     parser.add_argument("ref", help="The reference .json file")
     parser.add_argument("head", help="The head .json file")
     parser.add_argument("output", help="Output filename")
-    parser.add_argument("title", help="Title of plot")
     args = parser.parse_args()
 
     ref = result.Result.from_filename(Path(args.ref))
     head = result.Result.from_filename(Path(args.head))
     compare = result.BenchmarkComparison(ref, head, "base")
 
-    plot_diff(
-        compare.get_timing_diff(), Path(args.output), args.title, ("slower", "faster")
-    )
+    compare.write_timing_plot(Path(args.output))

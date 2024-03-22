@@ -9,7 +9,7 @@ import multiprocessing
 import os
 from pathlib import Path
 import sys
-from typing import Iterable, Optional, TextIO
+from typing import Iterable, Mapping, Optional, TextIO
 from urllib.parse import unquote
 
 
@@ -18,14 +18,13 @@ from bench_runner import gh
 from bench_runner import plot
 from bench_runner.result import (
     load_all_results,
-    Comparison,
     Result,
 )
 from bench_runner import table
 from bench_runner import util
 
 
-def _tuple_to_nested_dicts(entries: list[tuple], d: Optional[dict] = None) -> dict:
+def _tuple_to_nested_dicts(entries: Iterable[tuple], d: Optional[dict] = None) -> dict:
     def recurse(entry: tuple, d: dict):
         if len(entry) == 2:
             d.setdefault(entry[0], [])
@@ -44,118 +43,9 @@ def _tuple_to_nested_dicts(entries: list[tuple], d: Optional[dict] = None) -> di
     return d
 
 
-class ResultWriter:
-    @staticmethod
-    def need_to_generate(compare: Comparison) -> bool:
-        return False
-
-    @staticmethod
-    def generate(filename: Path, compare) -> None:
-        pass
-
-
-class MarkdownResultWriter(ResultWriter):
-    @staticmethod
-    def need_to_generate(compare: Comparison) -> bool:
-        return compare.contents is not None
-
-    @staticmethod
-    def generate(filename: Path, compare) -> None:
-        if filename.exists():
-            filename.unlink()
-            compare = compare.copy()
-
-        entries = [
-            ("fork", unquote(compare.head.fork)),
-            ("ref", compare.head.ref),
-            ("machine", f"{compare.head.system}-{compare.head.machine}"),
-            ("commit hash", compare.head.cpython_hash),
-            ("commit date", compare.head.commit_date),
-            ("overall geometric mean", compare.geometric_mean),
-            ("HPT reliability", compare.hpt_reliability),
-            ("HPT 99th percentile", compare.hpt_percentile(99)),
-        ]
-
-        if compare.memory_change is not None:
-            entries.append(("Memory change", compare.memory_change))
-
-        with open(filename, "w") as fd:
-            fd.write(f"# Results vs. {compare.base}\n\n")
-            for key, val in entries:
-                fd.write(f"- {key}: {val}\n")
-            fd.write("\n")
-            fd.write(compare.contents or "")
-
-
-class TimePlotResultWriter(ResultWriter):
-    @staticmethod
-    def need_to_generate(compare: Comparison) -> bool:
-        return True
-
-    @staticmethod
-    def generate(filename: Path, compare) -> None:
-        plot.plot_diff(
-            compare.get_timing_diff(),
-            filename,
-            (
-                "Timings of "
-                f"{unquote(compare.head.fork)}-{compare.head.ref}-"
-                f"{compare.head.cpython_hash}"
-                f" vs. {compare.ref.version}"
-            ),
-            ("slower", "faster"),
-        )
-
-
-class MemoryPlotResultWriter(ResultWriter):
-    @staticmethod
-    def need_to_generate(compare: Comparison) -> bool:
-        return compare.head.system != "windows" and compare.base == "base"
-
-    @staticmethod
-    def generate(filename: Path, compare) -> None:
-        plot.plot_diff(
-            compare.get_memory_diff(),
-            filename,
-            (
-                "Memory usage of "
-                f"{unquote(compare.head.fork)}-{compare.head.ref}-"
-                f"{compare.head.cpython_hash}"
-                f" vs. {compare.ref.version}"
-            ),
-            ("less", "more"),
-        )
-
-
-class PystatsDiffResultWriter(ResultWriter):
-    @staticmethod
-    def need_to_generate(compare: Comparison) -> bool:
-        return compare.contents is not None
-
-    @staticmethod
-    def generate(filename: Path, compare) -> None:
-        if filename.exists():
-            filename.unlink()
-            compare = compare.copy()
-
-        with open(filename, "w") as fd:
-            fd.write(compare.contents or "")
-
-
-RESULT_TYPES = {
-    "raw results": {
-        ".md": MarkdownResultWriter,
-        ".png": TimePlotResultWriter,
-        "-mem.png": MemoryPlotResultWriter,
-    },
-    "pystats raw": {".md": PystatsDiffResultWriter},
-    None: {},
-}
-
-
 def _worker(args) -> None:
-    writer, output_filename, compare = args
-    writer.generate(output_filename, compare)
+    func, output_filename = args
+    func(output_filename)
 
 
 def save_generated_results(results: Iterable[Result], force: bool = False) -> None:
@@ -166,22 +56,17 @@ def save_generated_results(results: Iterable[Result], force: bool = False) -> No
     regeneration, pass ``force=True``.
     """
     work = []
-    directories_affected = set()
     people_affected = defaultdict(set)
     for result in results:
         for compare in result.bases.values():
-            if compare.filename is not None:
-                for suffix, writer in RESULT_TYPES[result.result_info[0]].items():
-                    filename = compare.filename.parent / (
-                        compare.filename.stem + suffix
-                    )
-                    if writer.need_to_generate(compare) and (
-                        not filename.exists() or force
-                    ):
-                        work.append((writer, filename, compare))
-                        directories_affected.add(filename.parent)
-                        actor = compare.head.metadata.get("github_actor")
-                        if actor is not None:
+            if compare.valid_comparison:
+                for func, suffix, _ in compare.get_files():
+                    filename = util.apply_suffix(compare.base_filename, suffix)
+                    if not filename.exists() or force:
+                        work.append((func, filename))
+                        if (
+                            actor := compare.head.metadata.get("github_actor")
+                        ) is not None:
                             people_affected[actor].add(
                                 (filename.parent, compare.head.fork, compare.head.ref)
                             )
@@ -191,30 +76,28 @@ def save_generated_results(results: Iterable[Result], force: bool = False) -> No
             print(f"{i + 1:04d}/{len(work):04d}", end="\r")
         print()
 
-    github_repo = os.environ.get("GITHUB_REPOSITORY", "UNKNOWN")
-    for directory in directories_affected:
-        print(
-            "::notice ::New results at "
-            f"https://github.com/{github_repo}-public/tree/main/{directory}"
-        )
-
     if len(people_affected):
         send_notification(people_affected)
 
 
-def send_notification(people_affected):
+def send_notification(people_affected: Mapping[str, set[tuple[Path, str, str]]]):
     github_repo = os.environ.get("GITHUB_REPOSITORY", "UNKNOWN")
 
-    body = "🤖 This is the friendly benchmarking bot with some new results!\n\n"
+    lines = ["🤖 This is the friendly benchmarking bot with some new results!", ""]
     for actor, entries in people_affected.items():
-        body += f"@{actor}: "
         for directory, fork, ref in entries:
-            body += f"[{fork}/{ref}]"
-            body += f"(https://github.com/{github_repo}-public/tree/main/{directory}) "
-        body += "\n"
-    body += "\nNOTE: It may take up to 5 minutes before results are published."
+            line = (
+                f"@{actor}: "
+                f"[{fork}/{ref}]"
+                f"(https://github.com/{github_repo}-public/tree/main/{directory})"
+            )
+            print(f"::notice ::{line}")
+            lines.append(line)
+    lines.extend(
+        ["", "NOTE: It may take up to 5 minutes before results are published."]
+    )
 
-    gh.send_notification(body)
+    gh.send_notification("\n".join(lines))
 
 
 def output_results_index(
@@ -233,27 +116,16 @@ def output_results_index(
         for base in bases:
             if base in result.bases and result.bases[base].valid_comparison:
                 compare = result.bases[base]
-                entry = (
-                    compare.summary
-                    + "<br>"
-                    + table.md_link(
-                        util.TYPE_TO_ICON["table"],
-                        compare.filename.with_suffix(".md"),
-                        filename,
+                entry = [compare.summary, "<br>"]
+                for _, suffix, file_type in compare.get_files():
+                    entry.append(
+                        table.md_link(
+                            util.TYPE_TO_ICON[file_type],
+                            str(util.apply_suffix(compare.base_filename, suffix)),
+                            filename,
+                        )
                     )
-                    + table.md_link(
-                        util.TYPE_TO_ICON["time plot"],
-                        compare.filename.with_suffix(".png"),
-                        filename,
-                    )
-                )
-                if base == "base" and compare.memory_change not in (None, "unknown"):
-                    entry += table.md_link(
-                        util.TYPE_TO_ICON["memory plot"],
-                        compare.filename.parent / (compare.filename.stem + "-mem.png"),
-                        filename,
-                    )
-                versus.append(entry)
+                versus.append("".join(entry))
             else:
                 versus.append("")
 
@@ -345,7 +217,7 @@ def generate_index(
     if (most_recent_pystats := get_most_recent_pystats(all_results)) is not None:
         link = table.md_link(
             f"Most recent pystats on main ({most_recent_pystats.cpython_hash})",
-            str(most_recent_pystats.filename.with_suffix(".md")),
+            str(util.apply_suffix(most_recent_pystats.filename, ".md")),
             filename,
         )
         content.write(f"{link}\n\n")
