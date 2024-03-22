@@ -76,6 +76,10 @@ def run_benchmarks(
     else:
         fast_arg = []
 
+    output = subprocess.check_call([python, "-VV"])
+    if "fix-gc-counting" in output:
+        extra_args = extra_args + ["--rigorous"]
+
     subprocess.call(
         [
             *command_prefix,
