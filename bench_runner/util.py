@@ -1,5 +1,6 @@
 import hashlib
 import os
+from pathlib import Path
 
 
 def status(char: str) -> None:
@@ -22,3 +23,10 @@ TYPE_TO_ICON = {
     "time plot": "📈",
     "memory plot": "🧠",
 }
+
+
+def apply_suffix(path: Path, suffix: str) -> Path:
+    """
+    Like Path.with_suffix but allows adding things like "-mem.png".
+    """
+    return path.parent / (path.stem + suffix)

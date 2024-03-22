@@ -13,7 +13,6 @@ from typing import Iterable
 
 
 from bench_runner import result as mod_result
-from bench_runner import plot
 from bench_runner import runners as mod_runners
 from bench_runner import util
 
@@ -52,24 +51,14 @@ def compare_pair(
     counter[0] += 1
 
     name = f"{machine}-{head_name}-vs-{ref_name}"
-    comparison = mod_result.BenchmarkComparison(ref, head, "")
-    if comparison.contents is None:
-        raise RuntimeError()
-    with open(output_dir / f"{name}.md", "w", encoding="utf-8") as fd:
-        fd.write(comparison.contents)
-    compare = mod_result.BenchmarkComparison(ref, head, "base")
-    plot.plot_diff(
-        compare.get_timing_diff(),
-        output_dir / f"{name}.png",
-        f"{head_name} vs. {ref_name}",
-        ("slower", "faster"),
-    )
+    comparison = mod_result.BenchmarkComparison(ref, head, "base")
+    entry = [comparison.summary]
+    for func, suffix, file_type in comparison.get_files():
+        output_filename = util.apply_suffix(output_dir / name, suffix)
+        func(output_filename)
+        entry.append(f"[{util.TYPE_TO_ICON[file_type]}]({output_filename.name})")
 
-    return (
-        comparison.summary
-        + f" [{util.TYPE_TO_ICON['table']}]({name}.md)"
-        + f" [{util.TYPE_TO_ICON['time plot']}]({name}.png)"
-    )
+    return "".join(entry)
 
 
 def write_row(fd, columns: list[str]):
