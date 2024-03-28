@@ -117,6 +117,7 @@ jobs:
       individual: ${{ inputs.pystats_individual }}
       force: true
       tier2: ${{ inputs.tier2 }}
+      jit: ${{ inputs.jit }}
     secrets: inherit
 
   pystats-base:
@@ -130,6 +131,7 @@ jobs:
       individual: ${{ inputs.pystats_individual }}
       force: false
       tier2: ${{ inputs.tier2 }}
+      jit: ${{ inputs.jit }}
     secrets: inherit
 
   generate:

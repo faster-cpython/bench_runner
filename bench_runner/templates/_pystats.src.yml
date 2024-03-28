@@ -28,6 +28,9 @@ name: _pystats
       tier2:
         description: "Enable the Tier 2 interpreter"
         type: boolean
+      jit:
+        description: "Enable the JIT"
+        type: boolean
 
   workflow_call:
     inputs:
@@ -51,6 +54,9 @@ name: _pystats
         type: boolean
       tier2:
         description: "Enable the Tier 2 interpreter"
+        type: boolean
+      jit:
+        description: "Enable the JIT"
         type: boolean
 
 jobs:
@@ -78,7 +84,7 @@ jobs:
         if: ${{ always() }}
         id: should_run
         run: |
-          python -m bench_runner should_run ${{ inputs.force }} ${{ inputs.fork }} ${{ inputs.ref }} all true ${{ inputs.tier2 }} false >> $GITHUB_OUTPUT
+          python -m bench_runner should_run ${{ inputs.force }} ${{ inputs.fork }} ${{ inputs.ref }} all true ${{ inputs.tier2 }} ${{ inputs.jit }} >> $GITHUB_OUTPUT
       - name: Checkout python-macrobenchmarks
         uses: actions/checkout@v4
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
@@ -103,7 +109,7 @@ jobs:
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
           cd cpython
-          ./configure --enable-pystats --prefix=$PWD/install
+          ./configure --enable-pystats --prefix=$PWD/install ${{ inputs.jit == true && '--enable-experimental-jit' || '' }}
           make -j4
           make install
       - name: Install pyperformance into the system python
@@ -117,7 +123,7 @@ jobs:
       - name: Running pyperformance
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
-          python -m bench_runner run_benchmarks pystats cpython/python ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.benchmarks || 'all' }} --run_id ${{ github.run_id }} ${{ inputs.individual == true && '--individual' || '' }} ${{ inputs.tier2 == true && '--flag PYTHON_UOPS' || '' }}
+          python -m bench_runner run_benchmarks pystats cpython/python ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.benchmarks || 'all' }} --run_id ${{ github.run_id }} ${{ inputs.individual == true && '--individual' || '' }} ${{ inputs.tier2 == true && '--flag PYTHON_UOPS' || '' }} ${{ inputs.jit == true && '--flag JIT' || '' }}
       - name: Pull benchmarking
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
