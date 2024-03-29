@@ -1,3 +1,4 @@
+import contextlib
 from pathlib import Path
 import shutil
 import subprocess
@@ -49,6 +50,9 @@ def test_get_merge_base(tmp_path, capsys, checkout, monkeypatch):
         captured.out.strip()
         == textwrap.dedent(
             """
+    head=efa0bb6
+    date=2022-12-12T08:45:23-05:00
+    version=3.12.0a3+
     ref=158b8a07212cea6066afe8bb91f1cd542d922dba
     need_to_run=true
     """
@@ -56,8 +60,13 @@ def test_get_merge_base(tmp_path, capsys, checkout, monkeypatch):
     )
 
 
-def test_hard_coded(capsys):
-    get_merge_base._main(False, "linux-x86_64-linux", False, False, False)
+def test_hard_coded(tmp_path, capsys, checkout, monkeypatch):
+    monkeypatch.chdir(DATA_PATH)
+
+    shutil.copytree(checkout / "cpython", tmp_path / "cpython")
+
+    with contextlib.chdir(tmp_path):
+        get_merge_base._main(False, "linux-x86_64-linux", False, False, False)
 
     captured = capsys.readouterr()
 

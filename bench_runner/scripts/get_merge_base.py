@@ -1,10 +1,19 @@
 import argparse
 from pathlib import Path
+import re
 
 
 from bench_runner import git
 from bench_runner.result import has_result
 from bench_runner import util
+
+
+def get_python_version(cpython: Path):
+    with open(cpython / "Include" / "patchlevel.h") as fd:
+        for line in fd.readlines():
+            if m := re.match(r'#define\s+PY_VERSION\s+"(.+)"', line.strip()):
+                return m.groups()[0]
+    raise ValueError("Couldn't determine Python version")
 
 
 def _main(
@@ -15,6 +24,15 @@ def _main(
     jit: bool,
     cpython: Path = Path("cpython"),
 ) -> None:
+    commit_hash = git.get_git_hash(cpython)
+    print(f"head={commit_hash}")
+
+    commit_date = git.get_git_commit_date(cpython)
+    print(f"date={commit_date}")
+
+    version = get_python_version(cpython)
+    print(f"version={version}")
+
     if not need_to_run:
         print("ref=xxxxxxx")
         print("need_to_run=false")

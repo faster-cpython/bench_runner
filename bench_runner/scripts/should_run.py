@@ -48,11 +48,7 @@ def _main(
         # Fail the rest of the workflow
         sys.exit(1)
 
-    flags = []
-    if tier2:
-        flags.append("PYTHON_UOPS")
-    if jit:
-        flags.append("JIT")
+    flags = util.get_flags(tier2, jit)
 
     found_result = has_result(
         results_dir, commit_hash, machine, pystats, flags, util.get_benchmark_hash()

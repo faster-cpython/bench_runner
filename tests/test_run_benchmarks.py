@@ -1,3 +1,4 @@
+import contextlib
 import json
 from pathlib import Path
 import platform
@@ -305,18 +306,19 @@ def test_should_run_exists_force(tmp_path, benchmarks_checkout, capsys, monkeypa
 
     monkeypatch.setattr(git, "remove", remove)
 
-    generate_results._main(repo, force=False, bases=["3.11.0b3"])
-    should_run._main(
-        True,
-        "python",
-        "main",
-        "linux-x86_64-linux",
-        False,
-        False,
-        False,
-        tmp_path / "cpython",
-        repo / "results",
-    )
+    with contextlib.chdir(repo):
+        generate_results._main(repo, force=False, bases=["3.11.0b3"])
+        should_run._main(
+            True,
+            "python",
+            "main",
+            "linux-x86_64-linux",
+            False,
+            False,
+            False,
+            tmp_path / "cpython",
+            repo / "results",
+        )
 
     captured = capsys.readouterr()
     assert captured.out.splitlines()[-1].strip() == "should_run=true"

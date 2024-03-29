@@ -50,6 +50,9 @@ jobs:
   determine_base:
     runs-on: ubuntu-latest
     outputs:
+      head: ${{ steps.base.outputs.head }}
+      date: ${{ steps.base.outputs.date }}
+      version: ${{ steps.base.outputs.version }}
       ref: ${{ steps.base.outputs.ref }}
       need_to_run: ${{ steps.base.outputs.need_to_run }}
     steps:
@@ -62,7 +65,6 @@ jobs:
           cache: pip
       - name: Checkout CPython
         uses: actions/checkout@v4
-        if: ${{ inputs.benchmark_base }}
         with:
           repository: ${{ inputs.fork }}/cpython
           path: cpython
@@ -146,4 +148,18 @@ jobs:
     uses: ./.github/workflows/_publish.yml
     if: ${{ always() }}
     needs: [generate]
+    secrets: inherit
+
+  notify:
+    uses: ./.github/workflows/_notify.yml
+    if: ${{ always() }}
+    needs: [publish, determine_base]
+    with:
+      fork: ${{ inputs.fork }}
+      ref: ${{ inputs.ref }}
+      head: ${{ needs.determine_base.outputs.head }}
+      date: ${{ needs.determine_base.outputs.date }}
+      version: ${{ needs.determine_base.outputs.version }}
+      tier2: ${{ inputs.tier2 }}
+      jit: ${{ inputs.jit }}
     secrets: inherit
