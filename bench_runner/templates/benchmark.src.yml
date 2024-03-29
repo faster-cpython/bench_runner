@@ -147,3 +147,16 @@ jobs:
     if: ${{ always() }}
     needs: [generate]
     secrets: inherit
+
+  notify:
+    uses: ./.github/workflows/_notify.yml
+    needs: [publish, determine_base]
+    with:
+      fork: ${{ inputs.fork }}
+      ref: ${{ inputs.ref }}
+      head: ${{ needs.determine_base.outputs.head }}
+      date: ${{ needs.determine_base.outputs.date }}
+      version: ${{ needs.determine_base.outputs.version }}
+      tier2: ${{ inputs.tier2 }}
+      jit: ${{ inputs.jit }}
+    secrets: inherit

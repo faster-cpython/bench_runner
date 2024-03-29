@@ -419,8 +419,6 @@ class Result:
         flags: list[str] = [],
     ):
         self.nickname = nickname
-        if nickname not in runners.get_runners_by_nickname():
-            raise ValueError(f"Unknown runner {nickname}")
         self.machine = machine
         self.fork = fork
         self.ref = ref

@@ -11,6 +11,15 @@ TIER2_FLAGS = ["PYTHON_UOPS"]
 JIT_FLAGS = ["JIT"]
 
 
+def get_flags(tier2, jit):
+    flags = []
+    if tier2:
+        flags.extend(TIER2_FLAGS)
+    if jit:
+        flags.extend(JIT_FLAGS)
+    return flags
+
+
 def get_benchmark_hash() -> str:
     hash = hashlib.sha256()
     hash.update(os.environ["PYPERFORMANCE_HASH"].encode("ascii")[:7])

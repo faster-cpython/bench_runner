@@ -6,15 +6,13 @@ from collections import defaultdict
 import datetime
 import io
 import multiprocessing
-import os
 from pathlib import Path
 import sys
-from typing import Iterable, Mapping, Optional, TextIO
+from typing import Iterable, Optional, TextIO
 from urllib.parse import unquote
 
 
 from bench_runner.bases import get_bases
-from bench_runner import gh
 from bench_runner import plot
 from bench_runner.result import (
     load_all_results,
@@ -56,7 +54,6 @@ def save_generated_results(results: Iterable[Result], force: bool = False) -> No
     regeneration, pass ``force=True``.
     """
     work = []
-    people_affected = defaultdict(set)
     for result in results:
         for compare in result.bases.values():
             if compare.valid_comparison:
@@ -64,40 +61,11 @@ def save_generated_results(results: Iterable[Result], force: bool = False) -> No
                     filename = util.apply_suffix(compare.base_filename, suffix)
                     if not filename.exists() or force:
                         work.append((func, filename))
-                        if (
-                            actor := compare.head.metadata.get("github_actor")
-                        ) is not None:
-                            people_affected[actor].add(
-                                (filename.parent, compare.head.fork, compare.head.ref)
-                            )
 
     with multiprocessing.Pool() as pool:
         for i, _ in enumerate(pool.imap_unordered(_worker, work)):
             print(f"{i + 1:04d}/{len(work):04d}", end="\r")
         print()
-
-    if len(people_affected):
-        send_notification(people_affected)
-
-
-def send_notification(people_affected: Mapping[str, set[tuple[Path, str, str]]]):
-    github_repo = os.environ.get("GITHUB_REPOSITORY", "UNKNOWN")
-
-    lines = ["🤖 This is the friendly benchmarking bot with some new results!", ""]
-    for actor, entries in people_affected.items():
-        for directory, fork, ref in entries:
-            line = (
-                f"@{actor}: "
-                f"[{fork}/{ref}]"
-                f"(https://github.com/{github_repo}-public/tree/main/{directory})"
-            )
-            print(f"::notice ::{line}")
-            lines.append(line)
-    lines.extend(
-        ["", "NOTE: It may take up to 5 minutes before results are published."]
-    )
-
-    gh.send_notification("\n".join(lines))
 
 
 def output_results_index(

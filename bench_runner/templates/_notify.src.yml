@@ -1,0 +1,39 @@
+---
+name: _generate
+
+"on":
+  workflow_call:
+    inputs:
+      fork:
+        type: str
+      ref:
+        type: str
+      head:
+        type: str
+      date:
+        type: str
+      version:
+        type: str
+      tier2:
+        type: boolean
+      jit:
+        type: boolean
+
+jobs:
+  generate-results:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout benchmarking
+        uses: actions/checkout@v4
+      - name: Setup system Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install dependencies from PyPI
+        run: |
+          pip install -r requirements.txt
+      - name: Send notifications
+        run: python -m bench_runner notify --fork ${{ inputs.fork }} --ref ${{ inputs.ref }} --head ${{ inputs.head }} --date ${{ inputs.date }} --version ${{ inputs.version }} --tier2 ${{ inputs.tier2 }} --jit ${{ inputs.jit }}
+        env:
+          GH_TOKEN: ${{ github.token }}
