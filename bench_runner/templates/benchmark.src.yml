@@ -1,6 +1,6 @@
 ---
 name: benchmark
-run-name: benchmarking ${{ inputs.fork }}/${{ inputs.ref }}
+run-name: benchmarking ${{ inputs.fork }}/${{ inputs.ref }} ${{ inputs.tier2 == true && 'T2' || '' }} ${{ inputs.jit == true && 'JIT' || '' }}
 
 "on":
   workflow_dispatch:
