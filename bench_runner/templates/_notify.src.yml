@@ -1,5 +1,5 @@
 ---
-name: _generate
+name: _notify
 
 "on":
   workflow_call:
@@ -20,7 +20,7 @@ name: _generate
         type: boolean
 
 jobs:
-  generate-results:
+  notify:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout benchmarking
