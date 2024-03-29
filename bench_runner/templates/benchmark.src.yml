@@ -1,5 +1,6 @@
 ---
 name: benchmark
+run-name: benchmarking ${{ inputs.fork }}/${{ inputs.ref }}
 
 "on":
   workflow_dispatch:
