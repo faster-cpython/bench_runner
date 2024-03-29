@@ -50,6 +50,9 @@ jobs:
   determine_base:
     runs-on: ubuntu-latest
     outputs:
+      head: ${{ steps.base.outputs.head }}
+      date: ${{ steps.base.outputs.date }}
+      version: ${{ steps.base.outputs.version }}
       ref: ${{ steps.base.outputs.ref }}
       need_to_run: ${{ steps.base.outputs.need_to_run }}
     steps:
