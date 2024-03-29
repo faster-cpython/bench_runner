@@ -62,7 +62,6 @@ jobs:
           cache: pip
       - name: Checkout CPython
         uses: actions/checkout@v4
-        if: ${{ inputs.benchmark_base }}
         with:
           repository: ${{ inputs.fork }}/cpython
           path: cpython
