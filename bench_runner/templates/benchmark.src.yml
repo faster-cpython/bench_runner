@@ -149,6 +149,7 @@ jobs:
 
   notify:
     uses: ./.github/workflows/_notify.yml
+    if: ${{ always() }}
     needs: [publish, determine_base]
     with:
       fork: ${{ inputs.fork }}
