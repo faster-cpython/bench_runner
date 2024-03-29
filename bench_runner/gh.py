@@ -74,4 +74,4 @@ def send_notification(body):
     print("---")
     print(body)
     print("---")
-    subprocess.check_call(["gh", "issue", "comment", "183", "--body", body])
+    subprocess.check_call(["gh", "issue", "comment", "182", "--body", body])
