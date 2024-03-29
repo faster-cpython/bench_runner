@@ -5,15 +5,15 @@ name: _generate
   workflow_call:
     inputs:
       fork:
-        type: str
+        type: string
       ref:
-        type: str
+        type: string
       head:
-        type: str
+        type: string
       date:
-        type: str
+        type: string
       version:
-        type: str
+        type: string
       tier2:
         type: boolean
       jit:
