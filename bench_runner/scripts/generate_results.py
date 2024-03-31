@@ -337,7 +337,7 @@ def generate_directory_indices(results: list[Result]) -> None:
                     continue
                 data = dirresults[runner]
                 fd.write(f"## {runner}\n\n")
-                table.write_md_list(fd, data[None])
+                table.write_md_list(fd, data.get(None, ""))
                 for base, subdata in data.items():
                     if base is None:
                         continue
