@@ -166,6 +166,7 @@ jobs:
     timeout-minutes: 1440
 
     steps:
+      - uses: fregante/setup-git-user@v2
       - name: Checkout benchmarking
         uses: actions/checkout@v4
       - name: Setup system Python
