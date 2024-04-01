@@ -96,7 +96,7 @@ def run_benchmarks(
         *extra_args,
     ]
 
-    print("RUNNING:" + args)
+    print(f"RUNNING: {args}")
 
     subprocess.call(args)
 
