@@ -23,6 +23,7 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
+      - uses: technote-space/workflow-conclusion-action@v3
       - name: Checkout benchmarking
         uses: actions/checkout@v4
       - name: Setup system Python
@@ -34,6 +35,7 @@ jobs:
         run: |
           pip install -r requirements.txt
       - name: Send notifications
+        if: env.WORKFLOW_CONCLUSION == 'success'
         run: python -m bench_runner notify --fork ${{ inputs.fork }} --ref ${{ inputs.ref }} --head ${{ inputs.head }} --date ${{ inputs.date }} --version ${{ inputs.version }} --tier2 ${{ inputs.tier2 }} --jit ${{ inputs.jit }}
         env:
           GH_TOKEN: ${{ github.token }}
