@@ -343,7 +343,7 @@ def get_excluded_benchmarks() -> list[str]:
 
 def select_benchmarks(benchmarks: str):
     if benchmarks == "all":
-        return ",".join(["all", *[f"-{x}" for x in get_excluded_benchmarks()]])
+        return ",".join(["all", *[f"-{x}" for x in get_excluded_benchmarks() if x]])
     return benchmarks
 
 
