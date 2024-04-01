@@ -76,27 +76,29 @@ def run_benchmarks(
     else:
         fast_arg = []
 
-    subprocess.call(
-        [
-            *command_prefix,
-            sys.executable,
-            "-m",
-            "pyperformance",
-            "run",
-            *fast_arg,
-            "-o",
-            BENCHMARK_JSON,
-            "--manifest",
-            "benchmarks.manifest",
-            "--benchmarks",
-            benchmarks,
-            "--python",
-            python,
-            "--inherit-environ",
-            ",".join(ENV_VARS),
-            *extra_args,
-        ]
-    )
+    args = [
+        *command_prefix,
+        sys.executable,
+        "-m",
+        "pyperformance",
+        "run",
+        *fast_arg,
+        "-o",
+        BENCHMARK_JSON,
+        "--manifest",
+        "benchmarks.manifest",
+        "--benchmarks",
+        benchmarks,
+        "--python",
+        python,
+        "--inherit-environ",
+        ",".join(ENV_VARS),
+        *extra_args,
+    ]
+
+    print("RUNNING:" + args)
+
+    subprocess.call(args)
 
     # pyperformance frequently returns an error if any of the benchmarks failed.
     # We only want to fail if things are worse than that.
