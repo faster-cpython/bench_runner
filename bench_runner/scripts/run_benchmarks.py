@@ -76,27 +76,29 @@ def run_benchmarks(
     else:
         fast_arg = []
 
-    subprocess.call(
-        [
-            *command_prefix,
-            sys.executable,
-            "-m",
-            "pyperformance",
-            "run",
-            *fast_arg,
-            "-o",
-            BENCHMARK_JSON,
-            "--manifest",
-            "benchmarks.manifest",
-            "--benchmarks",
-            benchmarks,
-            "--python",
-            python,
-            "--inherit-environ",
-            ",".join(ENV_VARS),
-            *extra_args,
-        ]
-    )
+    args = [
+        *command_prefix,
+        sys.executable,
+        "-m",
+        "pyperformance",
+        "run",
+        *fast_arg,
+        "-o",
+        BENCHMARK_JSON,
+        "--manifest",
+        "benchmarks.manifest",
+        "--benchmarks",
+        benchmarks,
+        "--python",
+        python,
+        "--inherit-environ",
+        ",".join(ENV_VARS),
+        *extra_args,
+    ]
+
+    print(f"RUNNING: {args}")
+
+    subprocess.call(args)
 
     # pyperformance frequently returns an error if any of the benchmarks failed.
     # We only want to fail if things are worse than that.
@@ -333,6 +335,20 @@ def run_summarize_stats(
             )
 
 
+def get_excluded_benchmarks() -> list[str]:
+    filename = Path("excluded_benchmarks.txt")
+    if filename.is_file():
+        with open(filename) as fd:
+            return [x.strip() for x in fd.readlines()]
+    return []
+
+
+def select_benchmarks(benchmarks: str):
+    if benchmarks == "all":
+        return ",".join(["all", *[f"-{x}" for x in get_excluded_benchmarks() if x]])
+    return benchmarks
+
+
 def _main(
     mode: str,
     python: Path,
@@ -344,6 +360,8 @@ def _main(
     individual: bool,
     flags: list[str],
 ) -> None:
+    benchmarks = select_benchmarks(benchmarks)
+
     if mode == "benchmark":
         run_benchmarks(python, benchmarks, [], test_mode)
         update_metadata(BENCHMARK_JSON, fork, ref, run_id=run_id)
