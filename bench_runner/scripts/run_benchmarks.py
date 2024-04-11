@@ -11,7 +11,7 @@ import subprocess
 import sys
 import tempfile
 import textwrap
-from typing import Iterable, Optional, Union
+from typing import Iterable, Union
 
 
 import ujson
@@ -61,9 +61,9 @@ def get_benchmark_names(benchmarks: str) -> list[str]:
 def run_benchmarks(
     python: Union[Path, str],
     benchmarks: str,
-    command_prefix: list[str] = [],
+    command_prefix: Iterable[str] | None = None,
     test_mode: bool = False,
-    extra_args: list[str] = [],
+    extra_args: Iterable[str] | None = None,
 ) -> None:
     if benchmarks.strip() == "":
         benchmarks = "all"
@@ -71,10 +71,16 @@ def run_benchmarks(
     if BENCHMARK_JSON.is_file():
         BENCHMARK_JSON.unlink()
 
+    if command_prefix is None:
+        command_prefix = []
+
     if test_mode:
         fast_arg = ["--fast"]
     else:
         fast_arg = []
+
+    if extra_args is None:
+        extra_args = []
 
     args = [
         *command_prefix,
@@ -119,13 +125,16 @@ def collect_pystats(
     fork: str,
     ref: str,
     individual: bool,
-    flags: list[str] = [],
+    flags: Iterable[str] | None = None,
 ) -> None:
     pystats_dir = Path("/tmp/py_stats")
 
     all_benchmarks = get_benchmark_names(benchmarks)
 
     extra_args = ["--same-loops", "loops.json"]
+
+    if flags is None:
+        flags = []
 
     # We could technically run each benchmark in parallel (since we don't care
     # about performance timings), however, since the stats are written to the
@@ -235,7 +244,7 @@ def update_metadata(
     fork: str,
     ref: str,
     cpython: Path = Path("cpython"),
-    run_id: Optional[str] = None,
+    run_id: str | None = None,
 ) -> None:
     with open(filename) as fd:
         content = ujson.load(fd)
@@ -261,7 +270,7 @@ def update_metadata(
 
 
 def copy_to_directory(
-    filename: Path, python: Path, fork: str, ref: str, flags: list[str]
+    filename: Path, python: Path, fork: str, ref: str, flags: Iterable[str]
 ) -> None:
     result = Result.from_scratch(python, fork, ref, flags=flags)
     result.filename.parent.mkdir(parents=True, exist_ok=True)
@@ -274,9 +283,15 @@ def run_summarize_stats(
     ref: str,
     benchmark: str,
     output_json: bool,
-    benchmarks: list[str] = [],
-    flags: list[str] = [],
+    benchmarks: Iterable[str] | None = None,
+    flags: Iterable[str] | None = None,
 ) -> None:
+    if benchmarks is None:
+        benchmarks = []
+
+    if flags is None:
+        flags = []
+
     summarize_stats_path = (
         Path(python).parent / "Tools" / "scripts" / "summarize_stats.py"
     )
@@ -356,9 +371,9 @@ def _main(
     ref: str,
     benchmarks: str,
     test_mode: bool,
-    run_id: Optional[str],
+    run_id: str | None,
     individual: bool,
-    flags: list[str],
+    flags: Iterable[str],
 ) -> None:
     benchmarks = select_benchmarks(benchmarks)
 

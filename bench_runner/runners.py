@@ -5,7 +5,6 @@ import configparser
 import functools
 import os
 from pathlib import Path
-from typing import Optional
 
 
 class Runner:
@@ -19,7 +18,7 @@ class Runner:
         env: dict[str, str],
         # Override the Github self-hosted runner name if different from
         # os-arch-nickname
-        github_runner_name: Optional[str],
+        github_runner_name: str | None,
     ):
         self.nickname = nickname
         self.os = os
@@ -41,7 +40,7 @@ class Runner:
 
 
 @functools.cache
-def get_runners(path: Optional[Path] = None) -> list[Runner]:
+def get_runners(path: Path | None = None) -> list[Runner]:
     if path is None:
         path = Path("runners.ini")
 

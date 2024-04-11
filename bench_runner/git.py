@@ -5,13 +5,12 @@ from __future__ import annotations
 import datetime
 from pathlib import Path
 import subprocess
-from typing import Optional
 
 
 def get_log(
     format: str,
     dirname: Path,
-    ref: Optional[str] = None,
+    ref: str | None = None,
     n: int = 1,
     extra: list[str] = [],
 ) -> str:
@@ -52,7 +51,7 @@ def remove(repodir: Path, path: Path) -> None:
     )
 
 
-def get_git_merge_base(dirname: Path) -> Optional[str]:
+def get_git_merge_base(dirname: Path) -> str | None:
     # We need to make sure we have commits from main that are old enough to be
     # the base of this branch, but not so old that we waste a ton of bandwidth
     commit_date = datetime.datetime.fromisoformat(get_git_commit_date(dirname))

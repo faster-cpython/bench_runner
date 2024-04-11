@@ -7,7 +7,7 @@ import datetime
 import functools
 from operator import attrgetter
 from pathlib import Path
-from typing import Iterable, Optional, Sequence, TypeAlias
+from typing import Iterable, Sequence, TypeAlias
 
 
 from bench_runner import gh
@@ -125,7 +125,7 @@ def get_bisect(cpython: Path, refs: Sequence[str]) -> Iterable[Commit]:
     )
 
 
-def match_machine(a, b):
+def match_machine(a: str, b: str) -> bool:
     return (
         (a == "amd64" and b == "x86_64") or (a == "x86_64" and b == "amd64") or (a == b)
     )
@@ -135,7 +135,7 @@ def remove_existing(
     force: bool,
     commits: Iterable[Commit],
     runners: Sequence[RunnerType],
-    results: Optional[Sequence[mod_result.Result]] = None,
+    results: Sequence[mod_result.Result] | None = None,
 ) -> Iterable[Commit]:
     """
     Remove any runner/commit combinations that we already have results for.
@@ -216,10 +216,10 @@ def format_runners(
 
 def _main(
     cpython: Path,
-    all_with_prefix: Optional[Sequence[str]],
-    latest_with_prefix: Optional[Sequence[str]],
-    weekly_since: Optional[Sequence[str]],
-    bisect: Optional[Sequence[Sequence[str]]],
+    all_with_prefix: Sequence[str] | None,
+    latest_with_prefix: Sequence[str] | None,
+    weekly_since: Sequence[str] | None,
+    bisect: Sequence[Sequence[str]] | None,
     runners: Sequence[RunnerType],
     force: bool,
     tier2: bool,

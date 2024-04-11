@@ -11,7 +11,7 @@ import re
 import socket
 import subprocess
 import sys
-from typing import Any, Callable, Iterable, Optional
+from typing import Any, Callable, Iterable, Sequence
 from urllib.parse import unquote
 
 
@@ -27,7 +27,7 @@ from . import plot
 from . import runners
 
 
-CombinedData = list[tuple[str, Optional[np.ndarray], float]]
+CombinedData = list[tuple[str, np.ndarray | None, float]]
 
 
 def _clean(string: str) -> str:
@@ -84,7 +84,7 @@ class Comparison:
         return type(self)(self.ref, self.head, self.base)
 
     @property
-    def base_filename(self) -> Optional[Path]:
+    def base_filename(self) -> Path | None:
         if not self.valid_comparison:
             return None
 
@@ -106,7 +106,7 @@ class BenchmarkComparison(Comparison):
             yield (self.write_memory_plot, "-mem.png", "memory plot")
 
     @functools.cached_property
-    def _contents(self) -> Optional[str]:
+    def _contents(self) -> str | None:
         if self.base_filename is None:
             return None
 
@@ -149,7 +149,7 @@ class BenchmarkComparison(Comparison):
         fd.write(f"- memory change: {self._calculate_memory_change()}")
         return fd.getvalue()
 
-    def write_table(self, filename: Path) -> Optional[str]:
+    def write_table(self, filename: Path) -> str | None:
         entries = [
             ("fork", unquote(self.head.fork)),
             ("ref", self.head.ref),
@@ -182,9 +182,7 @@ class BenchmarkComparison(Comparison):
                 abs(values - np.mean(values)) < np.multiply(m, np.std(values))
             ]
 
-        def calculate_diffs(
-            ref_values, head_values
-        ) -> tuple[Optional[np.ndarray], float]:
+        def calculate_diffs(ref_values, head_values) -> tuple[np.ndarray | None, float]:
             sig, t_score = pyperf._utils.is_significant(ref_values, head_values)
 
             if not sig:
@@ -274,7 +272,7 @@ class BenchmarkComparison(Comparison):
             return f"{change:.02f}x"
 
     @functools.cached_property
-    def memory_change(self) -> Optional[str]:
+    def memory_change(self) -> str | None:
         if not self.valid_comparison:
             return ""
 
@@ -285,7 +283,7 @@ class BenchmarkComparison(Comparison):
         return None
 
     @property
-    def memory_change_float(self) -> Optional[float]:
+    def memory_change_float(self) -> float | None:
         memory_change = self.memory_change
         if memory_change in (None, "unknown"):
             return None
@@ -298,7 +296,7 @@ class BenchmarkComparison(Comparison):
         return f"Memory usage: {memory_change}"
 
     @functools.cached_property
-    def hpt_reliability(self) -> Optional[str]:
+    def hpt_reliability(self) -> str | None:
         if not self.valid_comparison:
             return ""
 
@@ -311,7 +309,7 @@ class BenchmarkComparison(Comparison):
 
         return None
 
-    def hpt_percentile(self, percentile: int) -> Optional[str]:
+    def hpt_percentile(self, percentile: int) -> str | None:
         if not self.valid_comparison:
             return ""
 
@@ -329,7 +327,7 @@ class BenchmarkComparison(Comparison):
 
         return None
 
-    def hpt_percentile_float(self, percentile: int) -> Optional[float]:
+    def hpt_percentile_float(self, percentile: int) -> float | None:
         result = self.hpt_percentile(percentile)
         if result is not None:
             num = float(result.split()[0][:-1])
@@ -413,10 +411,10 @@ class Result:
         ref: str,
         version: str,
         cpython_hash: str,
-        extra: list[str] = [],
+        extra: Iterable[str] | None = None,
         suffix: str = ".json",
-        commit_datetime: Optional[str] = None,
-        flags: list[str] = [],
+        commit_datetime: str | None = None,
+        flags: Iterable[str] | None = None,
     ):
         self.nickname = nickname
         self.machine = machine
@@ -424,9 +422,9 @@ class Result:
         self.ref = ref
         self.version = version
         self.cpython_hash = cpython_hash
-        self.extra = extra
+        self.extra = extra or []
         self.suffix = suffix
-        self.flags = sorted(set(flags))
+        self.flags = sorted(set(flags or []))
         self._commit_datetime = commit_datetime
         self._filename = None
         self.bases = {}
@@ -470,8 +468,8 @@ class Result:
         python: Path,
         fork: str,
         ref: str,
-        extra: list[str] = [],
-        flags: list[str] = [],
+        extra: Iterable[str] | None = None,
+        flags: Iterable[str] | None = None,
     ) -> "Result":
         result = cls(
             _clean(runners.get_nickname_for_hostname(socket.gethostname())),
@@ -480,10 +478,10 @@ class Result:
             _clean(ref[:20]),
             _clean(_get_platform_value(python, "python_version")),
             git.get_git_hash(Path("cpython"))[:7],
-            extra,
+            extra or [],
             ".json",
             commit_datetime=git.get_git_commit_date(Path("cpython")),
-            flags=flags,
+            flags=flags or [],
         )
         return result
 
@@ -522,7 +520,7 @@ class Result:
         return self._filename
 
     @functools.cached_property
-    def result_info(self) -> tuple[Optional[str], Optional[str]]:
+    def result_info(self) -> tuple[str | None, str | None]:
         match (self.extra, self.suffix):
             case ([], ".json"):
                 return ("raw results", None)
@@ -640,11 +638,11 @@ class Result:
         return self.run_datetime[:10]
 
     @property
-    def commit_merge_base(self) -> Optional[str]:
+    def commit_merge_base(self) -> str | None:
         return self.metadata.get("commit_merge_base", None)
 
     @property
-    def benchmark_hash(self) -> Optional[str]:
+    def benchmark_hash(self) -> str | None:
         return self.metadata.get("benchmark_hash", None)
 
     @property
@@ -668,7 +666,7 @@ class Result:
         return self.metadata.get("platform", "missing")
 
     @property
-    def github_action_url(self) -> Optional[str]:
+    def github_action_url(self) -> str | None:
         return self.metadata.get("github_action_url", None)
 
     @property
@@ -750,9 +748,9 @@ def has_result(
     commit_hash: str,
     machine: str,
     pystats: bool,
-    flags: list[str],
+    flags: Sequence[str],
     benchmark_hash: str,
-) -> Optional[Result]:
+) -> Result | None:
     if machine == "all":
         nickname = None
     else:
@@ -782,7 +780,7 @@ def has_result(
     return None
 
 
-def match_to_bases(results: list[Result], bases: Optional[list[str]]):
+def match_to_bases(results: Iterable[Result], bases: Sequence[str] | None):
     def find_match(result, candidates, base, func):
         # Try for an exact match (same benchmark_hash) first,
         # then fall back to less exact.
@@ -837,7 +835,7 @@ def match_to_bases(results: list[Result], bases: Optional[list[str]]):
 
 
 def load_all_results(
-    bases: Optional[list[str]],
+    bases: Sequence[str] | None,
     results_dir: Path,
     sorted: bool = True,
     match: bool = True,

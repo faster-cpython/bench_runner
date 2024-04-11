@@ -21,10 +21,13 @@ nothing about the method itself that should require that).
 
 """
 
+from __future__ import annotations
+
+
 import io
 import functools
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Any, Mapping
 
 
 import numpy as np
@@ -37,14 +40,14 @@ ACC_MAXSU = 2
 
 def load_from_json(
     json_path: Path,
-) -> Dict[str, NDArray[np.float64]]:
+) -> dict[str, NDArray[np.float64]]:
     with open(json_path) as fd:
         content = ujson.load(fd)
 
     return load_data(content)
 
 
-def load_data(data) -> Dict[str, NDArray[np.float64]]:
+def load_data(data: Mapping[str, Any]) -> dict[str, NDArray[np.float64]]:
     results = {}
     for benchmark in data["benchmarks"]:
         if "metadata" in benchmark:
@@ -60,8 +63,8 @@ def load_data(data) -> Dict[str, NDArray[np.float64]]:
 
 
 def create_matrices(
-    a: Dict[str, NDArray[np.float64]], b: Dict[str, NDArray[np.float64]]
-) -> Tuple[Dict[str, NDArray[np.float64]], Dict[str, NDArray[np.float64]]]:
+    a: Mapping[str, NDArray[np.float64]], b: Mapping[str, NDArray[np.float64]]
+) -> tuple[dict[str, NDArray[np.float64]], dict[str, NDArray[np.float64]]]:
     benchmarks = sorted(list(set(a.keys()) & set(b.keys())))
     return {bm: a[bm] for bm in benchmarks}, {bm: b[bm] for bm in benchmarks}
 
@@ -132,7 +135,7 @@ def cdfnorm(x: float) -> float:
 
 
 @functools.cache
-def ranksum_table(n: int, alpha: float) -> Tuple[float, float]:
+def ranksum_table(n: int, alpha: float) -> tuple[float, float]:
     if n < 12:
         raise ValueError(f"Fewer than 12 samples, got {n}")
 
@@ -145,7 +148,7 @@ def ranksum_table(n: int, alpha: float) -> Tuple[float, float]:
 
 def get_rank(
     gr_x: NDArray[np.float64],
-) -> Tuple[NDArray[np.int64], NDArray[np.int64]]:
+) -> tuple[NDArray[np.int64], NDArray[np.int64]]:
     rank = np.zeros((len(gr_x),), int)
     rep = np.zeros((len(gr_x),), int)
 
@@ -165,7 +168,7 @@ def get_ranksum(rank: NDArray[np.int64], rep: NDArray[np.int64]) -> np.int64:
 
 def prepare_one_row(
     por_x: NDArray[np.float64],
-) -> Tuple[np.int64, np.int64, np.float64, np.float64]:
+) -> tuple[np.int64, np.int64, np.float64, np.float64]:
     n = len(por_x) // 2
     rank, rep = get_rank(por_x)
     wl = get_ranksum(rank[:n], rep[:n])
@@ -176,7 +179,7 @@ def prepare_one_row(
     return wl, wr, ml, mr
 
 
-def unibench(ub_x: NDArray[np.float64], alpha: float) -> Optional[np.float64]:
+def unibench(ub_x: NDArray[np.float64], alpha: float) -> np.float64 | None:
     wl, _, ml, mr = prepare_one_row(ub_x)
     target = float(wl)
 
@@ -186,7 +189,7 @@ def unibench(ub_x: NDArray[np.float64], alpha: float) -> Optional[np.float64]:
     return None
 
 
-def crossbench(cb_x: NDArray[np.float64]) -> Tuple[float, float, float]:
+def crossbench(cb_x: NDArray[np.float64]) -> tuple[float, float, float]:
     sign = np.sign(cb_x)
     cb_x[sign < 0] *= -1.0
 
@@ -212,11 +215,11 @@ def crossbench(cb_x: NDArray[np.float64]) -> Tuple[float, float, float]:
 
 
 def hpt_basic(
-    mtx_a: Dict[str, NDArray[np.float64]],
-    mtx_b: Dict[str, NDArray[np.float64]],
+    mtx_a: Mapping[str, NDArray[np.float64]],
+    mtx_b: Mapping[str, NDArray[np.float64]],
     alpha: float,
     multi: float = 1.0,
-) -> Tuple[float, float, float]:
+) -> tuple[float, float, float]:
     assert mtx_a.keys() == mtx_b.keys()
 
     meddiff = np.zeros((len(mtx_a),), float)
@@ -232,8 +235,8 @@ def maxspeedup(
     reli: float,
     better: bool,
     alpha: float,
-    mtx_a: Dict[str, NDArray[np.float64]],
-    mtx_b: Dict[str, NDArray[np.float64]],
+    mtx_a: Mapping[str, NDArray[np.float64]],
+    mtx_b: Mapping[str, NDArray[np.float64]],
 ) -> float:
     if reli < 0.5:
         raise ValueError(
@@ -303,7 +306,7 @@ def maxspeedup(
             return base_su
 
 
-def make_report(ref, head, alpha=0.1):
+def make_report(ref: Path, head: Path, alpha=0.1):
     # The original code inverted the inputs from the standard in bench_runner,
     # and it's easier to just flip them here.
     a, b = head, ref
