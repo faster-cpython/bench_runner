@@ -9,12 +9,17 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 import sys
-from typing import Iterable
+from typing import TextIO, Iterable, Sequence, TypeAlias
 
 
 from bench_runner import result as mod_result
 from bench_runner import runners as mod_runners
 from bench_runner import util
+
+
+ParsedCommits: TypeAlias = Sequence[
+    tuple[str, list[str], str, Iterable[mod_result.Result]]
+]
 
 
 def parse_commit(commit: str) -> tuple[str, str, list[str]]:
@@ -61,13 +66,13 @@ def compare_pair(
     return "".join(entry)
 
 
-def write_row(fd, columns: list[str]):
+def write_row(fd: TextIO, columns: Iterable[str]):
     fd.write(f"| {' | '.join(columns)} |\n")
 
 
 def do_one_to_many(
-    fd,
-    parsed_commits: list[tuple[str, list[str], str, list[mod_result.Result]]],
+    fd: TextIO,
+    parsed_commits: ParsedCommits,
     machine: str,
     output_dir: Path,
     counter: list[int],
@@ -88,7 +93,7 @@ def do_one_to_many(
 
 def do_many_to_many(
     fd,
-    parsed_commits: list[tuple[str, list[str], str, list[mod_result.Result]]],
+    parsed_commits: ParsedCommits,
     machine: str,
     output_dir: Path,
     counter: list[int],
@@ -114,7 +119,7 @@ def do_many_to_many(
     fd.write("\n\nRows are 'bases', columns are 'heads'\n")
 
 
-def _main(commits: list[str], output_dir: Path, comparison_type: str):
+def _main(commits: Sequence[str], output_dir: Path, comparison_type: str):
     results = mod_result.load_all_results(
         None, Path("results"), sorted=False, match=False
     )

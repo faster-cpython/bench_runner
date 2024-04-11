@@ -6,7 +6,7 @@ import datetime
 from operator import attrgetter
 from pathlib import Path
 import re
-from typing import Callable, Iterable, Optional
+from typing import Callable, Iterable
 
 
 from matplotlib import pyplot as plt
@@ -135,7 +135,7 @@ def plot_diff(
     plt.close()
 
 
-def get_micro_version(version):
+def get_micro_version(version: str) -> str:
     micro = version.split(".")[-1].replace("+", "")
     if match := re.match(r"[0-9]+([a-z]+.+)", micro):
         micro = match.groups()[0]
@@ -174,7 +174,7 @@ tier2_date = datetime.datetime.fromisoformat("2023-11-11T00:00:00Z")
 jit_date = datetime.datetime.fromisoformat("2024-01-31T00:00:00Z")
 
 
-def filter_by_config(results):
+def filter_by_config(results: Iterable[result.Result]) -> list[result.Result]:
     correct_results = []
     for r in results:
         dt = datetime.datetime.fromisoformat(r.commit_datetime)
@@ -190,7 +190,7 @@ def filter_by_config(results):
     return correct_results
 
 
-def add_axvline(ax, dt, name):
+def add_axvline(ax, dt: datetime.datetime, name: str):
     ax.axvline(dt)
     ax.annotate(
         name,
@@ -213,7 +213,7 @@ def longitudinal_plot(
     styles=["-", ":", "-", "-", ":"],
     versions=[(3, 11), (3, 12), (3, 13)],
     getter: Callable[
-        [result.BenchmarkComparison], Optional[float]
+        [result.BenchmarkComparison], float | None
     ] = lambda r: r.hpt_percentile_float(99),
     differences: tuple[str, str] = ("slower", "faster"),
     markers=["s", "s", "^", ".", "."],
@@ -330,7 +330,7 @@ def flag_effect_plot(
     colors=["C0", "C0", "C2", "C3", "C3"],
     styles=["-", ":", "-", "-", ":"],
     getter: Callable[
-        [result.BenchmarkComparison], Optional[float]
+        [result.BenchmarkComparison], float | None
     ] = lambda r: r.hpt_percentile_float(99),
     differences: tuple[str, str] = ("slower", "faster"),
     markers=["s", "s", "^", ".", "."],

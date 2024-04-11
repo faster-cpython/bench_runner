@@ -7,13 +7,13 @@ from __future__ import annotations
 
 from pathlib import Path
 import subprocess
-from typing import Any, Mapping, Optional
+from typing import Any, Mapping
 
 
 from . import runners
 
 
-def get_machines(path: Optional[Path] = None):
+def get_machines(path: Path | None = None):
     return [x.name for x in runners.get_runners(path) if x.available] + ["all"]
 
 
@@ -31,12 +31,12 @@ def _get_flags(d: Mapping[str, Any]) -> list[str]:
 
 
 def benchmark(
-    fork: Optional[str] = None,
-    ref: Optional[str] = None,
-    machine: Optional[str] = None,
-    benchmark_base: Optional[bool] = None,
-    tier2: Optional[bool] = None,
-    _runner_path: Optional[Path] = None,
+    fork: str | None = None,
+    ref: str | None = None,
+    machine: str | None = None,
+    benchmark_base: bool | None = None,
+    tier2: bool | None = None,
+    _runner_path: Path | None = None,
 ) -> None:
     if not (fork is None or isinstance(fork, str)):
         raise TypeError(f"fork must be a str, got {type(fork)}")

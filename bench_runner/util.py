@@ -11,7 +11,7 @@ TIER2_FLAGS = ["PYTHON_UOPS"]
 JIT_FLAGS = ["JIT"]
 
 
-def get_flags(tier2, jit):
+def get_flags(tier2: bool, jit: bool) -> list[str]:
     flags = []
     if tier2:
         flags.extend(TIER2_FLAGS)

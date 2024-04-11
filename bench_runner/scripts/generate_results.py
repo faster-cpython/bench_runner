@@ -8,7 +8,7 @@ import io
 import multiprocessing
 from pathlib import Path
 import sys
-from typing import Iterable, Optional, TextIO
+from typing import Iterable, TextIO, Sequence
 from urllib.parse import unquote
 
 
@@ -22,7 +22,7 @@ from bench_runner import table
 from bench_runner import util
 
 
-def _tuple_to_nested_dicts(entries: Iterable[tuple], d: Optional[dict] = None) -> dict:
+def _tuple_to_nested_dicts(entries: Iterable[tuple], d: dict | None = None) -> dict:
     def recurse(entry: tuple, d: dict):
         if len(entry) == 2:
             d.setdefault(entry[0], [])
@@ -69,7 +69,7 @@ def save_generated_results(results: Iterable[Result], force: bool = False) -> No
 
 
 def output_results_index(
-    fd: TextIO, bases: list[str], results: Iterable[Result], filename: Path
+    fd: TextIO, bases: Iterable[str], results: Iterable[Result], filename: Path
 ):
     """
     Outputs a results index table.
@@ -139,7 +139,7 @@ def results_by_runner(
 
 
 def summarize_results(
-    results: Iterable[Result], bases: list[str], n_recent: int = 3, days: int = 3
+    results: Iterable[Result], n_recent: int = 3, days: int = 3
 ) -> Iterable[Result]:
     """
     Create a shorter list of results which includes:
@@ -156,7 +156,7 @@ def summarize_results(
     return new_results
 
 
-def get_most_recent_pystats(results: Iterable[Result]) -> Optional[Result]:
+def get_most_recent_pystats(results: Iterable[Result]) -> Result | None:
     candidate_pystats = [
         result
         for result in results
@@ -172,7 +172,7 @@ def get_most_recent_pystats(results: Iterable[Result]) -> Optional[Result]:
 
 def generate_index(
     filename: Path,
-    bases: list[str],
+    bases: Iterable[str],
     all_results: Iterable[Result],
     benchmarking_results: Iterable[Result],
     summarize: bool = False,
@@ -193,14 +193,14 @@ def generate_index(
     for runner, results in results_by_runner(benchmarking_results):
         content.write(f"## {runner}\n")
         if summarize:
-            results = summarize_results(results, bases)
+            results = summarize_results(results)
         output_results_index(content, bases, results, filename)
         content.write("\n")
     table.replace_section(filename, "table", content.getvalue())
 
 
 def generate_indices(
-    bases: list[str],
+    bases: Iterable[str],
     all_results: Iterable[Result],
     benchmarking_results: Iterable[Result],
     repo_dir: Path,
@@ -232,8 +232,8 @@ def find_different_benchmarks(head: Result, ref: Result) -> tuple[list[str], lis
 
 
 def get_directory_indices_entries(
-    results: list[Result],
-) -> list[tuple[Path, Optional[str], Optional[str], str]]:
+    results: Iterable[Result],
+) -> list[tuple[Path, str | None, str | None, str]]:
     entries = []
     dirpaths: set[Path] = set()
     refs = defaultdict(set)
@@ -313,7 +313,7 @@ def get_directory_indices_entries(
     return entries
 
 
-def generate_directory_indices(results: list[Result]) -> None:
+def generate_directory_indices(results: Iterable[Result]) -> None:
     """
     Generate the indices that go in each results directory.
     """
@@ -346,7 +346,7 @@ def generate_directory_indices(results: list[Result]) -> None:
     print()
 
 
-def _main(repo_dir: Path, force: bool = False, bases: Optional[list[str]] = None):
+def _main(repo_dir: Path, force: bool = False, bases: Sequence[str] | None = None):
     results_dir = repo_dir / "results"
     if bases is None:
         bases = get_bases()

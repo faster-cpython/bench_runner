@@ -75,6 +75,7 @@ def benchmarks_checkout(request):
     venv_dir = root / "venv"
     venv_python = venv_dir / "bin" / "python"
     if not venv_dir.is_dir():
+        venv_dir.parent.mkdir(parents=True, exist_ok=True)
         subprocess.check_call([sys.executable, "-m", "venv", venv_dir], cwd=root)
         subprocess.check_call(
             [venv_python, "-m", "pip", "install", root / "pyperformance"], cwd=root

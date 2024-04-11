@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 import shutil
 import sys
-from typing import Optional
+from typing import Sequence
 
 
 from bench_runner.bases import get_bases
@@ -24,7 +24,7 @@ def dir_size(path: Path) -> int:
     return total
 
 
-def _main(repo_dir: Path, days: int, dry_run: bool, bases: Optional[list[str]] = None):
+def _main(repo_dir: Path, days: int, dry_run: bool, bases: Sequence[str] | None = None):
     results_dir = repo_dir / "results"
     if bases is None:
         bases = get_bases()

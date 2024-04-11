@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+from typing import Sequence
 
 
 import ujson
@@ -41,7 +42,7 @@ def remove_benchmark(
             ujson.dump(data, fd, indent=2)
 
 
-def _main(benchmarks: list[str], keep_hash: list[str], dry_run: bool = False):
+def _main(benchmarks: Sequence[str], keep_hash: Sequence[str], dry_run: bool = False):
     print(f"Removing benchmarks {benchmarks} from all results")
 
     keep_hash_set = set(keep_hash)
