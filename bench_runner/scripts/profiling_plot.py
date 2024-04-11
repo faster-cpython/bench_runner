@@ -54,6 +54,7 @@ CATEGORIES: dict[str, list[str]] = {
         "update_one_slot",
     ],
     "gc": [
+        "_?PyGC_.+",
         "_?PyObject_GC_.+",
         "_PyObject_Visit.+",
         "_PyTrash_.+",
@@ -61,6 +62,7 @@ CATEGORIES: dict[str, list[str]] = {
         ".+MaybeUntrack",
         "deduce_unreachable",
         "gc_collect_main",
+        "gc_collect_region.*",
         "PyObject_IS_GC",
         "type_is_gc",
         "visit_.+",
