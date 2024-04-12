@@ -206,12 +206,12 @@ def add_axvline(ax, dt: datetime.datetime, name: str):
 def longitudinal_plot(
     results: Iterable[result.Result],
     output_filename: Path,
-    bases=["3.10.4", "3.11.0", "3.12.0"],
+    bases=["3.10.4", "3.11.0", "3.12.0", "3.12.0"],
     runners=["linux", "pythonperf2", "darwin", "pythonperf1", "pythonperf1_win32"],
     names=["linux", "linux2", "macos", "win64", "win32"],
     colors=["C0", "C0", "C2", "C3", "C3"],
     styles=["-", ":", "-", "-", ":"],
-    versions=[(3, 11), (3, 12), (3, 13)],
+    versions=[(3, 11), (3, 12), (3, 13), (3, 13)],
     getter: Callable[
         [result.BenchmarkComparison], float | None
     ] = lambda r: r.hpt_percentile_float(99),
@@ -245,7 +245,10 @@ def longitudinal_plot(
         version_str = ".".join(str(x) for x in version)
         ver_results = [r for r in results if r.parsed_version.release[0:2] == version]
 
-        ax.set_title(f"Python {version_str}.x vs. {base}")
+        title = f"Python {version_str}.x vs. {base}"
+        if i == 3:
+            title += " (with JIT)"
+        ax.set_title(title)
 
         for runner_i, (runner, name, color, style, marker) in enumerate(
             zip(runners, names, colors, styles, markers)
@@ -254,7 +257,11 @@ def longitudinal_plot(
 
             # For 3.13, only use Tier 2 results after 2023-11-11 and JIT results
             # after 2024-01-30
-            if version == (3, 13):
+            if i == 2:
+                runner_results = [
+                    r for r in runner_results if not r.is_tier2 and not r.is_jit
+                ]
+            elif i == 3:
                 runner_results = filter_by_config(runner_results)
 
             for r in results:
@@ -307,7 +314,7 @@ def longitudinal_plot(
         annotate_y_axis(ax, differences)
 
         # Add a line for when Tier 2 and JIT were turned on
-        if i == 2:
+        if i == 3:
             add_axvline(ax, tier2_date, "TIER 2")
             add_axvline(ax, jit_date, "JIT")
 
