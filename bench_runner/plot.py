@@ -245,10 +245,10 @@ def longitudinal_plot(
         version_str = ".".join(str(x) for x in version)
         ver_results = [r for r in results if r.parsed_version.release[0:2] == version]
 
-        title = f"Python {version_str}.x vs. {base}"
+        subtitle = f"Python {version_str}.x vs. {base}"
         if i == 3:
-            title += " (with JIT)"
-        ax.set_title(title)
+            subtitle += " (with JIT)"
+        ax.set_title(subtitle)
 
         for runner_i, (runner, name, color, style, marker) in enumerate(
             zip(runners, names, colors, styles, markers)
