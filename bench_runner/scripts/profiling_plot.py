@@ -257,18 +257,26 @@ def _main(input_dir: Path, output_prefix: Path):
 
                 # Add up all the JIT entries into a single row
                 rows = []
+                total = 0.0
                 jit_time = 0.0
                 for row in csvreader:
                     self_time, _, obj, sym = row
                     self_time = float(self_time)
                     if self_time > 100.0:
                         print(f"{stem} Invalid data")
+                    total += self_time
                     if obj == "[JIT]":
                         jit_time += self_time
                     else:
                         rows.append((self_time, obj, sym))
                 if jit_time != 0.0:
                     rows.append((jit_time, "[JIT]", "jit"))
+
+                if total >= 100.0:
+                    rows = [
+                        (self_time / 100.0, obj, sym) for (self_time, obj, sym) in rows
+                    ]
+
                 rows.sort(reverse=True)
 
                 for self_time, obj, sym in rows:
