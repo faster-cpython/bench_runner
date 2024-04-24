@@ -166,10 +166,8 @@ def _collect_single_pystats(
                 cwd=working_dir,
             )
         except NoBenchmarkError:
-            print("NoBenchmarkError")
             pass
         else:
-            print(f"individual {individual}")
             if individual:
                 run_summarize_stats(
                     pystats_dir, python, fork, ref, benchmark, False, flags=flags
