@@ -348,8 +348,6 @@ def run_summarize_stats(
     result.filename.parent.mkdir(parents=True, exist_ok=True)
     pystats_json = result.filename.with_suffix(".json")
 
-    print(f"RESULT: {result.filename}")
-
     args = [str(python), summarize_stats_path, pystats_dir]
     if output_json:
         args.extend(["--json-output", pystats_json])
