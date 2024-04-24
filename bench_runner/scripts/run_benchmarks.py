@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import multiprocessing
 import os
 from operator import itemgetter
 from pathlib import Path
@@ -11,7 +12,7 @@ import subprocess
 import sys
 import tempfile
 import textwrap
-from typing import Iterable, Union
+from typing import Iterable
 
 
 import ujson
@@ -24,13 +25,12 @@ from bench_runner import util
 
 
 REPO_ROOT = Path()
-BENCHMARK_JSON = REPO_ROOT / "benchmark.json"
 PROFILING_RESULTS = REPO_ROOT / "profiling" / "results"
 GITHUB_URL = "https://github.com/" + os.environ.get(
     "GITHUB_REPOSITORY", "faster-cpython/bench_runner"
 )
 # Environment variables that control the execution of CPython
-ENV_VARS = ["PYTHON_UOPS"]
+ENV_VARS = ["PYTHON_UOPS", "PYTHON_PYSTATS_DIR"]
 
 
 class NoBenchmarkError(Exception):
@@ -59,17 +59,24 @@ def get_benchmark_names(benchmarks: str) -> list[str]:
 
 
 def run_benchmarks(
-    python: Union[Path, str],
+    python: Path | str,
     benchmarks: str,
     command_prefix: Iterable[str] | None = None,
     test_mode: bool = False,
     extra_args: Iterable[str] | None = None,
+    env: dict[str, str] | None = None,
+    cwd: Path | None = None,
 ) -> None:
+    if cwd is None:
+        cwd = Path()
+
+    benchmark_json = cwd / "benchmark.json"
+
     if benchmarks.strip() == "":
         benchmarks = "all"
 
-    if BENCHMARK_JSON.is_file():
-        BENCHMARK_JSON.unlink()
+    if benchmark_json.is_file():
+        benchmark_json.unlink()
 
     if command_prefix is None:
         command_prefix = []
@@ -82,6 +89,9 @@ def run_benchmarks(
     if extra_args is None:
         extra_args = []
 
+    if env is None:
+        env = {}
+
     args = [
         *command_prefix,
         sys.executable,
@@ -90,7 +100,7 @@ def run_benchmarks(
         "run",
         *fast_arg,
         "-o",
-        BENCHMARK_JSON,
+        benchmark_json.resolve(),
         "--manifest",
         "benchmarks.manifest",
         "--benchmarks",
@@ -104,19 +114,72 @@ def run_benchmarks(
 
     print(f"RUNNING: {args}")
 
-    subprocess.call(args)
+    subprocess.call(args, env=env, cwd=cwd)
 
     # pyperformance frequently returns an error if any of the benchmarks failed.
     # We only want to fail if things are worse than that.
 
-    if not Path(BENCHMARK_JSON).is_file():
+    if not benchmark_json.is_file():
         raise NoBenchmarkError(
-            f"No benchmark file created at {BENCHMARK_JSON.resolve()}."
+            f"No benchmark file created at {benchmark_json.resolve()}."
         )
-    with open(BENCHMARK_JSON) as fd:
+    with open(benchmark_json) as fd:
         contents = ujson.load(fd)
     if len(contents.get("benchmarks", [])) == 0:
         raise NoBenchmarkError("No benchmarks were run.")
+
+
+def _collect_single_pystats(
+    cumulative_stats_dir: Path,
+    python: Path,
+    benchmark: str,
+    fork: str,
+    ref: str,
+    flags: Iterable[str],
+    individual: bool,
+):
+    extra_args = ["--same-loops", "loops.json"]
+
+    pid = os.getpid()
+    root_dir = Path("..")
+    working_dir = Path(f"pystats{pid:08}")
+    if working_dir.exists():
+        raise RuntimeError(f"Working directory {working_dir} already exists")
+    working_dir.mkdir()
+
+    try:
+        # Set up the working directory with the necessary content and symlinks
+        shutil.copyfile("benchmarks.manifest", working_dir / "benchmarks.manifest")
+        shutil.copyfile("loops.json", working_dir / "loops.json")
+        (working_dir / "cpython").symlink_to(root_dir / "cpython")
+        (working_dir / "pyperformance").symlink_to(root_dir / "pyperformance")
+        (working_dir / "pyston-benchmarks").symlink_to(root_dir / "pyston-benchmarks")
+        pystats_dir = working_dir / "pystats"
+        pystats_dir.mkdir()
+
+        try:
+            run_benchmarks(
+                python,
+                benchmark,
+                extra_args=extra_args,
+                env={"PYTHON_PYSTATS_DIR": "pystats/"},
+                cwd=working_dir,
+            )
+        except NoBenchmarkError:
+            print("NoBenchmarkError")
+            pass
+        else:
+            print(f"individual {individual}")
+            if individual:
+                run_summarize_stats(
+                    pystats_dir, python, fork, ref, benchmark, False, flags=flags
+                )
+
+            for filename in pystats_dir.iterdir():
+                os.rename(filename, Path(cumulative_stats_dir) / filename.name)
+
+    finally:
+        shutil.rmtree(working_dir)
 
 
 def collect_pystats(
@@ -127,37 +190,20 @@ def collect_pystats(
     individual: bool,
     flags: Iterable[str] | None = None,
 ) -> None:
-    pystats_dir = Path("/tmp/py_stats")
-
     all_benchmarks = get_benchmark_names(benchmarks)
-
-    extra_args = ["--same-loops", "loops.json"]
 
     if flags is None:
         flags = []
 
-    # We could technically run each benchmark in parallel (since we don't care
-    # about performance timings), however, since the stats are written to the
-    # same directory, they would get intertwined. At some point, specifying an
-    # output directory for stats might make sense for this.
-
     with tempfile.TemporaryDirectory() as tempdir:
-        for benchmark in all_benchmarks:
-            try:
-                run_benchmarks(python, benchmark, extra_args=extra_args)
-            except NoBenchmarkError:
-                pass
-            else:
-                if individual:
-                    run_summarize_stats(
-                        python, fork, ref, benchmark, False, flags=flags
-                    )
-
-            for filename in pystats_dir.iterdir():
-                os.rename(filename, Path(tempdir) / filename.name)
-
-        for filename in Path(tempdir).iterdir():
-            os.rename(filename, pystats_dir / filename.name)
+        with multiprocessing.Pool() as pool:
+            pool.starmap(
+                _collect_single_pystats,
+                [
+                    (tempdir, python, benchmark, fork, ref, flags, individual)
+                    for benchmark in all_benchmarks
+                ],
+            )
 
         if individual:
             benchmark_links = all_benchmarks
@@ -165,7 +211,7 @@ def collect_pystats(
             benchmark_links = []
 
         run_summarize_stats(
-            python, fork, ref, "all", True, benchmark_links, flags=flags
+            Path(tempdir), python, fork, ref, "all", True, benchmark_links, flags=flags
         )
 
 
@@ -278,6 +324,7 @@ def copy_to_directory(
 
 
 def run_summarize_stats(
+    pystats_dir: Path,
     python: Path,
     fork: str,
     ref: str,
@@ -303,7 +350,9 @@ def run_summarize_stats(
     result.filename.parent.mkdir(parents=True, exist_ok=True)
     pystats_json = result.filename.with_suffix(".json")
 
-    args = [str(python), summarize_stats_path]
+    print(f"RESULT: {result.filename}")
+
+    args = [str(python), summarize_stats_path, pystats_dir]
     if output_json:
         args.extend(["--json-output", pystats_json])
 
@@ -379,8 +428,8 @@ def _main(
 
     if mode == "benchmark":
         run_benchmarks(python, benchmarks, [], test_mode)
-        update_metadata(BENCHMARK_JSON, fork, ref, run_id=run_id)
-        copy_to_directory(BENCHMARK_JSON, python, fork, ref, flags)
+        update_metadata(Path("benchmark.json"), fork, ref, run_id=run_id)
+        copy_to_directory(Path("benchmark.json"), python, fork, ref, flags)
     elif mode == "perf":
         collect_perf(python, benchmarks)
     elif mode == "pystats":
