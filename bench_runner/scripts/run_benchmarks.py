@@ -138,6 +138,7 @@ def _collect_single_pystats(
     flags: Iterable[str],
     individual: bool,
 ):
+    print(f"In subprocess: {os.environ.get('LD_LIBRARY_PATH')}")
     extra_args = ["--same-loops", "loops.json"]
 
     pid = os.getpid()
@@ -188,6 +189,8 @@ def collect_pystats(
     individual: bool,
     flags: Iterable[str] | None = None,
 ) -> None:
+    print("In main process: {os.environ.get('LD_LIBRARY_PATH')}")
+
     all_benchmarks = get_benchmark_names(benchmarks)
 
     if flags is None:
