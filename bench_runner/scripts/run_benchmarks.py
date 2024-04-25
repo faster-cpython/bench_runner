@@ -92,6 +92,9 @@ def run_benchmarks(
     if env is None:
         env = {}
 
+    if ld_library_path := os.environ.get("LD_LIBRARY_PATH"):
+        env["LD_LIBRARY_PATH"] = ld_library_path
+
     args = [
         *command_prefix,
         sys.executable,
@@ -189,7 +192,7 @@ def collect_pystats(
     individual: bool,
     flags: Iterable[str] | None = None,
 ) -> None:
-    print("In main process: {os.environ.get('LD_LIBRARY_PATH')}")
+    print(f"In main process: {os.environ.get('LD_LIBRARY_PATH')}")
 
     all_benchmarks = get_benchmark_names(benchmarks)
 
