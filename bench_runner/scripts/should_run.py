@@ -30,6 +30,10 @@ def _main(
         )
         sys.exit(1)
 
+    if tier2 and jit:
+        print("Tier 2 interpreter and JIT may not be selected at the same time")
+        sys.exit(1)
+
     # Now that we've assert we are Python 3.11 or later, we can import
     # parts of our library.
     from bench_runner import git
