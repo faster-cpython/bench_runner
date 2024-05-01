@@ -87,6 +87,10 @@ def main():
     parser.add_argument("jit")
     args = parser.parse_args()
 
+    print(repr(args.tier2))
+    print(repr(args.jit))
+    print(args.tier2 != "false", args.jit != "false")
+
     _main(
         args.force != "false",
         args.fork,
