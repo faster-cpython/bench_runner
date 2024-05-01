@@ -30,7 +30,7 @@ GITHUB_URL = "https://github.com/" + os.environ.get(
     "GITHUB_REPOSITORY", "faster-cpython/bench_runner"
 )
 # Environment variables that control the execution of CPython
-ENV_VARS = ["PYTHON_UOPS"]
+ENV_VARS = ["PYTHON_JIT"]
 
 
 class NoBenchmarkError(Exception):
