@@ -273,7 +273,7 @@ jobs:
         if: ${{ always() }}
         id: should_run
         run: |
-          venv/bin/python -m bench_runner should_run ${{ inputs.force }} ${{ inputs.force }} ${{ inputs.ref }} ${{ inputs.machine }} false ${{ inputs.tier2 }} ${{ inputs.jit }}>> $GITHUB_OUTPUT
+          venv/bin/python -m bench_runner should_run ${{ inputs.force }} ${{ inputs.force }} ${{ inputs.ref }} ${{ inputs.machine }} false ${{ inputs.tier2 }} ${{ inputs.jit }} >> $GITHUB_OUTPUT
       - name: Checkout python-macrobenchmarks
         uses: actions/checkout@v4
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
