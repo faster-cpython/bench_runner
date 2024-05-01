@@ -109,7 +109,7 @@ jobs:
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
           cd cpython
-          ./configure --enable-pystats --prefix=$PWD/install ${{ inputs.jit == true && '--enable-experimental-jit' || '' }}
+          ./configure --enable-pystats --prefix=$PWD/install ${{ inputs.tier2 == true && '--enable-experimental-jit=interpreter' || '' }} ${{ inputs.jit == true && '--enable-experimental-jit=yes' || '' }}
           make -j4
           make install
       - name: Install pyperformance into the system python
