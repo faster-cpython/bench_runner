@@ -207,16 +207,23 @@ def longitudinal_plot(
     results: Iterable[result.Result],
     output_filename: Path,
     bases=["3.10.4", "3.11.0", "3.12.0", "3.12.0"],
-    runners=["linux", "pythonperf2", "darwin", "pythonperf1", "pythonperf1_win32"],
-    names=["linux", "linux2", "macos", "win64", "win32"],
-    colors=["C0", "C0", "C2", "C3", "C3"],
-    styles=["-", ":", "-", "-", ":"],
+    runners=[
+        "linux",
+        "pythonperf2",
+        "arminc",
+        "darwin",
+        "pythonperf1",
+        "pythonperf1_win32",
+    ],
+    names=["linux", "linux2", "linux-aarch64", "macos", "win64", "win32"],
+    colors=["C0", "C0", "C4", "C2", "C3", "C3"],
+    styles=["-", ":", "--", "-", "-", ":"],
     versions=[(3, 11), (3, 12), (3, 13), (3, 13)],
     getter: Callable[
         [result.BenchmarkComparison], float | None
     ] = lambda r: r.hpt_percentile_float(99),
     differences: tuple[str, str] = ("slower", "faster"),
-    markers=["s", "s", "^", ".", "."],
+    markers=["s", "s", "s", "^", ".", "."],
     title="Performance improvement by configuration",
 ):
     def get_comparison_value(ref, r, base):
@@ -332,15 +339,22 @@ def flag_effect_plot(
     output_filename: Path,
     flags=["JIT", "PYTHON_UOPS"],
     configs=["JIT compiler", "Tier 2 interpreter"],
-    runners=["linux", "pythonperf2", "darwin", "pythonperf1", "pythonperf1_win32"],
-    names=["linux", "linux2", "macos", "win64", "win32"],
-    colors=["C0", "C0", "C2", "C3", "C3"],
-    styles=["-", ":", "-", "-", ":"],
+    runners=[
+        "linux",
+        "pythonperf2",
+        "arminc",
+        "darwin",
+        "pythonperf1",
+        "pythonperf1_win32",
+    ],
+    names=["linux", "linux2", "linux-aarch64", "macos", "win64", "win32"],
+    colors=["C0", "C0", "C4", "C2", "C3", "C3"],
+    styles=["-", ":", "--", "-", "-", ":"],
     getter: Callable[
         [result.BenchmarkComparison], float | None
     ] = lambda r: r.hpt_percentile_float(99),
     differences: tuple[str, str] = ("slower", "faster"),
-    markers=["s", "s", "^", ".", "."],
+    markers=["s", "s", "s", "^", ".", "."],
     title="Performance improvement by configuration",
 ):
     def get_comparison_value(ref, r):
