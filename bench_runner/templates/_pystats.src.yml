@@ -15,10 +15,6 @@ name: _pystats
       benchmarks:
         description: "Benchmarks to run (comma-separated; empty runs all benchmarks)"
         type: string
-      dry_run:
-        description: "Dry run: Do not commit to the repo"
-        type: boolean
-        default: false
       force:
         description: "Rerun and replace results if commit already exists"
         type: boolean
@@ -30,6 +26,9 @@ name: _pystats
         type: boolean
       jit:
         description: "Enable the JIT"
+        type: boolean
+      nogil:
+        description: "Enable free threading"
         type: boolean
 
   workflow_call:
@@ -58,6 +57,9 @@ name: _pystats
       jit:
         description: "Enable the JIT"
         type: boolean
+      nogil:
+        description: "Enable free threading"
+        type: boolean
 
 jobs:
   collect-stats:
@@ -84,7 +86,7 @@ jobs:
         if: ${{ always() }}
         id: should_run
         run: |
-          python -m bench_runner should_run ${{ inputs.force }} ${{ inputs.fork }} ${{ inputs.ref }} all true ${{ inputs.tier2 }} ${{ inputs.jit }} >> $GITHUB_OUTPUT
+          python -m bench_runner should_run ${{ inputs.force }} ${{ inputs.fork }} ${{ inputs.ref }} all true ${{ inputs.tier2 }} ${{ inputs.jit }} ${{ inputs.nogil }} >> $GITHUB_OUTPUT
       - name: Checkout python-macrobenchmarks
         uses: actions/checkout@v4
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
@@ -109,7 +111,7 @@ jobs:
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
           cd cpython
-          ./configure --enable-pystats --prefix=$PWD/install ${{ inputs.tier2 == true && '--enable-experimental-jit=interpreter' || '' }} ${{ inputs.jit == true && '--enable-experimental-jit=yes' || '' }}
+          ./configure --enable-pystats --prefix=$PWD/install ${{ inputs.tier2 == true && '--enable-experimental-jit=interpreter' || '' }} ${{ inputs.jit == true && '--enable-experimental-jit=yes' || '' }} ${{ inputs.nogil == true && '--disable-gil' || '' }}
           make -j4
           make install
       - name: Install pyperformance into the system python
@@ -129,7 +131,7 @@ jobs:
           # just pulled in in that case.
           git pull -s recursive -X ours --autostash --rebase
       - name: Add data to repo
-        if: ${{ steps.should_run.outputs.should_run != 'false' && !inputs.dry_run }}
+        if: ${{ steps.should_run.outputs.should_run != 'false' }}
         uses: EndBug/add-and-commit@v9
         with:
           add: results
