@@ -78,6 +78,9 @@ def benchmarks_checkout(request):
         venv_dir.parent.mkdir(parents=True, exist_ok=True)
         subprocess.check_call([sys.executable, "-m", "venv", venv_dir], cwd=root)
         subprocess.check_call(
+            [venv_python, "-m", "pip", "install", "setuptools"], cwd=root
+        )
+        subprocess.check_call(
             [venv_python, "-m", "pip", "install", root / "pyperformance"], cwd=root
         )
 
@@ -217,6 +220,7 @@ def test_should_run_exists_noforce(tmp_path, benchmarks_checkout, capsys):
         False,
         False,
         False,
+        False,
         tmp_path / "cpython",
         repo / "results",
     )
@@ -236,6 +240,7 @@ def test_should_run_diff_machine_noforce(tmp_path, benchmarks_checkout, capsys):
         "python",
         "main",
         "darwin-x86_64-darwin",
+        False,
         False,
         False,
         False,
@@ -261,6 +266,7 @@ def test_should_run_all_noforce(tmp_path, benchmarks_checkout, capsys):
         False,
         False,
         False,
+        False,
         tmp_path / "cpython",
         repo / "results",
     )
@@ -281,6 +287,7 @@ def test_should_run_noexists_noforce(tmp_path, benchmarks_checkout, capsys):
         "python",
         "main",
         "linux-x86_64-linux",
+        False,
         False,
         False,
         False,
@@ -317,6 +324,7 @@ def test_should_run_exists_force(tmp_path, benchmarks_checkout, capsys, monkeypa
             False,
             False,
             False,
+            False,
             tmp_path / "cpython",
             repo / "results",
         )
@@ -345,6 +353,7 @@ def test_should_run_noexists_force(tmp_path, benchmarks_checkout, capsys):
         False,
         False,
         False,
+        False,
         tmp_path / "cpython",
         repo / "results",
     )
@@ -366,6 +375,7 @@ def test_should_run_checkout_failed(tmp_path, capsys):
             "python",
             "main",
             "linux-x86_64-linux",
+            False,
             False,
             False,
             False,
