@@ -9,14 +9,17 @@ def status(char: str) -> None:
 
 TIER2_FLAGS = ["PYTHON_UOPS"]
 JIT_FLAGS = ["JIT"]
+NOGIL_FLAGS = ["NOGIL"]
 
 
-def get_flags(tier2: bool, jit: bool) -> list[str]:
+def get_flags(tier2: bool, jit: bool, nogil: bool) -> list[str]:
     flags = []
     if tier2:
         flags.extend(TIER2_FLAGS)
     if jit:
         flags.extend(JIT_FLAGS)
+    if nogil:
+        flags.extend(NOGIL_FLAGS)
     return flags
 
 

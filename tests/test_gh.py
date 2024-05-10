@@ -54,4 +54,8 @@ def test_benchmark_cmdline(monkeypatch):
         "benchmark_base=true",
         "-f",
         "tier2=false",
+        "-f",
+        "jit=false",
+        "-f",
+        "nogil=false",
     ]

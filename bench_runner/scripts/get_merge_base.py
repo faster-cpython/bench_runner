@@ -22,6 +22,7 @@ def _main(
     pystats: bool,
     tier2: bool,
     jit: bool,
+    nogil: bool,
     cpython: Path = Path("cpython"),
 ) -> None:
     commit_hash = git.get_git_hash(cpython)
@@ -43,11 +44,7 @@ def _main(
             print("ref=xxxxxxx")
             print("need_to_run=false")
         else:
-            flags = []
-            if tier2:
-                flags.extend(util.TIER2_FLAGS)
-            if jit:
-                flags.extend(util.JIT_FLAGS)
+            flags = util.get_flags(tier2, jit, nogil)
 
             need_to_run = (
                 machine == "all"
@@ -78,6 +75,7 @@ def main():
     parser.add_argument("pystats")
     parser.add_argument("tier2")
     parser.add_argument("jit")
+    parser.add_argument("nogil")
     args = parser.parse_args()
 
     _main(
@@ -86,6 +84,7 @@ def main():
         args.pystats != "false",
         args.tier2 != "false",
         args.jit != "false",
+        args.nogil != "false",
     )
 
 

@@ -223,6 +223,8 @@ def _main(
     runners: Sequence[RunnerType],
     force: bool,
     tier2: bool,
+    jit: bool,
+    nogil: bool,
     all_runners: Sequence[RunnerType],
 ) -> None:
     all_with_prefix = all_with_prefix or []
@@ -263,7 +265,13 @@ def _main(
                 gh.benchmark(ref=commit.hash, machine="all")
             else:
                 for runner in commit.runners:
-                    gh.benchmark(ref=commit.hash, machine=runner.name, tier2=tier2)
+                    gh.benchmark(
+                        ref=commit.hash,
+                        machine=runner.name,
+                        tier2=tier2,
+                        jit=jit,
+                        nogil=nogil,
+                    )
 
 
 def main():
@@ -315,6 +323,8 @@ def main():
         action="store_true",
         help="Enable the tier2 interpreter",
     )
+    parser.add_argument("--jit", action="store_true", help="Enable the jit")
+    parser.add_argument("--nogil", action="store_true", help="Enable free threading")
     parser.add_argument("cpython", type=Path, help="The path to a checkout of CPython")
 
     args = parser.parse_args()
@@ -333,6 +343,8 @@ def main():
         use_runners,
         args.force,
         args.tier2,
+        args.jit,
+        args.nogil,
         all_runners,
     )
 

@@ -337,8 +337,8 @@ def longitudinal_plot(
 def flag_effect_plot(
     results: Iterable[result.Result],
     output_filename: Path,
-    flags=["JIT", "PYTHON_UOPS"],
-    configs=["JIT compiler", "Tier 2 interpreter"],
+    flags=["NOGIL", "JIT", "PYTHON_UOPS"],
+    configs=["Free threading", "JIT compiler", "Tier 2 interpreter"],
     runners=[
         "linux",
         "pythonperf2",

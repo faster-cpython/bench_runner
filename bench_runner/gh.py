@@ -36,6 +36,8 @@ def benchmark(
     machine: str | None = None,
     benchmark_base: bool | None = None,
     tier2: bool | None = None,
+    jit: bool | None = None,
+    nogil: bool | None = None,
     _runner_path: Path | None = None,
 ) -> None:
     if not (fork is None or isinstance(fork, str)):
@@ -54,6 +56,12 @@ def benchmark(
     if tier2 is None:
         tier2 = False
 
+    if jit is None:
+        jit = False
+
+    if nogil is None:
+        nogil = False
+
     flags = _get_flags(
         {
             "fork": fork,
@@ -61,6 +69,8 @@ def benchmark(
             "machine": machine,
             "benchmark_base": benchmark_base,
             "tier2": str(tier2).lower(),
+            "jit": str(jit).lower(),
+            "nogil": str(nogil).lower(),
         }
     )
 

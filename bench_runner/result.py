@@ -678,6 +678,10 @@ class Result:
         return "JIT" in self.flags
 
     @property
+    def is_free_threaded(self) -> bool:
+        return "NOGIL" in self.flags
+
+    @property
     def hash_and_flags(self) -> str:
         # A representation for the user that combines the commit hash and other flags
         parts = [self.cpython_hash]
