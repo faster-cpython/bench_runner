@@ -427,8 +427,8 @@ def flag_effect_plot(
 
     fig.suptitle(title)
 
-    minx = min(ax.get_xlim()[0] for ax in axs)
-    maxx = max(ax.get_xlim()[1] for ax in axs)
+    minx = min(ax.get_xlim()[0] for ax in axs[1:])
+    maxx = max(ax.get_xlim()[1] for ax in axs[1:])
     for ax in axs:
         ax.set_xlim((minx, maxx))
 
