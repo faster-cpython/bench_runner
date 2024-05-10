@@ -7,18 +7,25 @@ from bench_runner import util
 
 
 def generate_dirname(
-    date: str, version: str, cpython_hash: str, tier2: bool, jit: bool
+    date: str, version: str, cpython_hash: str, tier2: bool, jit: bool, nogil: bool
 ) -> str:
-    flags = util.get_flags(tier2, jit)
+    flags = util.get_flags(tier2, jit, nogil)
     return "-".join(
         ["bm", date[:10].replace("-", ""), version, cpython_hash[:7], *flags]
     )
 
 
 def _main(
-    fork: str, ref: str, head: str, date: str, version: str, tier2: bool, jit: bool
+    fork: str,
+    ref: str,
+    head: str,
+    date: str,
+    version: str,
+    tier2: bool,
+    jit: bool,
+    nogil: bool,
 ) -> None:
-    dirname = generate_dirname(date, version, head, tier2, jit)
+    dirname = generate_dirname(date, version, head, tier2, jit, nogil)
     actor = os.environ.get("GITHUB_ACTOR", "UNKNOWN")
     github_repo = os.environ.get("GITHUB_REPOSITORY", "UNKNOWN")
 
@@ -47,6 +54,7 @@ def main():
     parser.add_argument("--version")
     parser.add_argument("--tier2")
     parser.add_argument("--jit")
+    parser.add_argument("--nogil")
     args = parser.parse_args()
 
     _main(
@@ -57,6 +65,7 @@ def main():
         args.version,
         args.tier2 != "false",
         args.jit != "false",
+        args.nogil != "false",
     )
 
 

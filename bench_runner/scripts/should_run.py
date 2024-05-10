@@ -20,6 +20,7 @@ def _main(
     pystats: bool,
     tier2: bool,
     jit: bool,
+    nogil: bool,
     cpython: Path = Path("cpython"),
     results_dir: Path = Path("results"),
 ) -> None:
@@ -52,7 +53,7 @@ def _main(
         # Fail the rest of the workflow
         sys.exit(1)
 
-    flags = util.get_flags(tier2, jit)
+    flags = util.get_flags(tier2, jit, nogil)
 
     found_result = has_result(
         results_dir, commit_hash, machine, pystats, flags, util.get_benchmark_hash()
@@ -85,6 +86,7 @@ def main():
     parser.add_argument("pystats")
     parser.add_argument("tier2")
     parser.add_argument("jit")
+    parser.add_argument("nogil")
     args = parser.parse_args()
 
     _main(
@@ -95,6 +97,7 @@ def main():
         args.pystats != "false",
         args.tier2 != "false",
         args.jit != "false",
+        args.nogil != "false",
     )
 
 

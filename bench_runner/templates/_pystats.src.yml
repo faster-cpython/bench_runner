@@ -116,14 +116,10 @@ jobs:
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
           python -m pip install --no-binary :all: ./pyperformance
-      - name: Enable Tier 2
-        if: ${{ inputs.tier2 }}
-        run: |
-          echo "PYTHON_UOPS=1" >> "$GITHUB_ENV"
       - name: Running pyperformance
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
-          python -m bench_runner run_benchmarks pystats cpython/python ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.benchmarks || 'all' }} --run_id ${{ github.run_id }} ${{ inputs.individual == true && '--individual' || '' }} ${{ inputs.tier2 == true && '--flag PYTHON_UOPS' || '' }} ${{ inputs.jit == true && '--flag JIT' || '' }}
+          python -m bench_runner run_benchmarks pystats cpython/python ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.benchmarks || 'all' }} --run_id ${{ github.run_id }} ${{ inputs.individual == true && '--individual' || '' }} ${{ inputs.tier2 == true && '--flag PYTHON_UOPS' || '' }} ${{ inputs.jit == true && '--flag JIT' || '' }} ${{ inputs.nogil == true && '--flag NOGIL' || '' }}
       - name: Pull benchmarking
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
