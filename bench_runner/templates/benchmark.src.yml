@@ -167,5 +167,5 @@ jobs:
       version: ${{ needs.determine_base.outputs.version }}
       tier2: ${{ inputs.tier2 }}
       jit: ${{ inputs.jit }}
-      nogil: $${{ inputs.nogil }}
+      nogil: ${{ inputs.nogil }}
     secrets: inherit
