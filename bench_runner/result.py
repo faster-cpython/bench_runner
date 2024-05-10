@@ -689,6 +689,8 @@ class Result:
             parts.append("️(T2)")
         if self.is_jit:
             parts.append("(JIT)")
+        if self.is_free_threaded:
+            parts.append("(NOGIL)")
         return " ".join(parts)
 
     @functools.cached_property
