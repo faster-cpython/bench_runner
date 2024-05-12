@@ -266,7 +266,7 @@ def longitudinal_plot(
             # after 2024-01-30
             if i == 2:
                 runner_results = [
-                    r for r in runner_results if not r.is_tier2 and not r.is_jit
+                    r for r in runner_results if r.flags == []
                 ]
             elif i == 3:
                 runner_results = filter_by_config(runner_results)
