@@ -265,9 +265,7 @@ def longitudinal_plot(
             # For 3.13, only use Tier 2 results after 2023-11-11 and JIT results
             # after 2024-01-30
             if i == 2:
-                runner_results = [
-                    r for r in runner_results if r.flags == []
-                ]
+                runner_results = [r for r in runner_results if r.flags == []]
             elif i == 3:
                 runner_results = filter_by_config(runner_results)
 
