@@ -12,6 +12,7 @@ import sys
 from typing import TextIO, Iterable, Sequence, TypeAlias
 
 
+from bench_runner import flags as mflags
 from bench_runner import result as mod_result
 from bench_runner import runners as mod_runners
 from bench_runner import util
@@ -28,14 +29,14 @@ def parse_commit(commit: str) -> tuple[str, str, list[str]]:
         commit, name = result
     else:
         name = commit
-    if commit.endswith("T"):
-        commit = commit[:-1]
-        flags = util.TIER2_FLAGS
-    elif commit.endswith("J"):
-        commit = commit[:-1]
-        flags = util.JIT_FLAGS
-    else:
-        flags = []
+    suffix = commit[-1]
+    flags = []
+    if suffix not in "0123456789abcdefABCDEF":
+        for flag_descr in mflags.FLAGS:
+            if flag_descr.short_name[0] == suffix:
+                commit = commit[:-1]
+                flags = [flag_descr.name]
+                break
     return (commit, name, flags)
 
 
@@ -194,8 +195,9 @@ def main():
         help="""
             Commits to compare. Must be a git commit hash prefix. May optionally
             have a friendly name after a comma, e.g. c0ffee,main.  If ends with
-            a "T", use the Tier 2 run for that commit. If ends with a "J", use the
-            JIT run for that commit.
+            a "T", use the Tier 2 run for that commit. If ends with a "J", use
+            the JIT run for that commit.  If ends with a "N", use the NOGIL run
+            for that commit.
         """,
     )
     parser.add_argument(

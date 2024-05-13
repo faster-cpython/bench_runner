@@ -17,6 +17,7 @@ from typing import Iterable, Union
 import ujson
 
 
+from bench_runner import flags
 from bench_runner import git
 from bench_runner.result import Result
 from bench_runner.table import md_link
@@ -407,6 +408,11 @@ def main():
     parser.add_argument("ref", help="The git ref in the fork")
     parser.add_argument("benchmarks", help="The benchmarks to run")
     parser.add_argument(
+        "flags",
+        action="append",
+        help="Configuration flags",
+    )
+    parser.add_argument(
         "--test_mode",
         action="store_true",
         help="Run in a special mode for unit testing",
@@ -416,11 +422,6 @@ def main():
         "--individual",
         action="store_true",
         help="For pystats mode, collect stats for each individual benchmark",
-    )
-    parser.add_argument(
-        "--flag",
-        action="append",
-        help="Build or runtime flags",
     )
     args = parser.parse_args()
 
@@ -441,7 +442,7 @@ def main():
         args.test_mode,
         args.run_id,
         args.individual,
-        args.flag or [],
+        flags.parse_flags(args.flags),
     )
 
 

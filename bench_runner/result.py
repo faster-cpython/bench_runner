@@ -21,6 +21,7 @@ import pyperf
 import ujson
 
 
+from . import flags as mflags
 from . import git
 from . import hpt
 from . import plot
@@ -684,14 +685,9 @@ class Result:
     @property
     def hash_and_flags(self) -> str:
         # A representation for the user that combines the commit hash and other flags
-        parts = [self.cpython_hash]
-        if self.is_tier2:
-            parts.append("️(T2)")
-        if self.is_jit:
-            parts.append("(JIT)")
-        if self.is_free_threaded:
-            parts.append("(NOGIL)")
-        return " ".join(parts)
+        return " ".join(
+            [self.cpython_hash, *(f"({x})" for x in mflags.flags_to_human(self.flags))]
+        )
 
     @functools.cached_property
     def benchmark_names(self) -> set[str]:

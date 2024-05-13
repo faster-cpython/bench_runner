@@ -18,6 +18,7 @@ import ujson
 matplotlib.use("agg")
 
 
+from . import flags as mflags
 from . import result
 
 
@@ -335,8 +336,6 @@ def longitudinal_plot(
 def flag_effect_plot(
     results: Iterable[result.Result],
     output_filename: Path,
-    flags=["NOGIL", "JIT", "PYTHON_UOPS"],
-    configs=["Free threading", "JIT compiler", "Tier 2 interpreter"],
     runners=[
         "linux",
         "pythonperf2",
@@ -355,6 +354,9 @@ def flag_effect_plot(
     markers=["s", "s", "s", "^", ".", "."],
     title="Performance improvement by configuration",
 ):
+    flags = [flag.name for flag in reversed(mflags.FLAGS)]
+    configs = [flag.description for flag in reversed(mflags.FLAGS)]
+
     def get_comparison_value(ref, r):
         key = ",".join((str(ref.filename)[8:], str(r.filename)[8:]))
         if key in data:

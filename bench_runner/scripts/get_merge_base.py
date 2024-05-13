@@ -3,6 +3,7 @@ from pathlib import Path
 import re
 
 
+from bench_runner import flags as mflags
 from bench_runner import git
 from bench_runner.result import has_result
 from bench_runner import util
@@ -20,9 +21,7 @@ def _main(
     need_to_run: bool,
     machine: str,
     pystats: bool,
-    tier2: bool,
-    jit: bool,
-    nogil: bool,
+    flags: list[str],
     cpython: Path = Path("cpython"),
 ) -> None:
     commit_hash = git.get_git_hash(cpython)
@@ -44,8 +43,6 @@ def _main(
             print("ref=xxxxxxx")
             print("need_to_run=false")
         else:
-            flags = util.get_flags(tier2, jit, nogil)
-
             need_to_run = (
                 machine == "all"
                 or has_result(
@@ -73,18 +70,14 @@ def main():
     parser.add_argument("need_to_run")
     parser.add_argument("machine")
     parser.add_argument("pystats")
-    parser.add_argument("tier2")
-    parser.add_argument("jit")
-    parser.add_argument("nogil")
+    parser.add_argument("flags")
     args = parser.parse_args()
 
     _main(
         args.need_to_run != "false",
         args.machine,
         args.pystats != "false",
-        args.tier2 != "false",
-        args.jit != "false",
-        args.nogil != "false",
+        mflags.parse_flags(args.flags),
     )
 
 

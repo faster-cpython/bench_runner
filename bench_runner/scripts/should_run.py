@@ -18,9 +18,7 @@ def _main(
     ref: str,
     machine: str,
     pystats: bool,
-    tier2: bool,
-    jit: bool,
-    nogil: bool,
+    flag_str: str,
     cpython: Path = Path("cpython"),
     results_dir: Path = Path("results"),
 ) -> None:
@@ -31,15 +29,18 @@ def _main(
         )
         sys.exit(1)
 
-    if tier2 and jit:
-        print("Tier 2 interpreter and JIT may not be selected at the same time")
-        sys.exit(1)
-
     # Now that we've assert we are Python 3.11 or later, we can import
     # parts of our library.
+    from bench_runner import flags as mflags
     from bench_runner import git
     from bench_runner.result import has_result
     from bench_runner import util
+
+    flags = mflags.parse_flags(flag_str)
+
+    if "PYTHON_UOPS" in flags and "JIT" in flags:
+        print("Tier 2 interpreter and JIT may not be selected at the same time")
+        sys.exit(1)
 
     try:
         commit_hash = git.get_git_hash(cpython)
@@ -52,8 +53,6 @@ def _main(
         print("Are you sure you entered the fork and ref correctly?", file=sys.stderr)
         # Fail the rest of the workflow
         sys.exit(1)
-
-    flags = util.get_flags(tier2, jit, nogil)
 
     found_result = has_result(
         results_dir, commit_hash, machine, pystats, flags, util.get_benchmark_hash()
@@ -84,9 +83,7 @@ def main():
     parser.add_argument("ref")
     parser.add_argument("machine")
     parser.add_argument("pystats")
-    parser.add_argument("tier2")
-    parser.add_argument("jit")
-    parser.add_argument("nogil")
+    parser.add_argument("flags")
     args = parser.parse_args()
 
     _main(
@@ -95,9 +92,7 @@ def main():
         args.ref,
         args.machine,
         args.pystats != "false",
-        args.tier2 != "false",
-        args.jit != "false",
-        args.nogil != "false",
+        args.flags,
     )
 
 

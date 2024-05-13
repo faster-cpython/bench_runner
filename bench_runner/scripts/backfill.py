@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Iterable, Sequence, TypeAlias
 
 
+from bench_runner import flags as mflags
 from bench_runner import gh
 from bench_runner import git
 from bench_runner import result as mod_result
@@ -222,9 +223,7 @@ def _main(
     bisect: Sequence[Sequence[str]] | None,
     runners: Sequence[RunnerType],
     force: bool,
-    tier2: bool,
-    jit: bool,
-    nogil: bool,
+    flags: list[str],
     all_runners: Sequence[RunnerType],
 ) -> None:
     all_with_prefix = all_with_prefix or []
@@ -268,9 +267,7 @@ def _main(
                     gh.benchmark(
                         ref=commit.hash,
                         machine=runner.name,
-                        tier2=tier2,
-                        jit=jit,
-                        nogil=nogil,
+                        flags=flags,
                     )
 
 
@@ -319,12 +316,12 @@ def main():
         help="Re-run benchmark, even if we already have results for that commit hash.",
     )
     parser.add_argument(
-        "--tier2",
-        action="store_true",
-        help="Enable the tier2 interpreter",
+        "--flags",
+        help=(
+            "A comma-separated value of configuration flags, "
+            f"from {', '.join(flag.gha_variable for flag in mflags.FLAGS)}"
+        ),
     )
-    parser.add_argument("--jit", action="store_true", help="Enable the jit")
-    parser.add_argument("--nogil", action="store_true", help="Enable free threading")
     parser.add_argument("cpython", type=Path, help="The path to a checkout of CPython")
 
     args = parser.parse_args()
@@ -342,9 +339,7 @@ def main():
         args.bisect,
         use_runners,
         args.force,
-        args.tier2,
-        args.jit,
-        args.nogil,
+        mflags.parse_flags(args.flags),
         all_runners,
     )
 
