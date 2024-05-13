@@ -180,13 +180,13 @@ def filter_by_config(results: Iterable[result.Result]) -> list[result.Result]:
     for r in results:
         dt = datetime.datetime.fromisoformat(r.commit_datetime)
         if dt < tier2_date:
-            if not r.is_tier2 and not r.is_jit:
+            if r.flags == []:
                 correct_results.append(r)
         elif dt < jit_date:
-            if r.is_tier2 and not r.is_jit:
+            if r.flags == ["PYTHON_UOPS"]:
                 correct_results.append(r)
         else:
-            if r.is_jit:
+            if r.flags == ["JIT"]:
                 correct_results.append(r)
     return correct_results
 
