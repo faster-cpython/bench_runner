@@ -151,6 +151,7 @@ def test_run_benchmarks(tmp_path, benchmarks_checkout):
             "python",
             "main",
             "deepcopy",
+            ",,",
             "--test_mode",
             "--run_id",
             "12345",
@@ -199,6 +200,7 @@ def test_run_benchmarks(tmp_path, benchmarks_checkout):
             "python",
             "main",
             "foo",
+            ",,",
             "--run_id",
             "12345",
         ],
@@ -218,7 +220,7 @@ def test_should_run_exists_noforce(tmp_path, benchmarks_checkout, capsys):
         "main",
         "linux-x86_64-linux",
         False,
-        [],
+        ",,",
         tmp_path / "cpython",
         repo / "results",
     )
@@ -239,7 +241,7 @@ def test_should_run_diff_machine_noforce(tmp_path, benchmarks_checkout, capsys):
         "main",
         "darwin-x86_64-darwin",
         False,
-        [],
+        ",,",
         tmp_path / "cpython",
         repo / "results",
     )
@@ -260,7 +262,7 @@ def test_should_run_all_noforce(tmp_path, benchmarks_checkout, capsys):
         "main",
         "all",
         False,
-        [],
+        ",,",
         tmp_path / "cpython",
         repo / "results",
     )
@@ -282,7 +284,7 @@ def test_should_run_noexists_noforce(tmp_path, benchmarks_checkout, capsys):
         "main",
         "linux-x86_64-linux",
         False,
-        [],
+        ",,",
         tmp_path / "cpython",
         repo / "results",
     )
@@ -314,7 +316,7 @@ def test_should_run_exists_force(tmp_path, benchmarks_checkout, capsys, monkeypa
             "main",
             "linux-x86_64-linux",
             False,
-            [],
+            ",,",
             tmp_path / "cpython",
             repo / "results",
         )
@@ -341,7 +343,7 @@ def test_should_run_noexists_force(tmp_path, benchmarks_checkout, capsys):
         "main",
         "linux-x86_64-linux",
         False,
-        [],
+        ",,",
         tmp_path / "cpython",
         repo / "results",
     )
@@ -364,7 +366,7 @@ def test_should_run_checkout_failed(tmp_path, capsys):
             "main",
             "linux-x86_64-linux",
             False,
-            [],
+            ",,",
             cpython_path,
             repo / "results",
         )
@@ -397,11 +399,10 @@ def test_run_benchmarks_flags(tmp_path, benchmarks_checkout):
             "python",
             "main",
             "deepcopy",
+            "tier2,,",
             "--test_mode",
             "--run_id",
             "12345",
-            "--flag",
-            "PYTHON_UOPS",
         ],
         cwd=tmp_path,
     )

@@ -407,11 +407,7 @@ def main():
     parser.add_argument("fork", help="The fork of CPython")
     parser.add_argument("ref", help="The git ref in the fork")
     parser.add_argument("benchmarks", help="The benchmarks to run")
-    parser.add_argument(
-        "flags",
-        action="append",
-        help="Configuration flags",
-    )
+    parser.add_argument("flags", help="Configuration flags")
     parser.add_argument(
         "--test_mode",
         action="store_true",
