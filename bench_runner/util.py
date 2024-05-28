@@ -7,22 +7,6 @@ def status(char: str) -> None:
     print(char, end="", flush=True)
 
 
-TIER2_FLAGS = ["PYTHON_UOPS"]
-JIT_FLAGS = ["JIT"]
-NOGIL_FLAGS = ["NOGIL"]
-
-
-def get_flags(tier2: bool, jit: bool, nogil: bool) -> list[str]:
-    flags = []
-    if tier2:
-        flags.extend(TIER2_FLAGS)
-    if jit:
-        flags.extend(JIT_FLAGS)
-    if nogil:
-        flags.extend(NOGIL_FLAGS)
-    return flags
-
-
 def get_benchmark_hash() -> str:
     hash = hashlib.sha256()
     hash.update(os.environ["PYPERFORMANCE_HASH"].encode("ascii")[:7])

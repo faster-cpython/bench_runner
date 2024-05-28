@@ -18,6 +18,7 @@ import ujson
 matplotlib.use("agg")
 
 
+from . import flags as mflags
 from . import result
 
 
@@ -179,13 +180,13 @@ def filter_by_config(results: Iterable[result.Result]) -> list[result.Result]:
     for r in results:
         dt = datetime.datetime.fromisoformat(r.commit_datetime)
         if dt < tier2_date:
-            if not r.is_tier2 and not r.is_jit:
+            if r.flags == []:
                 correct_results.append(r)
         elif dt < jit_date:
-            if r.is_tier2 and not r.is_jit:
+            if r.flags == ["PYTHON_UOPS"]:
                 correct_results.append(r)
         else:
-            if r.is_jit:
+            if r.flags == ["JIT"]:
                 correct_results.append(r)
     return correct_results
 
@@ -335,8 +336,6 @@ def longitudinal_plot(
 def flag_effect_plot(
     results: Iterable[result.Result],
     output_filename: Path,
-    flags=["NOGIL", "JIT", "PYTHON_UOPS"],
-    configs=["Free threading", "JIT compiler", "Tier 2 interpreter"],
     runners=[
         "linux",
         "pythonperf2",
@@ -355,6 +354,9 @@ def flag_effect_plot(
     markers=["s", "s", "s", "^", ".", "."],
     title="Performance improvement by configuration",
 ):
+    flags = [flag.name for flag in reversed(mflags.FLAGS)]
+    configs = [flag.description for flag in reversed(mflags.FLAGS)]
+
     def get_comparison_value(ref, r):
         key = ",".join((str(ref.filename)[8:], str(r.filename)[8:]))
         if key in data:

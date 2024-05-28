@@ -13,6 +13,7 @@ from urllib.parse import unquote
 
 
 from bench_runner.bases import get_bases
+from bench_runner import flags as mflags
 from bench_runner import plot
 from bench_runner.result import (
     load_all_results,
@@ -245,8 +246,8 @@ def get_directory_indices_entries(
         refs[dirpath].add(result.ref)
         entries.append((dirpath, None, None, f"fork: {unquote(result.fork)}"))
         entries.append((dirpath, None, None, f"version: {result.version}"))
-        entries.append((dirpath, None, None, f"tier 2: {result.is_tier2}"))
-        entries.append((dirpath, None, None, f"jit: {result.is_jit}"))
+        config = ",".join(mflags.flags_to_human(result.flags))
+        entries.append((dirpath, None, None, f"config: {config}"))
         link = table.link_to_hash(result.cpython_hash, result.fork)
         entries.append((dirpath, None, None, f"commit hash: {link}"))
         entries.append((dirpath, None, None, f"commit date: {result.commit_datetime}"))
