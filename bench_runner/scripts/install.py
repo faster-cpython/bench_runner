@@ -4,6 +4,7 @@ Regenerates some Github Actions workflow files from templates.
 
 import argparse
 import copy
+import functools
 import io
 from pathlib import Path
 import shutil
@@ -21,6 +22,12 @@ from bench_runner import runners
 ROOT_PATH = Path()
 TEMPLATE_PATH = Path(__file__).parents[1] / "templates"
 WORKFLOW_PATH = Path() / ".github" / "workflows"
+
+
+@functools.cache
+def get_requirements():
+    with open("requirements.txt") as fd:
+        return list(fd.readlines())[0].strip()
 
 
 def fail_check(dst: Path):
@@ -133,6 +140,14 @@ def generate_benchmark(dst: Any) -> Any:
 
     dst["on"]["workflow_dispatch"]["inputs"]["machine"]["options"] = runner_choices
 
+    dst["jobs"]["determine_base"]["steps"][2] = f'pip install "{get_requirements()}"'
+
+    return dst
+
+
+def generate__notify(dst: Any) -> Any:
+    dst["jobs"]["notify"]["steps"][2]["run"] = f'pip install "{get_requirements()}"'
+
     return dst
 
 
@@ -143,6 +158,7 @@ def generate_generic(dst: Any) -> Any:
 GENERATORS = {
     "benchmark.src.yml": generate_benchmark,
     "_benchmark.src.yml": generate__benchmark,
+    "_notify.src.yml": generate__notify,
 }
 
 
