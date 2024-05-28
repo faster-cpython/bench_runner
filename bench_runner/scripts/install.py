@@ -141,8 +141,8 @@ def generate_benchmark(dst: Any) -> Any:
 
     dst["on"]["workflow_dispatch"]["inputs"]["machine"]["options"] = runner_choices
 
-    dst["jobs"]["determine_base"]["steps"][
-        2
+    dst["jobs"]["determine_base"]["steps"][2][
+        "run"
     ] = f"pip install {shlex.quote(get_requirements())}"
 
     return dst
