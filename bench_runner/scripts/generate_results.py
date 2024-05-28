@@ -161,12 +161,14 @@ def get_most_recent_pystats(results: Iterable[Result]) -> Result | None:
     candidate_pystats = [
         result
         for result in results
-        if result.result_info[0] == "pystats raw" and result.fork == "python"
+        if result.result_info[0] == "pystats raw"
+        and result.fork == "python"
+        and result.flags == ["PYTHON_UOPS"]
     ]
     if len(candidate_pystats):
         return sorted(
             candidate_pystats,
-            key=lambda x: (x.commit_datetime, len(x.flags)),
+            key=lambda x: x.commit_datetime,
             reverse=True,
         )[0]
 
