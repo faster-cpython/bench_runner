@@ -14,12 +14,6 @@ name: _notify
         type: string
       version:
         type: string
-      tier2:
-        type: boolean
-      jit:
-        type: boolean
-      nogil:
-        type: boolean
 
 jobs:
   notify:
@@ -38,6 +32,6 @@ jobs:
           pip install -r requirements.txt
       - name: Send notifications
         if: env.WORKFLOW_CONCLUSION == 'success'
-        run: python -m bench_runner notify --fork ${{ inputs.fork }} --ref ${{ inputs.ref }} --head ${{ inputs.head }} --date ${{ inputs.date }} --version ${{ inputs.version }} --tier2 ${{ inputs.tier2 }} --jit ${{ inputs.jit }} --nogil ${{ inputs.nogil }}
+        run: python -m bench_runner notify --fork ${{ inputs.fork }} --ref ${{ inputs.ref }} --head ${{ inputs.head }} --date ${{ inputs.date }} --version ${{ inputs.version }} --flags ${{ env.flags }}
         env:
           GH_TOKEN: ${{ github.token }}

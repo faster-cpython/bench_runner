@@ -4,6 +4,7 @@ Regenerates some Github Actions workflow files from templates.
 
 import argparse
 import copy
+import functools
 import io
 from pathlib import Path
 import shutil
@@ -15,6 +16,7 @@ from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import LiteralScalarString
 
 
+from bench_runner import flags
 from bench_runner import runners
 
 
@@ -72,6 +74,29 @@ def load_yaml(src: Path) -> Any:
         return yaml.load(fd)
 
 
+def add_flag_variables(dst: dict[str, Any]) -> None:
+    for flag in flags.FLAGS:
+        dst[flag.gha_variable] = {
+            "description": flag.description,
+            "type": "boolean",
+            "default": False,
+        }
+
+
+@functools.cache
+def flag_env():
+    return ",".join(
+        f"${{{{ inputs.{flag.gha_variable} == 'true' && '{flag.name}' || '' }}}}"
+        for flag in flags.FLAGS
+    )
+
+
+def add_flag_env(jobs: dict[str, Any]):
+    for job in jobs.values():
+        job.setdefault("env", {})
+        job["env"]["flags"] = flag_env()
+
+
 def generate__benchmark(src: Any) -> Any:
     """
     Generates _benchmark.yml from _benchmark.src.yml.
@@ -116,7 +141,12 @@ def generate__benchmark(src: Any) -> Any:
         )
         dst["jobs"][f"benchmark-{runner.name}"] = runner_template
 
+    add_flag_env(dst["jobs"])
+
     dst["on"]["workflow_dispatch"]["inputs"]["machine"]["options"] = runner_choices
+
+    add_flag_variables(dst["on"]["workflow_dispatch"]["inputs"])
+    add_flag_variables(dst["on"]["workflow_call"]["inputs"])
 
     return dst
 
@@ -133,6 +163,38 @@ def generate_benchmark(dst: Any) -> Any:
 
     dst["on"]["workflow_dispatch"]["inputs"]["machine"]["options"] = runner_choices
 
+    add_flag_variables(dst["on"]["workflow_dispatch"]["inputs"])
+    add_flag_env(dst["jobs"])
+
+    # Set all of the flag inputs that are delegated to the reusable workflows
+    for job in dst["jobs"].values():
+        if "with" in job:
+            for flag in flags.FLAGS:
+                job["with"][
+                    flag.gha_variable
+                ] = f"${{{{ inputs.{flag.gha_variable} }}}}"
+
+    # Include all of the flags in the human-readable workflow "run name"
+    dst["run-name"] += " " + " ".join(
+        f"${{{{ inputs.{flag.gha_variable} == true && '{flag.short_name}' || '' }}}}"
+        for flag in flags.FLAGS
+    )
+
+    return dst
+
+
+def generate__pystats(dst: Any) -> Any:
+    add_flag_variables(dst["on"]["workflow_dispatch"]["inputs"])
+    add_flag_variables(dst["on"]["workflow_call"]["inputs"])
+    add_flag_env(dst["jobs"])
+
+    return dst
+
+
+def generate__notify(dst: Any) -> Any:
+    add_flag_variables(dst["on"]["workflow_call"]["inputs"])
+    add_flag_env(dst["jobs"])
+
     return dst
 
 
@@ -143,6 +205,8 @@ def generate_generic(dst: Any) -> Any:
 GENERATORS = {
     "benchmark.src.yml": generate_benchmark,
     "_benchmark.src.yml": generate__benchmark,
+    "_pystats.src.yml": generate__pystats,
+    "_notify.src.yml": generate__notify,
 }
 
 

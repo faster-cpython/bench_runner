@@ -10,6 +10,7 @@ import subprocess
 from typing import Any, Mapping
 
 
+from . import flags as mflags
 from . import runners
 
 
@@ -35,9 +36,7 @@ def benchmark(
     ref: str | None = None,
     machine: str | None = None,
     benchmark_base: bool | None = None,
-    tier2: bool | None = None,
-    jit: bool | None = None,
-    nogil: bool | None = None,
+    flags: list[str] | None = None,
     _runner_path: Path | None = None,
 ) -> None:
     if not (fork is None or isinstance(fork, str)):
@@ -53,29 +52,22 @@ def benchmark(
     if not (benchmark_base is None or isinstance(benchmark_base, bool)):
         raise TypeError(f"benchmark_base must be bool, got {type(benchmark_base)}")
 
-    if tier2 is None:
-        tier2 = False
+    if flags is None:
+        flags = []
 
-    if jit is None:
-        jit = False
+    args = {
+        "fork": fork,
+        "ref": ref,
+        "machine": machine,
+        "benchmark_base": benchmark_base,
+    }
 
-    if nogil is None:
-        nogil = False
+    args.update(mflags.flags_to_gha_variables(flags))
 
-    flags = _get_flags(
-        {
-            "fork": fork,
-            "ref": ref,
-            "machine": machine,
-            "benchmark_base": benchmark_base,
-            "tier2": str(tier2).lower(),
-            "jit": str(jit).lower(),
-            "nogil": str(nogil).lower(),
-        }
-    )
+    cli_flags = _get_flags(args)
 
     subprocess.check_call(
-        ["gh", "workflow", "run", "benchmark.yml", *flags],
+        ["gh", "workflow", "run", "benchmark.yml", *cli_flags],
     )
 
 
