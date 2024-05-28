@@ -7,6 +7,7 @@ import copy
 import functools
 import io
 from pathlib import Path
+import shlex
 import shutil
 import sys
 from typing import Any
@@ -140,13 +141,17 @@ def generate_benchmark(dst: Any) -> Any:
 
     dst["on"]["workflow_dispatch"]["inputs"]["machine"]["options"] = runner_choices
 
-    dst["jobs"]["determine_base"]["steps"][2] = f'pip install "{get_requirements()}"'
+    dst["jobs"]["determine_base"]["steps"][
+        2
+    ] = f"pip install {shlex.quote(get_requirements())}"
 
     return dst
 
 
 def generate__notify(dst: Any) -> Any:
-    dst["jobs"]["notify"]["steps"][2]["run"] = f'pip install "{get_requirements()}"'
+    dst["jobs"]["notify"]["steps"][2][
+        "run"
+    ] = f"pip install {shlex.quote(get_requirements())}"
 
     return dst
 
