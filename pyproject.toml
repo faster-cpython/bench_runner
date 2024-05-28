@@ -29,7 +29,7 @@ test = [
     "black==24.4.2",
     "flake8==7.0.0",
     "pyright==1.1.364",
-    "pytest==8.2.0",
+    "pytest==8.2.1",
 ]
 
 [tool.setuptools_scm]
