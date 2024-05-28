@@ -19,7 +19,7 @@ dependencies = [
     "matplotlib==3.8.4",
     "pyperf@git+https://github.com/psf/pyperf#egg=555a16885096072eecd07b2a765d6f437add924c",
     "ruamel.yaml==0.18.6",
-    "ujson==5.9.0",
+    "ujson==5.10.0",
     "wheel",
 ]
 dynamic = ["version"]
