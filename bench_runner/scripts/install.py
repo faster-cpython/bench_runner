@@ -168,7 +168,9 @@ def generate_benchmark(dst: Any) -> Any:
     add_flag_env(dst["jobs"])
 
     # Set all of the flag inputs that are delegated to the reusable workflows
-    for job in dst["jobs"].values():
+    for name, job in dst["jobs"].items():
+        if name == "generate":
+            continue
         if "with" in job:
             for flag in flags.FLAGS:
                 job["with"][
