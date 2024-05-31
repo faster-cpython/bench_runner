@@ -20,6 +20,7 @@ jobs:
         with:
           repository: python/cpython
           path: cpython
+          ref: "3.13"
       - name: Determine head commit
         id: head
         run: |
