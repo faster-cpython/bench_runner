@@ -86,7 +86,7 @@ def add_flag_variables(dst: dict[str, Any]) -> None:
 @functools.cache
 def flag_env():
     return ",".join(
-        f"${{{{ inputs.{flag.gha_variable} == true && '{flag.name}' || '' }}}}"
+        f"${{{{ inputs.{flag.gha_variable} == true && '{flag.gha_variable}' || '' }}}}"
         for flag in flags.FLAGS
     )
 
