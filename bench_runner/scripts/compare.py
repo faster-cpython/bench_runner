@@ -12,6 +12,10 @@ import sys
 from typing import TextIO, Iterable, Sequence, TypeAlias
 
 
+import rich
+import rich_argparse
+
+
 from bench_runner import flags as mflags
 from bench_runner import result as mod_result
 from bench_runner import runners as mod_runners
@@ -53,7 +57,7 @@ def compare_pair(
     head: mod_result.Result,
     counter: list[int],
 ) -> str:
-    print(f"Comparing {counter[0]+1}/{counter[1]}", end="\r")
+    rich.print(f"Comparing {counter[0]+1}/{counter[1]}", end="\r")
     counter[0] += 1
 
     name = f"{machine}-{head_name}-vs-{ref_name}"
@@ -175,15 +179,16 @@ def _main(commits: Sequence[str], output_dir: Path, comparison_type: str):
             fd.write(f"# {runners[machine].display_name}\n\n")
             func(fd, parsed_commits, machine, output_dir_path, counter)
             fd.write("\n")
-    print()
+    rich.print()
 
 
 def main():
     parser = argparse.ArgumentParser(
-        """
+        description="""
         Generate a set of comparisons between arbitrary commits. The commits
         must already exist in the dataset.
-        """
+        """,
+        formatter_class=rich_argparse.ArgumentDefaultsRichHelpFormatter,
     )
 
     parser.add_argument(
@@ -215,7 +220,7 @@ def main():
     try:
         _main(args.commit, Path(args.output_dir), args.type)
     except ValueError as e:
-        print(str(e), file=sys.stderr)
+        rich.print(str(e), file=sys.stderr)
         sys.exit(1)
 
 

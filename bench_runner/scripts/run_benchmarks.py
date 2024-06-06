@@ -14,6 +14,7 @@ import textwrap
 from typing import Iterable, Union
 
 
+import rich_argparse
 import ujson
 
 
@@ -394,11 +395,12 @@ def main():
         print(f"{var}={os.environ.get(var, '<unset>')}")
 
     parser = argparse.ArgumentParser(
-        """
+        description="""
         Run benchmarks in `pyperformance` with the given python executable. Add
         additional metadata to a benchmark results file and then copy it to the
         correct location in the results tree.
-        """
+        """,
+        formatter_class=rich_argparse.ArgumentDefaultsRichHelpFormatter,
     )
     parser.add_argument(
         "mode", choices=["benchmark", "perf", "pystats"], help="The mode of execution"

@@ -23,7 +23,9 @@ FLAGS = [
 FLAG_MAPPING = {flag.gha_variable: flag.name for flag in FLAGS}
 
 
-def parse_flags(flag_str: str) -> list[str]:
+def parse_flags(flag_str: str | None) -> list[str]:
+    if flag_str is None:
+        return []
     flags = [flag.strip() for flag in flag_str.split(",") if flag.strip() != ""]
     internal_flags = []
     for flag in flags:

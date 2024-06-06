@@ -3,6 +3,9 @@ from pathlib import Path
 import re
 
 
+import rich_argparse
+
+
 from bench_runner import flags as mflags
 from bench_runner import git
 from bench_runner.result import has_result
@@ -62,10 +65,11 @@ def _main(
 
 def main():
     parser = argparse.ArgumentParser(
-        """
+        description="""
         Find the git merge-base in CPython main of a given commit, and also
         determine whether we already have data for that commit.
-        """
+        """,
+        formatter_class=rich_argparse.ArgumentDefaultsRichHelpFormatter,
     )
     parser.add_argument("need_to_run")
     parser.add_argument("machine")

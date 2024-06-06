@@ -2,6 +2,9 @@ import argparse
 import os
 
 
+import rich_argparse
+
+
 from bench_runner import flags as mflags
 from bench_runner import gh
 
@@ -35,9 +38,8 @@ def _main(
 
 def main():
     parser = argparse.ArgumentParser(
-        """
-        Send a notification that the workflow is complete.
-        """
+        description="Send a notification that the workflow is complete.",
+        formatter_class=rich_argparse.ArgumentDefaultsRichHelpFormatter,
     )
     parser.add_argument("--fork")
     parser.add_argument("--ref")

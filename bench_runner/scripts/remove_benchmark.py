@@ -6,12 +6,14 @@ from pathlib import Path
 from typing import Sequence
 
 
+import rich
+import rich.progress
+import rich_argparse
 import ujson
 
 
 from bench_runner import result
 from bench_runner.scripts import generate_results
-from bench_runner import util
 
 
 def remove_benchmark(
@@ -21,7 +23,6 @@ def remove_benchmark(
         data = ujson.load(fd)
 
     if data["metadata"]["benchmark_hash"] in keep_hash:
-        util.status("/")
         return
 
     benchmarks = []
@@ -35,15 +36,13 @@ def remove_benchmark(
 
     data["benchmarks"] = benchmarks
 
-    util.status(".")
-
     if not dry_run:
         with open(filename, "w") as fd:
             ujson.dump(data, fd, indent=2)
 
 
 def _main(benchmarks: Sequence[str], keep_hash: Sequence[str], dry_run: bool = False):
-    print(f"Removing benchmarks {benchmarks} from all results")
+    rich.print(f"Removing benchmarks {', '.join(benchmarks)} from all results")
 
     keep_hash_set = set(keep_hash)
     benchmarks_set = set(benchmarks)
@@ -52,7 +51,9 @@ def _main(benchmarks: Sequence[str], keep_hash: Sequence[str], dry_run: bool = F
         if Path("longitudinal.json").is_file():
             Path("longitudinal.json").unlink()
 
-    for filename in Path("results").glob("**/*"):
+    for filename in rich.progress.track(
+        list(Path("results").glob("**/*")), description="Deleting results"
+    ):
         if filename.is_dir():
             continue
         if filename.name != "README.md":
@@ -60,8 +61,7 @@ def _main(benchmarks: Sequence[str], keep_hash: Sequence[str], dry_run: bool = F
             if res.result_info[0] == "raw results":
                 remove_benchmark(filename, benchmarks_set, keep_hash_set, dry_run)
 
-    print()
-    print("Regenerating all derived results. This will take quite some time.")
+    rich.print("Regenerating all derived results. This will take quite some time...")
 
     if not dry_run:
         generate_results._main(Path(), force=True)
@@ -69,8 +69,8 @@ def _main(benchmarks: Sequence[str], keep_hash: Sequence[str], dry_run: bool = F
 
 def main():
     parser = argparse.ArgumentParser(
-        "Remove one or more benchmarks from the entire dataset",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="Remove one or more benchmarks from the entire dataset",
+        formatter_class=rich_argparse.ArgumentDefaultsRichHelpFormatter,
     )
 
     parser.add_argument(

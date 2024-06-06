@@ -153,7 +153,6 @@ def test_fork_with_hyphen(tmp_path):
     _run_for_bases(["3.10.4", "3.11.0b3"], repo_path, check_readmes=False)
 
     contents = (repo_path / "RESULTS.md").read_text()
-    print(contents)
     assert contents.count("with-hyphen") == 1
     assert contents.count(" with%2dhyphen ") == 0
     assert (

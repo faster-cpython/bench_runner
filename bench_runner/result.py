@@ -18,6 +18,7 @@ from urllib.parse import unquote
 import numpy as np
 from packaging import version
 import pyperf
+import rich.progress
 import ujson
 
 
@@ -785,13 +786,13 @@ def match_to_bases(results: Iterable[Result], bases: Sequence[str] | None):
         return False
 
     groups = defaultdict(lambda: defaultdict(list))
-    for result in results:
+    for result in rich.progress.track(results, description="Loading results"):
         if result.fork == "python":
             groups[(result.nickname, tuple(result.extra))][
                 result.benchmark_hash
             ].append(result)
 
-    for result in results:
+    for result in rich.progress.track(results, description="Matching results to bases"):
         candidates = groups[(result.nickname, tuple(result.extra))]
 
         if bases is not None:

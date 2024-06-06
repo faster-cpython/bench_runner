@@ -10,6 +10,11 @@ import sys
 from typing import Sequence
 
 
+import rich
+import rich.progress
+import rich_argparse
+
+
 from bench_runner.bases import get_bases
 from bench_runner.result import load_all_results
 from bench_runner.scripts.generate_results import _main as generate_results
@@ -31,14 +36,15 @@ def _main(repo_dir: Path, days: int, dry_run: bool, bases: Sequence[str] | None 
     if len(bases) == 0:
         raise ValueError("Must have at least one base specified")
 
-    print("Loading results")
     results = load_all_results(bases, results_dir, sorted=False, match=False)
     all_dirs = [d for d in results_dir.iterdir() if d.is_dir()]
     keep_dirs = set()
 
     earliest = (datetime.date.today() - datetime.timedelta(days=days)).isoformat()
 
-    for result in results:
+    for result in rich.progress.track(
+        results, description="Selecting results to remove"
+    ):
         if result.result_info[0] != "raw results":
             continue
         if (
@@ -48,7 +54,7 @@ def _main(repo_dir: Path, days: int, dry_run: bool, bases: Sequence[str] | None 
         ):
             keep_dirs.add(result.filename.parent)
 
-    print(
+    rich.print(
         f"Removing {len(all_dirs) - len(keep_dirs)} of {len(all_dirs)} "
         "results directories"
     )
@@ -56,24 +62,26 @@ def _main(repo_dir: Path, days: int, dry_run: bool, bases: Sequence[str] | None 
     total = 0
     for d in all_dirs:
         if d not in keep_dirs:
-            print(f"Removing {d}")
+            rich.print(f"Removing {d}")
             total += dir_size(d)
             if not dry_run:
                 shutil.rmtree(d)
 
-    print(f"Saved {total:,} bytes")
+    rich.print(f"Saved {total:,} bytes")
 
     if not dry_run:
-        print("Regenerating results")
+        rich.print("Regenerating results...")
 
         generate_results(repo_dir, force=False, bases=bases)
 
 
 def main():
     parser = argparse.ArgumentParser(
-        "Purge old results that aren't associated with an exact tag. "
-        "Should be run every few months to keep the repository size under control. ",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="""
+        Purge old results that aren't associated with an exact tag.
+        Should be run every few months to keep the repository size under control.
+        """,
+        formatter_class=rich_argparse.ArgumentDefaultsRichHelpFormatter,
     )
 
     parser.add_argument(

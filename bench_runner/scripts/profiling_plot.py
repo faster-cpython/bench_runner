@@ -16,6 +16,7 @@ import re
 
 from matplotlib import pyplot as plt
 import numpy as np
+import rich_argparse
 
 
 SANITY_CHECK = True
@@ -377,8 +378,8 @@ def _main(input_dir: Path, output_prefix: Path):
 
 def main():
     parser = argparse.ArgumentParser(
-        "Generate graphs from profiling information",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="Generate graphs from profiling information",
+        formatter_class=rich_argparse.ArgumentDefaultsRichHelpFormatter,
     )
 
     parser.add_argument(
