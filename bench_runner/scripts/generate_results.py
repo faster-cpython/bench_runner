@@ -403,12 +403,14 @@ def _main(repo_dir: Path, force: bool = False, bases: Sequence[str] | None = Non
         ],
         description="Generating plots",
     ):
-        plot_func(*args, **kwargs)
+        plot_func(*args, **kwargs)  # type: ignore
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Generate index tables and comparison plots for all of the results.",
+        description="""
+        Generate index tables and comparison plots for all of the results.
+        """,
         formatter_class=rich_argparse.ArgumentDefaultsRichHelpFormatter,
     )
 

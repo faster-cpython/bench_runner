@@ -247,7 +247,7 @@ def _main(check: bool) -> None:
 
 def main():
     parser = argparse.ArgumentParser(
-        decscription="Install the Github Actions and other files",
+        description="Install the Github Actions and other files",
         formatter_class=rich_argparse.ArgumentDefaultsRichHelpFormatter,
     )
     parser.add_argument(
