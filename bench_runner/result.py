@@ -741,13 +741,14 @@ def has_result(
     pystats: bool,
     flags: Sequence[str],
     benchmark_hash: str,
+    progress: bool = True,
 ) -> Result | None:
     if machine == "all":
         nickname = None
     else:
         _, _, nickname = machine.split("-")
 
-    results = load_all_results([], results_dir, False)
+    results = load_all_results([], results_dir, False, progress=progress)
 
     if pystats:
         for result in results:
@@ -771,7 +772,9 @@ def has_result(
     return None
 
 
-def match_to_bases(results: Iterable[Result], bases: Sequence[str] | None):
+def match_to_bases(
+    results: Iterable[Result], bases: Sequence[str] | None, progress: bool = True
+):
     def find_match(result, candidates, base, func):
         # Try for an exact match (same benchmark_hash) first,
         # then fall back to less exact.
@@ -785,14 +788,21 @@ def match_to_bases(results: Iterable[Result], bases: Sequence[str] | None):
                     return True
         return False
 
+    if progress:
+        track = rich.progress.track  # type: ignore
+    else:
+
+        def track(it, *_args, **_kwargs):
+            return it
+
     groups = defaultdict(lambda: defaultdict(list))
-    for result in rich.progress.track(results, description="Loading results"):
+    for result in track(results, description="Loading results"):
         if result.fork == "python":
             groups[(result.nickname, tuple(result.extra))][
                 result.benchmark_hash
             ].append(result)
 
-    for result in rich.progress.track(results, description="Matching results to bases"):
+    for result in track(results, description="Matching results to bases"):
         candidates = groups[(result.nickname, tuple(result.extra))]
 
         if bases is not None:
@@ -830,6 +840,7 @@ def load_all_results(
     results_dir: Path,
     sorted: bool = True,
     match: bool = True,
+    progress: bool = True,
 ) -> list[Result]:
     results = []
 
@@ -842,7 +853,7 @@ def load_all_results(
         raise ValueError("Didn't find any results.  That seems fishy.")
 
     if match:
-        match_to_bases(results, bases)
+        match_to_bases(results, bases, progress=progress)
 
     if sorted:
         results.sort(

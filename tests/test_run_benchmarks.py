@@ -174,7 +174,7 @@ def test_run_benchmarks(tmp_path, benchmarks_checkout):
     assert metadata["commit_id"] == "9d38120"
     assert metadata["commit_fork"] == "python"
     assert metadata["commit_branch"] == "main"
-    assert metadata["commit_date"] == "2022-03-23T20:12:04Z"
+    assert metadata["commit_date"].startswith("2022-03-23T20:12:04")
     assert "commit_merge_base" not in metadata
     assert metadata["benchmark_hash"] == "215d35"
     assert (

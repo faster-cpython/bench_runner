@@ -58,7 +58,13 @@ def _main(
         sys.exit(1)
 
     found_result = has_result(
-        results_dir, commit_hash, machine, pystats, flags, util.get_benchmark_hash()
+        results_dir,
+        commit_hash,
+        machine,
+        pystats,
+        flags,
+        util.get_benchmark_hash(),
+        progress=False,
     )
 
     if force:

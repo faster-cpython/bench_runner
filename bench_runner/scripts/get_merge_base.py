@@ -55,6 +55,7 @@ def _main(
                     pystats,
                     flags,
                     util.get_benchmark_hash(),
+                    progress=False,
                 )
                 is None
             )
