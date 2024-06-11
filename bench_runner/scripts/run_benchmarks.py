@@ -431,6 +431,11 @@ def main():
 
         socket.gethostname = gethostname
 
+        def dummy(*args, **kwargs):
+            return None
+
+        git.get_git_merge_base = dummy
+
     _main(
         args.mode,
         Path(args.python),

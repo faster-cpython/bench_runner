@@ -106,8 +106,9 @@ def test_main(tmp_path, monkeypatch):
     _run_for_bases(["3.10.4", "3.11.0b3"], repo_path, has_base=["b0e1f9c"])
 
 
-def test_change_bases(tmp_path):
+def test_change_bases(tmp_path, monkeypatch):
     repo_path = _copy_repo(tmp_path)
+    monkeypatch.chdir(repo_path)
 
     _run_for_bases(["3.10.4", "3.11.0b3"], repo_path)
     contents = (repo_path / "README.md").read_text()

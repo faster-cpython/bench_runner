@@ -15,22 +15,21 @@ DATA_PATH = Path(__file__).parent / "data"
 
 
 @pytest.fixture
-def checkout(request):
-    root = request.config.cache.mkdir("get-merge-base-checkout")
+def checkout(tmp_dir):
+    root = Path(tmp_dir)
 
-    if not (root / "cpython").is_dir():
-        subprocess.check_call(
-            [
-                "git",
-                "clone",
-                "https://github.com/mdboom/cpython",
-                "--branch",
-                "fix-pystats",
-                "--depth",
-                "50",
-            ],
-            cwd=root,
-        )
+    subprocess.check_call(
+        [
+            "git",
+            "clone",
+            "https://github.com/mdboom/cpython",
+            "--branch",
+            "fix-pystats",
+            "--depth",
+            "50",
+        ],
+        cwd=root,
+    )
 
     return root
 

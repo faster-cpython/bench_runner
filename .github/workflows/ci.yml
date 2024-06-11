@@ -37,4 +37,4 @@ jobs:
           python -m pip install .[test]
       - name: Run tests
         run: |
-          python -m pytest tests
+          python -m pytest tests -n auto
