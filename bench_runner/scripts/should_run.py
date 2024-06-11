@@ -8,6 +8,9 @@ import subprocess
 import sys
 
 
+import rich_argparse
+
+
 # NOTE: This file should import in Python 3.9 or later so it can at least print
 # the error message that the version of Python is too old.
 
@@ -55,7 +58,13 @@ def _main(
         sys.exit(1)
 
     found_result = has_result(
-        results_dir, commit_hash, machine, pystats, flags, util.get_benchmark_hash()
+        results_dir,
+        commit_hash,
+        machine,
+        pystats,
+        flags,
+        util.get_benchmark_hash(),
+        progress=False,
     )
 
     if force:
@@ -72,8 +81,8 @@ def _main(
 
 def main():
     parser = argparse.ArgumentParser(
-        "Do we need to run this commit?",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="Do we need to run this commit?",
+        formatter_class=rich_argparse.ArgumentDefaultsRichHelpFormatter,
     )
     parser.add_argument(
         "force",

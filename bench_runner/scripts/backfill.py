@@ -10,6 +10,13 @@ from pathlib import Path
 from typing import Iterable, Sequence, TypeAlias
 
 
+import rich
+import rich.console
+import rich.prompt
+import rich.table
+import rich_argparse
+
+
 from bench_runner import flags as mflags
 from bench_runner import gh
 from bench_runner import git
@@ -76,7 +83,8 @@ def get_latest_with_prefix(
             commits.append(Commit(cpython, tag, f"--latest-with-prefix {prefix}"))
 
     commits.sort(key=attrgetter("date"))
-    yield commits[-1]
+    if len(commits) > 0:
+        yield commits[-1]
 
 
 def next_weekday(d: datetime.datetime, weekday: int) -> datetime.datetime:
@@ -149,7 +157,9 @@ def remove_existing(
         return
 
     if results is None:
-        results = mod_result.load_all_results(None, Path("results"), sorted=False)
+        results = mod_result.load_all_results(
+            None, Path("results"), sorted=False, match=False
+        )
 
     for commit in commits:
         commit.runners = []
@@ -242,23 +252,35 @@ def _main(
 
     commits = sorted(commits, key=attrgetter("date"))
 
-    print(f"runners: {', '.join(x.nickname for x in runners)}")
-    print()
-    print(f"{'date':10s} {'hash':7s} {'ref':15s} {'#' * len(runners)} source")
+    rich.print(f"runners: {', '.join(f'[blue]{x.nickname}[/blue]' for x in runners)}")
+    rich.print()
+
+    table = rich.table.Table(title="Benchmark runs")
+    table.add_column("date")
+    table.add_column("hash")
+    table.add_column("ref")
+    table.add_column("machine")
+    table.add_column("source")
+
     runs = 0
     for commit in commits:
-        print(
-            f"{str(commit.date)[:10]} {commit.hash[:7]:7s} "
-            f"{commit.ref[:15]:15s} {format_runners(commit.runners, runners)} "
-            f"{commit.source}"
+        table.add_row(
+            str(commit.date)[:10],
+            commit.hash[:7],
+            commit.ref[:15],
+            format_runners(commit.runners, runners),
+            commit.source,
         )
         runs += len(commit.runners)
 
-    print()
-    print(f"Selected {len(commits)} commits, {runs} runs.")
-    choice = input("Are you sure you want to run them all? [y/N]")
+    console = rich.console.Console()
+    console.print(table)
 
-    if choice.lower() in ("y", "yes"):
+    rich.print(f"Selected {len(commits)} commits, {runs} runs.")
+    if runs == 0:
+        return
+
+    if rich.prompt.Confirm.ask("Are you sure you want to run them all?", default=False):
         for commit in commits:
             if len(commit.runners) == len(all_runners):
                 gh.benchmark(ref=commit.hash, machine="all")
@@ -276,12 +298,13 @@ def main():
     runners_by_names = {x.nickname: x for x in all_runners}
 
     parser = argparse.ArgumentParser(
-        """
+        description="""
         Fire off a set of benchmark jobs based on tags in the cpython
         repository. Useful for regenerating or catching up with old data. The
         set of tags to run will be displayed for confirmation before actually
         setting up the jobs.
-        """
+        """,
+        formatter_class=rich_argparse.ArgumentDefaultsRichHelpFormatter,
     )
     parser.add_argument(
         "--all-with-prefix",

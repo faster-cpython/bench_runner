@@ -12,6 +12,11 @@ from typing import Iterable, TextIO, Sequence
 from urllib.parse import unquote
 
 
+import rich
+import rich.progress
+import rich_argparse
+
+
 from bench_runner.bases import get_bases
 from bench_runner import flags as mflags
 from bench_runner import plot
@@ -64,9 +69,12 @@ def save_generated_results(results: Iterable[Result], force: bool = False) -> No
                         work.append((func, filename))
 
     with multiprocessing.Pool() as pool:
-        for i, _ in enumerate(pool.imap_unordered(_worker, work)):
-            print(f"{i + 1:04d}/{len(work):04d}", end="\r")
-        print()
+        for i, _ in rich.progress.track(
+            enumerate(pool.imap_unordered(_worker, work)),
+            description="Generating results",
+            total=len(work),
+        ):
+            pass
 
 
 def output_results_index(
@@ -330,8 +338,9 @@ def generate_directory_indices(results: Iterable[Result]) -> None:
     entries = get_directory_indices_entries(results)
     structure = _tuple_to_nested_dicts(entries)
 
-    for dirpath, dirresults in structure.items():
-        util.status(".")
+    for dirpath, dirresults in rich.progress.track(
+        structure.items(), description="Generating indices"
+    ):
         with open(dirpath / "README.md", "w") as fd:
             fd.write("# Results\n\n")
             table.write_md_list(fd, dirresults[None][None])
@@ -346,7 +355,6 @@ def generate_directory_indices(results: Iterable[Result]) -> None:
                         continue
                     fd.write(f"### vs. {base}\n\n")
                     table.write_md_list(fd, subdata)
-    print()
 
 
 def _main(repo_dir: Path, force: bool = False, bases: Sequence[str] | None = None):
@@ -355,40 +363,55 @@ def _main(repo_dir: Path, force: bool = False, bases: Sequence[str] | None = Non
         bases = get_bases()
     if len(bases) == 0:
         raise ValueError("Must have at least one base specified")
-    print(f"Comparing to bases {bases}")
+    rich.print(f"Comparing to bases: {','.join(bases)}")
     results = load_all_results(bases, results_dir)
-    print(f"Found {len(results)} results")
-    print("Generating comparison results")
+    rich.print(f"Found {len(results)} results")
     save_generated_results(results, force=force)
-    print("Generating indices")
     benchmarking_results = [r for r in results if r.result_info[0] == "raw results"]
     generate_indices(bases, results, benchmarking_results, repo_dir)
     generate_directory_indices(benchmarking_results)
-    print("Generating longitudinal plot")
-    plot.longitudinal_plot(benchmarking_results, repo_dir / "longitudinal.png")
-    print("Generating configurations plot")
-    plot.flag_effect_plot(benchmarking_results, repo_dir / "configs.png")
-    print("Generating memory plots")
-    plot.longitudinal_plot(
-        benchmarking_results,
-        repo_dir / "memory_long.png",
-        getter=lambda r: r.memory_change_float,
-        differences=("less", "more"),
-        title="Memory usage change by major version",
-    )
-    plot.flag_effect_plot(
-        benchmarking_results,
-        repo_dir / "memory_configs.png",
-        getter=lambda r: r.memory_change_float,
-        differences=("less", "more"),
-        title="Memory usage change by configuration",
-    )
+    for plot_func, args, kwargs in rich.progress.track(
+        [
+            (
+                plot.longitudinal_plot,
+                (benchmarking_results, repo_dir / "longitudinal.png"),
+                {},
+            ),
+            (
+                plot.flag_effect_plot,
+                (benchmarking_results, repo_dir / "configs.png"),
+                {},
+            ),
+            (
+                plot.longitudinal_plot,
+                (benchmarking_results, repo_dir / "memory_long.png"),
+                dict(
+                    getter=lambda r: r.memory_change_float,
+                    differences=("less", "more"),
+                    title="Memory usage change by major version",
+                ),
+            ),
+            (
+                plot.flag_effect_plot,
+                (benchmarking_results, repo_dir / "memory_configs.png"),
+                dict(
+                    getter=lambda r: r.memory_change_float,
+                    differences=("less", "more"),
+                    title="Memory usage change by configuration",
+                ),
+            ),
+        ],
+        description="Generating plots",
+    ):
+        plot_func(*args, **kwargs)  # type: ignore
 
 
 def main():
     parser = argparse.ArgumentParser(
-        "Generate index tables and comparison plots for all of the results.",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="""
+        Generate index tables and comparison plots for all of the results.
+        """,
+        formatter_class=rich_argparse.ArgumentDefaultsRichHelpFormatter,
     )
 
     parser.add_argument(
@@ -407,7 +430,7 @@ def main():
     args = parser.parse_args()
 
     if not args.repo_dir.is_dir():
-        print(f"{args.repo_dir} is not a directory.")
+        rich.print(f"[red]{args.repo_dir} is not a directory.[/red]")
         sys.exit(1)
 
     _main(args.repo_dir, force=args.force)

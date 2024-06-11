@@ -12,6 +12,7 @@ from typing import Callable, Iterable
 from matplotlib import pyplot as plt
 import matplotlib
 import numpy as np
+import rich_argparse
 import ujson
 
 
@@ -440,7 +441,10 @@ def flag_effect_plot(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser("Compare two benchmark .json files")
+    parser = argparse.ArgumentParser(
+        "Compare two benchmark .json files",
+        formatter_class=rich_argparse.ArgumentDefaultsRichHelpFormatter,
+    )
     parser.add_argument("ref", help="The reference .json file")
     parser.add_argument("head", help="The head .json file")
     parser.add_argument("output", help="Output filename")

@@ -12,6 +12,8 @@ import sys
 from typing import Any
 
 
+import rich
+import rich_argparse
 from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import LiteralScalarString
 
@@ -26,8 +28,11 @@ WORKFLOW_PATH = Path() / ".github" / "workflows"
 
 
 def fail_check(dst: Path):
-    print(f"{dst.relative_to(ROOT_PATH)} needs to be regenerated.", file=sys.stderr)
-    print(
+    rich.print(
+        f"[red]{dst.relative_to(ROOT_PATH)} needs to be regenerated.[/red]",
+        file=sys.stderr,
+    )
+    rich.print(
         "Run `python -m bench_runner install` and commit the result.",
         file=sys.stderr,
     )
@@ -241,7 +246,10 @@ def _main(check: bool) -> None:
 
 
 def main():
-    parser = argparse.ArgumentParser("Install the Github Actions and other files")
+    parser = argparse.ArgumentParser(
+        description="Install the Github Actions and other files",
+        formatter_class=rich_argparse.ArgumentDefaultsRichHelpFormatter,
+    )
     parser.add_argument(
         "--check",
         action="store_true",
