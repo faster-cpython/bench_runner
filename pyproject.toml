@@ -15,7 +15,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 dependencies = [
-    "ijson==3.2.3",
+    "ijson==3.3.0",
     "matplotlib==3.9.0",
     "pyperf@git+https://github.com/psf/pyperf#egg=2b9591dcc5be28998d29237f6665b30ca2e1b805",
     "rich==13.7.1",
