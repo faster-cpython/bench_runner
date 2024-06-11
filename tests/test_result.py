@@ -42,7 +42,9 @@ def test_load_all_results(tmp_path):
     assert result_310.benchmark_hash == "215d35"
 
 
-def test_merge_base(tmp_path):
+def test_merge_base(tmp_path, monkeypatch):
+    monkeypatch.chdir(DATA_PATH)
+
     results_path = _copy_results(tmp_path)
 
     # Hack up so one of the results has an explicit commit_merge_base
@@ -74,6 +76,8 @@ def test_merge_base(tmp_path):
 
 
 def test_from_scratch(monkeypatch):
+    monkeypatch.chdir(DATA_PATH)
+
     python = sys.executable
 
     def get_git_hash(*args):

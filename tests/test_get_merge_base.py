@@ -1,6 +1,5 @@
 import contextlib
 from pathlib import Path
-import shutil
 import subprocess
 import textwrap
 
@@ -15,32 +14,29 @@ DATA_PATH = Path(__file__).parent / "data"
 
 
 @pytest.fixture
-def checkout(request):
-    root = request.config.cache.mkdir("get-merge-base-checkout")
+def checkout(tmp_path):
+    root = Path(tmp_path)
 
-    if not (root / "cpython").is_dir():
-        subprocess.check_call(
-            [
-                "git",
-                "clone",
-                "https://github.com/mdboom/cpython",
-                "--branch",
-                "fix-pystats",
-                "--depth",
-                "50",
-            ],
-            cwd=root,
-        )
+    subprocess.check_call(
+        [
+            "git",
+            "clone",
+            "https://github.com/mdboom/cpython",
+            "--branch",
+            "fix-pystats",
+            "--depth",
+            "50",
+        ],
+        cwd=root,
+    )
 
     return root
 
 
-def test_get_merge_base(tmp_path, capsys, checkout, monkeypatch):
+def test_get_merge_base(capsys, checkout, monkeypatch):
     monkeypatch.chdir(DATA_PATH)
 
-    shutil.copytree(checkout / "cpython", tmp_path / "cpython")
-
-    get_merge_base._main(True, "linux-x86_64-linux", False, [], tmp_path / "cpython")
+    get_merge_base._main(True, "linux-x86_64-linux", False, [], checkout / "cpython")
 
     captured = capsys.readouterr()
 
@@ -58,12 +54,10 @@ def test_get_merge_base(tmp_path, capsys, checkout, monkeypatch):
     )
 
 
-def test_hard_coded(tmp_path, capsys, checkout, monkeypatch):
+def test_hard_coded(capsys, checkout, monkeypatch):
     monkeypatch.chdir(DATA_PATH)
 
-    shutil.copytree(checkout / "cpython", tmp_path / "cpython")
-
-    with contextlib.chdir(tmp_path):
+    with contextlib.chdir(checkout):
         get_merge_base._main(False, "linux-x86_64-linux", False, [])
 
     captured = capsys.readouterr()
