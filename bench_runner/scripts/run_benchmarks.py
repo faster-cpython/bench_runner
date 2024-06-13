@@ -15,7 +15,7 @@ from typing import Iterable, Union
 
 
 import rich_argparse
-import ujson
+import simdjson
 
 
 from bench_runner import flags
@@ -116,7 +116,7 @@ def run_benchmarks(
             f"No benchmark file created at {BENCHMARK_JSON.resolve()}."
         )
     with BENCHMARK_JSON.open() as fd:
-        contents = ujson.load(fd)
+        contents = simdjson.load(fd)
     if len(contents.get("benchmarks", [])) == 0:
         raise NoBenchmarkError("No benchmarks were run.")
 
@@ -249,7 +249,7 @@ def update_metadata(
     run_id: str | None = None,
 ) -> None:
     with filename.open() as fd:
-        content = ujson.load(fd)
+        content = simdjson.load(fd)
 
     metadata = content.setdefault("metadata", {})
 
@@ -268,7 +268,7 @@ def update_metadata(
         metadata["github_actor"] = actor
 
     with filename.open("w") as fd:
-        ujson.dump(content, fd, indent=2)
+        simdjson.dump(content, fd, indent=2)
 
 
 def copy_to_directory(
