@@ -13,7 +13,7 @@ from bench_runner import util
 
 
 def get_python_version(cpython: Path):
-    with open(cpython / "Include" / "patchlevel.h") as fd:
+    with (cpython / "Include" / "patchlevel.h").open() as fd:
         for line in fd.readlines():
             if m := re.match(r'#define\s+PY_VERSION\s+"(.+)"', line.strip()):
                 return m.groups()[0]

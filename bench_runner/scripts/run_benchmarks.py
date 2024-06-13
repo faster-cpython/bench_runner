@@ -111,11 +111,11 @@ def run_benchmarks(
     # pyperformance frequently returns an error if any of the benchmarks failed.
     # We only want to fail if things are worse than that.
 
-    if not Path(BENCHMARK_JSON).is_file():
+    if not BENCHMARK_JSON.is_file():
         raise NoBenchmarkError(
             f"No benchmark file created at {BENCHMARK_JSON.resolve()}."
         )
-    with open(BENCHMARK_JSON) as fd:
+    with BENCHMARK_JSON.open() as fd:
         contents = ujson.load(fd)
     if len(contents.get("benchmarks", [])) == 0:
         raise NoBenchmarkError("No benchmarks were run.")
@@ -192,7 +192,7 @@ def perf_to_csv(lines: Iterable[str], output: Path):
 
     rows.sort(key=itemgetter(0), reverse=True)
 
-    with open(output, "w") as fd:
+    with output.open("w") as fd:
         csvwriter = csv.writer(fd)
         csvwriter.writerow(["self", "children", "object", "symbol"])
         for row in rows:
@@ -248,7 +248,7 @@ def update_metadata(
     cpython: Path = Path("cpython"),
     run_id: str | None = None,
 ) -> None:
-    with open(filename) as fd:
+    with filename.open() as fd:
         content = ujson.load(fd)
 
     metadata = content.setdefault("metadata", {})
@@ -267,7 +267,7 @@ def update_metadata(
     if actor is not None:
         metadata["github_actor"] = actor
 
-    with open(filename, "w") as fd:
+    with filename.open("w") as fd:
         ujson.dump(content, fd, indent=2)
 
 
@@ -324,10 +324,7 @@ def run_summarize_stats(
     """
     )
 
-    with open(
-        result.filename.with_suffix(".md"),
-        "w",
-    ) as fd:
+    with result.filename.with_suffix(".md").open("w") as fd:
         fd.write(header)
         if benchmarks:
             fd.write("- ")
@@ -355,7 +352,7 @@ def run_summarize_stats(
 def get_excluded_benchmarks() -> list[str]:
     filename = Path("excluded_benchmarks.txt")
     if filename.is_file():
-        with open(filename) as fd:
+        with filename.open() as fd:
             return [x.strip() for x in fd.readlines()]
     return []
 

@@ -113,9 +113,7 @@ class BenchmarkComparison(Comparison):
             return None
 
         if self.base_filename.with_suffix(".md").is_file():
-            with open(
-                self.base_filename.with_suffix(".md"), "r", encoding="utf-8"
-            ) as fd:
+            with self.base_filename.with_suffix(".md").open(encoding="utf-8") as fd:
                 return fd.read()
         else:
             return self._generate_contents()
@@ -169,7 +167,7 @@ class BenchmarkComparison(Comparison):
         contents = self._contents
         assert contents is not None
 
-        with open(filename, "w") as fd:
+        with filename.open("w") as fd:
             fd.write(f"# Results vs. {self.base}\n\n")
             for key, val in entries:
                 fd.write(f"- {key}: {val}\n")
@@ -387,8 +385,7 @@ class PystatsComparison(Comparison):
             )
         except subprocess.CalledProcessError:
             return None
-        with open(filename, "w") as fd:
-            fd.write(contents)
+        filename.write_text(contents)
 
 
 def comparison_factory(ref: "Result", head: "Result", base: str) -> Comparison:
@@ -597,7 +594,7 @@ class Result:
                     fast_contents["metadata"][prefix[9:]] = value
 
         fast_contents = {"metadata": {}, "benchmarks": []}
-        with open(self.filename, "rb") as fd:
+        with self.filename.open("rb") as fd:
             parser = ijson.parse(fd)
             parse_top(parser)
 
@@ -612,7 +609,7 @@ class Result:
         if hasattr(self, "_fast_contents"):
             del self._fast_contents
 
-        with open(self.filename, "rb") as fd:
+        with self.filename.open("rb") as fd:
             self._full_contents = ujson.load(fd)
 
         return self._full_contents

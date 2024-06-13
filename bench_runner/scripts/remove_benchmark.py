@@ -19,7 +19,7 @@ from bench_runner.scripts import generate_results
 def remove_benchmark(
     filename: Path, remove: set[str], keep_hash: set[str], dry_run: bool
 ):
-    with open(filename) as fd:
+    with filename.open() as fd:
         data = ujson.load(fd)
 
     if data["metadata"]["benchmark_hash"] in keep_hash:
@@ -37,7 +37,7 @@ def remove_benchmark(
     data["benchmarks"] = benchmarks
 
     if not dry_run:
-        with open(filename, "w") as fd:
+        with filename.open("w") as fd:
             ujson.dump(data, fd, indent=2)
 
 

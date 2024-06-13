@@ -174,7 +174,7 @@ def _main(commits: Sequence[str], output_dir: Path, comparison_type: str):
     runners = mod_runners.get_runners_by_nickname()
 
     counter = [0, total]
-    with open(output_dir_path / "README.md", "w", encoding="utf-8") as fd:
+    with (output_dir_path / "README.md").open("w", encoding="utf-8") as fd:
         for machine in machines:
             fd.write(f"# {runners[machine].display_name}\n\n")
             func(fd, parsed_commits, machine, output_dir_path, counter)

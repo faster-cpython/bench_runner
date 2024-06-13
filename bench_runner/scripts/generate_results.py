@@ -341,7 +341,7 @@ def generate_directory_indices(results: Iterable[Result]) -> None:
     for dirpath, dirresults in rich.progress.track(
         structure.items(), description="Generating indices"
     ):
-        with open(dirpath / "README.md", "w") as fd:
+        with (dirpath / "README.md").open("w") as fd:
             fd.write("# Results\n\n")
             table.write_md_list(fd, dirresults[None][None])
             for runner in sort_runner_names(dirresults.keys()):

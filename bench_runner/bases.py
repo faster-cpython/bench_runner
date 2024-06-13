@@ -11,7 +11,7 @@ from pathlib import Path
 def get_bases(
     bases_filepath: Path = Path("bases.txt"),
 ) -> list[str]:
-    with open(bases_filepath) as fd:
+    with bases_filepath.open() as fd:
         return list(
             line.strip() for line in fd.readlines() if line and not line.startswith("#")
         )
