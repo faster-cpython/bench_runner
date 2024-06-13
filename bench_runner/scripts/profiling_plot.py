@@ -240,7 +240,7 @@ def _main(input_dir: Path, output_prefix: Path):
         print("No profiling data. Skipping.")
         return
 
-    with open(output_prefix.with_suffix(".md"), "w") as md:
+    with output_prefix.with_suffix(".md").open("w") as md:
         for csv_path in sorted(input_dir.glob("*.csv")):
             stem = csv_path.stem.split(".", 1)[0]
 
@@ -251,7 +251,7 @@ def _main(input_dir: Path, output_prefix: Path):
             md.write("| percentage | object | symbol | category |\n")
             md.write("| ---: | :--- | :--- | :--- |\n")
 
-            with open(csv_path, newline="") as fd:
+            with csv_path.open(newline="") as fd:
                 csvreader = csv.reader(fd)
                 for _ in csvreader:
                     break
@@ -325,7 +325,7 @@ def _main(input_dir: Path, output_prefix: Path):
     bottom = np.zeros(len(results))
     names = list(results.keys())[::-1]
 
-    for i, (val, category) in enumerate(sorted_categories):
+    for val, category in sorted_categories:
         if category == "unknown":
             continue
         values = np.array(

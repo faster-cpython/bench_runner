@@ -13,24 +13,6 @@ from bench_runner.scripts import generate_results
 DATA_PATH = Path(__file__).parent / "data"
 
 
-def _parse_table(path, table_name="table"):
-    state = "start"
-    rows = []
-    with open(path) as fd:
-        for line in fd.readlines():
-            line = line.strip()
-            if state == "start":
-                if line == f"<!-- START {table_name} -->":
-                    state = "table"
-            elif state == "table":
-                if line == f"<!-- END {table_name} -->":
-                    state = "end"
-                    break
-                elif line.startswith("|"):
-                    rows.append([x.strip() for x in line.split("|")][1:-1])
-    return rows
-
-
 def _copy_repo(tmp_path):
     repo_path = tmp_path / "repo"
     shutil.copytree(DATA_PATH, tmp_path / "repo")

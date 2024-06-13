@@ -4,7 +4,6 @@ from __future__ import annotations
 import argparse
 import datetime
 import functools
-import json
 from operator import attrgetter
 from pathlib import Path
 import re
@@ -49,8 +48,8 @@ INTERPRETER_HEAVY = {
 
 @functools.cache
 def get_plot_config():
-    with open("plotconfig.json") as fd:
-        content = json.load(fd)
+    with Path("plotconfig.json").open() as fd:
+        content = ujson.load(fd)
 
     for key in ["bases", "runners", "names", "colors", "styles", "versions", "markers"]:
         assert key in content
@@ -247,7 +246,7 @@ def longitudinal_plot(
 
     data_cache = output_filename.with_suffix(".json")
     if data_cache.is_file():
-        with open(data_cache) as fd:
+        with data_cache.open() as fd:
             data = ujson.load(fd)
     else:
         data = {}
@@ -347,7 +346,7 @@ def longitudinal_plot(
     plt.savefig(output_filename, dpi=150)
     plt.close()
 
-    with open(data_cache, "w") as fd:
+    with data_cache.open("w") as fd:
         ujson.dump(data, fd, indent=2)
 
 
@@ -376,7 +375,7 @@ def flag_effect_plot(
 
     data_cache = output_filename.with_suffix(".json")
     if data_cache.is_file():
-        with open(data_cache) as fd:
+        with data_cache.open() as fd:
             data = ujson.load(fd)
     else:
         data = {}
@@ -443,7 +442,7 @@ def flag_effect_plot(
     plt.savefig(output_filename, dpi=150)
     plt.close()
 
-    with open(data_cache, "w") as fd:
+    with data_cache.open("w") as fd:
         ujson.dump(data, fd, indent=2)
 
 

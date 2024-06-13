@@ -58,15 +58,14 @@ def write_yaml(dst: Path, contents: Any, check: bool):
         if not dst.is_file():
             fail_check(dst)
 
-        with open(dst) as fd:
-            orig_contents = fd.read()
+        orig_contents = dst.read_text()
         fd = io.StringIO()
         do_write(contents, fd)
         new_contents = fd.getvalue()
         if orig_contents != new_contents:
             fail_check(dst)
     else:
-        with open(dst, "w") as fd:
+        with dst.open("w") as fd:
             do_write(contents, fd)
 
 
@@ -74,7 +73,7 @@ def load_yaml(src: Path) -> Any:
     """
     Load YAML from `src`.
     """
-    with open(src) as fd:
+    with src.open() as fd:
         yaml = YAML()
         return yaml.load(fd)
 
