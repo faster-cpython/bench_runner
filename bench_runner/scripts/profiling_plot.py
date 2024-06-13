@@ -253,7 +253,7 @@ def _main(input_dir: Path, output_prefix: Path):
 
             with open(csv_path, newline="") as fd:
                 csvreader = csv.reader(fd)
-                for row in csvreader:
+                for _ in csvreader:
                     break
 
                 # Add up all the JIT entries into a single row

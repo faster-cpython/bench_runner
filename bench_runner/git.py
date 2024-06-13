@@ -15,7 +15,7 @@ def get_log(
     dirname: Path,
     ref: str | None = None,
     n: int = 1,
-    extra: list[str] = [],
+    extra: list[str] | None = None,
 ) -> str:
     """
     format: The git pretty format string for each log entry
@@ -24,6 +24,9 @@ def get_log(
     n: If < 1, show full log, otherwise the number of entries to show
     extra: Extra arguments to pass to `git log`
     """
+    if extra is None:
+        extra = []
+
     if ref is None:
         ref_args = []
     else:

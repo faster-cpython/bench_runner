@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import argparse
 import datetime
+import functools
+import json
 from operator import attrgetter
 from pathlib import Path
 import re
@@ -45,6 +47,25 @@ INTERPRETER_HEAVY = {
 }
 
 
+@functools.cache
+def get_plot_config():
+    with open("plotconfig.json") as fd:
+        content = json.load(fd)
+
+    for key in ["bases", "runners", "names", "colors", "styles", "versions", "markers"]:
+        assert key in content
+    assert len(content["bases"]) == len(content["versions"])
+    assert (
+        len(content["runners"])
+        == len(content["names"])
+        == len(content["colors"])
+        == len(content["styles"])
+        == len(content["markers"])
+    )
+
+    return content
+
+
 def plot_diff_pair(ax, data):
     if not len(data):
         return []
@@ -53,7 +74,7 @@ def plot_diff_pair(ax, data):
     violins = []
     colors = []
 
-    for i, (name, values, mean) in enumerate(data):
+    for i, (name, values, _mean) in enumerate(data):
         if values is not None:
             idx = np.round(np.linspace(0, len(values) - 1, 100)).astype(int)
             violins.append(values[idx])
@@ -204,28 +225,13 @@ def add_axvline(ax, dt: datetime.datetime, name: str):
     )
 
 
-# TODO: Make this configurable
 def longitudinal_plot(
     results: Iterable[result.Result],
     output_filename: Path,
-    bases=["3.10.4", "3.11.0", "3.12.0", "3.12.0"],
-    runners=[
-        "linux",
-        "pythonperf2",
-        "arminc",
-        "darwin",
-        "pythonperf1",
-        "pythonperf1_win32",
-    ],
-    names=["linux", "linux2", "linux-aarch64", "macos", "win64", "win32"],
-    colors=["C0", "C0", "C4", "C2", "C3", "C3"],
-    styles=["-", ":", "--", "-", "-", ":"],
-    versions=[(3, 11), (3, 12), (3, 13), (3, 13)],
     getter: Callable[
         [result.BenchmarkComparison], float | None
     ] = lambda r: r.hpt_percentile_float(99),
     differences: tuple[str, str] = ("slower", "faster"),
-    markers=["s", "s", "s", "^", ".", "."],
     title="Performance improvement by configuration",
 ):
     def get_comparison_value(ref, r, base):
@@ -237,6 +243,8 @@ def longitudinal_plot(
             data[key] = value
             return value
 
+    cfg = get_plot_config()
+
     data_cache = output_filename.with_suffix(".json")
     if data_cache.is_file():
         with open(data_cache) as fd:
@@ -245,12 +253,15 @@ def longitudinal_plot(
         data = {}
 
     fig, axs = plt.subplots(
-        len(versions), 1, figsize=(10, 5 * len(versions)), layout="constrained"
+        len(cfg["versions"]),
+        1,
+        figsize=(10, 5 * len(cfg["versions"])),
+        layout="constrained",
     )
 
     results = [r for r in results if r.fork == "python"]
 
-    for i, (version, base, ax) in enumerate(zip(versions, bases, axs)):
+    for i, (version, base, ax) in enumerate(zip(cfg["versions"], cfg["bases"], axs)):
         version_str = ".".join(str(x) for x in version)
         ver_results = [r for r in results if r.parsed_version.release[0:2] == version]
 
@@ -260,7 +271,13 @@ def longitudinal_plot(
         ax.set_title(subtitle)
 
         for runner_i, (runner, name, color, style, marker) in enumerate(
-            zip(runners, names, colors, styles, markers)
+            zip(
+                cfg["runners"],
+                cfg["names"],
+                cfg["colors"],
+                cfg["styles"],
+                cfg["markers"],
+            )
         ):
             runner_results = [r for r in ver_results if r.nickname == runner]
 
@@ -337,22 +354,10 @@ def longitudinal_plot(
 def flag_effect_plot(
     results: Iterable[result.Result],
     output_filename: Path,
-    runners=[
-        "linux",
-        "pythonperf2",
-        "arminc",
-        "darwin",
-        "pythonperf1",
-        "pythonperf1_win32",
-    ],
-    names=["linux", "linux2", "linux-aarch64", "macos", "win64", "win32"],
-    colors=["C0", "C0", "C4", "C2", "C3", "C3"],
-    styles=["-", ":", "--", "-", "-", ":"],
     getter: Callable[
         [result.BenchmarkComparison], float | None
     ] = lambda r: r.hpt_percentile_float(99),
     differences: tuple[str, str] = ("slower", "faster"),
-    markers=["s", "s", "s", "^", ".", "."],
     title="Performance improvement by configuration",
 ):
     flags = [flag.name for flag in reversed(mflags.FLAGS)]
@@ -366,6 +371,8 @@ def flag_effect_plot(
             value = getter(result.BenchmarkComparison(ref, r, "default"))
             data[key] = value
             return value
+
+    cfg = get_plot_config()
 
     data_cache = output_filename.with_suffix(".json")
     if data_cache.is_file():
@@ -393,7 +400,7 @@ def flag_effect_plot(
         ax.set_title(f"Effect of {config} vs. Tier 1 (same commit)")
 
         for runner, name, color, style, marker in zip(
-            runners, names, colors, styles, markers
+            cfg["runners"], cfg["names"], cfg["colors"], cfg["styles"], cfg["markers"]
         ):
             runner_results = commits.get(runner, {})
             base_results = runner_results.get("", {})
