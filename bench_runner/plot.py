@@ -262,7 +262,9 @@ def longitudinal_plot(
 
     for i, (version, base, ax) in enumerate(zip(cfg["versions"], cfg["bases"], axs)):
         version_str = ".".join(str(x) for x in version)
-        ver_results = [r for r in results if r.parsed_version.release[0:2] == version]
+        ver_results = [
+            r for r in results if list(r.parsed_version.release[0:2]) == version
+        ]
 
         subtitle = f"Python {version_str}.x vs. {base}"
         if i == 3:
