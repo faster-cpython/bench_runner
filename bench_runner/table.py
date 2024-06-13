@@ -3,7 +3,7 @@ Utilities to generate markdown tables.
 """
 
 from pathlib import Path
-from typing import Iterable, Optional, Sequence, TextIO
+from typing import Iterable, Sequence, TextIO
 from urllib.parse import quote
 
 
@@ -18,7 +18,7 @@ def output_table(
         fd.write(f'| {" | ".join(row)} |\n')
 
     output_row(head)
-    output_row([col.endswith(":") and "---:" or "---" for col in head])
+    output_row(col.endswith(":") and "---:" or "---" for col in head)
     for row in rows:
         output_row(row)
 
@@ -38,19 +38,13 @@ def replace_section(filename: Path, name: str, content: str) -> None:
     lines = iter(filename.read_text().splitlines())
 
     with filename.open("w") as fd:
-        while True:
-            try:
-                line = next(lines)
-            except StopIteration:
-                break
-
+        for line in lines:
             if line == f"<!-- START {name} -->":
                 fd.write(line + "\n")
                 fd.write(content)
                 fd.write("\n")
 
-                while True:
-                    line = next(lines)
+                for line in lines:
                     if line == f"<!-- END {name} -->":
                         fd.write(line + "\n")
                         break
@@ -58,7 +52,7 @@ def replace_section(filename: Path, name: str, content: str) -> None:
                 fd.write(line + "\n")
 
 
-def md_link(text: str, link: str, root: Optional[Path] = None) -> str:
+def md_link(text: str, link: str, root: Path | None = None) -> str:
     """
     Formats a Markdown link. The link is resolved relative to the given root.
     """

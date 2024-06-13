@@ -69,8 +69,8 @@ def save_generated_results(results: Iterable[Result], force: bool = False) -> No
                         work.append((func, filename))
 
     with multiprocessing.Pool() as pool:
-        for i, _ in rich.progress.track(
-            enumerate(pool.imap_unordered(_worker, work)),
+        for _ in rich.progress.track(
+            pool.imap_unordered(_worker, work),
             description="Generating results",
             total=len(work),
         ):
