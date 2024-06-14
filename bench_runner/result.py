@@ -19,7 +19,7 @@ import numpy as np
 from packaging import version
 import pyperf
 import rich.progress
-import ujson
+import simdjson
 
 
 from . import flags as mflags
@@ -541,82 +541,14 @@ class Result:
             f"Unknown result type (extra={self.extra} suffix={self.suffix})"
         )
 
-    @property
-    def fast_contents(self) -> dict[str, Any]:
-        """
-        Gets just a portion of the JSON contents when the whole set isn't needed.
-        """
-        if hasattr(self, "_full_contents"):
-            return self._full_contents
-        if hasattr(self, "_fast_contents"):
-            return self._fast_contents
-
-        try:
-            import ijson
-        except ImportError:
-            return self.contents
-
-        def parse_top(parser):
-            for prefix, _, _ in parser:
-                match prefix:
-                    case "benchmarks":
-                        parse_benchmarks(parser)
-                    case "metadata":
-                        parse_metadata(parser)
-                    case _:
-                        pass
-
-        def parse_benchmarks(parser):
-            for prefix, event, value in parser:
-                match prefix:
-                    case "benchmarks.item.metadata.name":
-                        fast_contents["benchmarks"].append(
-                            {"metadata": {"name": value}}
-                        )
-                    case "benchmarks.item.runs.item.metadata.date":
-                        if len(fast_contents["benchmarks"]) == 0:
-                            fast_contents["benchmarks"].append({})
-                        if len(fast_contents["benchmarks"]) == 1:
-                            fast_contents["benchmarks"][-1]["runs"] = [
-                                {"metadata": {"date": value}}
-                            ]
-                    case "benchmarks":
-                        if event == "end_array":
-                            return
-                    case _:
-                        pass
-
-        def parse_metadata(parser):
-            for prefix, event, value in parser:
-                if prefix == "metadata" and event == "end_map":
-                    return
-                elif len(prefix) > 9:
-                    fast_contents["metadata"][prefix[9:]] = value
-
-        fast_contents = {"metadata": {}, "benchmarks": []}
-        with self.filename.open("rb") as fd:
-            parser = ijson.parse(fd)
-            parse_top(parser)
-
-        self._fast_contents = fast_contents
-        return fast_contents
-
-    @property
+    @functools.cached_property
     def contents(self) -> dict[str, Any]:
-        if hasattr(self, "_full_contents"):
-            return self._full_contents
-
-        if hasattr(self, "_fast_contents"):
-            del self._fast_contents
-
         with self.filename.open("rb") as fd:
-            self._full_contents = ujson.load(fd)
-
-        return self._full_contents
+            return simdjson.load(fd)
 
     @property
     def metadata(self) -> dict[str, Any]:
-        return self.fast_contents.get("metadata", {})
+        return self.contents.get("metadata", {})
 
     @property
     def commit_datetime(self) -> str:
@@ -630,7 +562,7 @@ class Result:
 
     @property
     def run_datetime(self) -> str:
-        return self.fast_contents["benchmarks"][0]["runs"][0]["metadata"]["date"]
+        return self.contents["benchmarks"][0]["runs"][0]["metadata"]["date"]
 
     @property
     def run_date(self) -> str:
@@ -677,13 +609,12 @@ class Result:
 
     @functools.cached_property
     def benchmark_names(self) -> set[str]:
-        contents = self.fast_contents
         names = set()
-        for benchmark in contents["benchmarks"]:
+        for benchmark in self.contents["benchmarks"]:
             if "metadata" in benchmark:
                 names.add(benchmark["metadata"]["name"])
             else:
-                names.add(contents["metadata"]["name"])
+                names.add(self.contents["metadata"]["name"])
         return names
 
     @functools.cached_property

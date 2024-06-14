@@ -32,7 +32,7 @@ from typing import Any, Mapping
 
 import numpy as np
 from numpy.typing import NDArray
-import ujson
+import simdjson
 
 
 ACC_MAXSU = 2
@@ -42,7 +42,7 @@ def load_from_json(
     json_path: Path,
 ) -> dict[str, NDArray[np.float64]]:
     with json_path.open() as fd:
-        content = ujson.load(fd)
+        content = simdjson.load(fd)
 
     return load_data(content)
 

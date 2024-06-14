@@ -1,3 +1,4 @@
 {
-  "useLibraryCodeForTypes": false
+  "useLibraryCodeForTypes": false,
+  "reportAttributeAccessIssue": false
 }

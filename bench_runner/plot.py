@@ -14,7 +14,7 @@ from matplotlib import pyplot as plt
 import matplotlib
 import numpy as np
 import rich_argparse
-import ujson
+import simdjson
 
 
 matplotlib.use("agg")
@@ -49,7 +49,7 @@ INTERPRETER_HEAVY = {
 @functools.cache
 def get_plot_config():
     with Path("plotconfig.json").open() as fd:
-        content = ujson.load(fd)
+        content = simdjson.load(fd)
 
     for key in ["bases", "runners", "names", "colors", "styles", "versions", "markers"]:
         assert key in content
@@ -247,7 +247,7 @@ def longitudinal_plot(
     data_cache = output_filename.with_suffix(".json")
     if data_cache.is_file():
         with data_cache.open() as fd:
-            data = ujson.load(fd)
+            data = simdjson.load(fd)
     else:
         data = {}
 
@@ -349,7 +349,7 @@ def longitudinal_plot(
     plt.close()
 
     with data_cache.open("w") as fd:
-        ujson.dump(data, fd, indent=2)
+        simdjson.dump(data, fd, indent=2)
 
 
 def flag_effect_plot(
@@ -378,7 +378,7 @@ def flag_effect_plot(
     data_cache = output_filename.with_suffix(".json")
     if data_cache.is_file():
         with data_cache.open() as fd:
-            data = ujson.load(fd)
+            data = simdjson.load(fd)
     else:
         data = {}
 
@@ -445,7 +445,7 @@ def flag_effect_plot(
     plt.close()
 
     with data_cache.open("w") as fd:
-        ujson.dump(data, fd, indent=2)
+        simdjson.dump(data, fd, indent=2)
 
 
 if __name__ == "__main__":
