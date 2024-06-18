@@ -19,7 +19,7 @@ dependencies = [
     "pyperf==2.7.0",
     "pysimdjson==6.0.2",
     "rich==13.7.1",
-    "rich-argparse==1.5.1",
+    "rich-argparse==1.5.2",
     "ruamel.yaml==0.18.6",
     "wheel",
 ]
