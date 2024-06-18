@@ -196,22 +196,6 @@ tier2_date = datetime.datetime.fromisoformat("2023-11-11T00:00:00Z")
 jit_date = datetime.datetime.fromisoformat("2024-01-31T00:00:00Z")
 
 
-def filter_by_config(results: Iterable[result.Result]) -> list[result.Result]:
-    correct_results = []
-    for r in results:
-        dt = datetime.datetime.fromisoformat(r.commit_datetime)
-        if dt < tier2_date:
-            if r.flags == []:
-                correct_results.append(r)
-        elif dt < jit_date:
-            if r.flags == ["PYTHON_UOPS"]:
-                correct_results.append(r)
-        else:
-            if r.flags == ["JIT"]:
-                correct_results.append(r)
-    return correct_results
-
-
 def add_axvline(ax, dt: datetime.datetime, name: str):
     ax.axvline(dt)
     ax.annotate(
@@ -282,12 +266,11 @@ def longitudinal_plot(
         ):
             runner_results = [r for r in ver_results if r.nickname == runner]
 
-            # For 3.13, only use Tier 2 results after 2023-11-11 and JIT results
-            # after 2024-01-30
-            if i == 2:
+            # The last plot is JIT-only
+            if i == 3:
+                runner_results = [r for r in runner_results if r.flags == ["JIT"]]
+            else:
                 runner_results = [r for r in runner_results if r.flags == []]
-            elif i == 3:
-                runner_results = filter_by_config(runner_results)
 
             for r in results:
                 if r.nickname == runner and r.version == base:
@@ -337,11 +320,6 @@ def longitudinal_plot(
                     text.arrow_patch.set_color("#888")
 
         annotate_y_axis(ax, differences)
-
-        # Add a line for when Tier 2 and JIT were turned on
-        if i == 3:
-            add_axvline(ax, tier2_date, "TIER 2")
-            add_axvline(ax, jit_date, "JIT")
 
     fig.suptitle(title)
 

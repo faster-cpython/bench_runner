@@ -22,6 +22,7 @@ import rich.progress
 import simdjson
 
 
+from . import bases as mbases
 from . import flags as mflags
 from . import git
 from . import hpt
@@ -733,9 +734,21 @@ def match_to_bases(
     for result in track(results, description="Matching results to bases"):
         candidates = groups[(result.nickname, tuple(result.extra))]
 
+        if (
+            result.version not in bases
+            and result.parsed_version.release[0:2]
+            < mbases.get_minimum_version_for_all_comparisons()
+        ):
+            continue
+
         if bases is not None:
             for base in bases:
-                find_match(result, candidates, base, lambda ref: ref.version == base)
+                find_match(
+                    result,
+                    candidates,
+                    base,
+                    lambda ref: ref.version == base and ref.flags == [],
+                )
 
         merge_base = result.commit_merge_base
         found_base = False

@@ -20,7 +20,7 @@ jobs:
         with:
           repository: python/cpython
           path: cpython
-          ref: "3.13"
+          ref: main
       - name: Determine head commit
         id: head
         run: |
@@ -39,18 +39,6 @@ jobs:
       tier2: false
     secrets: inherit
 
-  weekly-tier2:
-    uses: ./.github/workflows/_benchmark.yml
-    needs: determine_head
-    with:
-      fork: python
-      ref: ${{ needs.determine_head.outputs.commit }}
-      machine: all
-      benchmarks: all
-      pgo: true
-      tier2: true
-    secrets: inherit
-
   weekly-jit:
     uses: ./.github/workflows/_benchmark.yml
     needs: determine_head
@@ -62,6 +50,20 @@ jobs:
       pgo: true
       tier2: false
       jit: true
+    secrets: inherit
+
+  weekly-nogil:
+    uses: ./.github/workflows/_benchmark.yml
+    needs: determine_head
+    with:
+      fork: python
+      ref: ${{ needs.determine_head.outputs.commit }}
+      machine: all
+      benchmarks: all
+      pgo: true
+      tier2: false
+      jit: false
+      nogil: true
     secrets: inherit
 
   pystats:
@@ -90,7 +92,7 @@ jobs:
     uses: ./.github/workflows/_generate.yml
     with:
       force: false
-    needs: [weekly, weekly-tier2, weekly-jit, pystats, pystats-tier2]
+    needs: [weekly, weekly-jit, weekly-nogil, pystats, pystats-tier2]
     secrets: inherit
 
   publish:
