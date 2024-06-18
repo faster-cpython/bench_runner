@@ -717,6 +717,9 @@ def match_to_bases(
                     return True
         return False
 
+    if bases is None:
+        bases = []
+
     if progress:
         track = rich.progress.track  # type: ignore
     else:
