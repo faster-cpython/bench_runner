@@ -24,4 +24,7 @@ def get_minimum_version_for_all_comparisons(bases_filepath: Path = Path("bases.t
     from packaging import version as pkg_version
 
     bases = get_bases(bases_filepath)
-    return pkg_version.parse(bases[-1].replace("+", "0")).release[0:2]
+    try:
+        return pkg_version.parse(bases[-1].replace("+", "0")).release[0:2]
+    except pkg_version.InvalidVersion:
+        return (0, 0)
