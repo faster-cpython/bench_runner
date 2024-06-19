@@ -357,6 +357,30 @@ def generate_directory_indices(results: Iterable[Result]) -> None:
                     table.write_md_list(fd, subdata)
 
 
+def filter_broken_memory_results(results):
+    # TODO: Remove me at some point in the future
+    # Some memory results on macOS are broken.  Let's just exclude them from the
+    # longitudinal plots.
+
+    excluded_results = {
+        "bm-20240215-darwin-arm64-python-v3.13.0a4-3.13.0a4-9d34f60",
+        "bm-20240312-darwin-arm64-python-v3.13.0a5-3.13.0a5-076d169",
+        "bm-20240511-darwin-arm64-python-5b941e57c71d7d0ab983-3.14.0a0-5b941e5",
+        "bm-20240513-darwin-arm64-python-44995aab499b09a550de-3.13.0b1+-44995aa",
+        "bm-20240518-darwin-arm64-python-caf6064a1bc15ac344af-3.14.0a0-caf6064",
+        "bm-20240522-darwin-arm64-python-d472b4f9fa4fb6061588-3.14.0a0-d472b4f",
+        "bm-20240525-darwin-arm64-python-2404cd94603bc585e617-3.13.0b1+-2404cd9",
+        "bm-20240525-darwin-arm64-python-e418fc3a6e7bade68ab5-3.14.0a0-e418fc3",
+        "bm-20240601-darwin-arm64-python-edb6883ef3f7a8ef0c83-3.13.0b1+-edb6883",
+        "bm-20240603-darwin-arm64-python-6b10467fbc0b67bf217e-3.13.0b1+-6b10467",
+        "bm-20240604-darwin-arm64-python-34a6d897883935f13fc2-3.13.0b1+-34a6d89",
+        "bm-20240604-darwin-arm64-python-6725c78d376eadb01a9d-3.13.0b1+-6725c78",
+        "bm-20240605-darwin-arm64-python-e83ce850f433fd8bbf8f-3.14.0a0-e83ce85",
+        "bm-20240608-darwin-arm64-python-c15f94d6fbc960790db3-3.13.0b2+-c15f94d",
+    }
+    return [r for r in results if r.filename.stem not in excluded_results]
+
+
 def _main(repo_dir: Path, force: bool = False, bases: Sequence[str] | None = None):
     results_dir = repo_dir / "results"
     if bases is None:
@@ -370,6 +394,9 @@ def _main(repo_dir: Path, force: bool = False, bases: Sequence[str] | None = Non
     benchmarking_results = [r for r in results if r.result_info[0] == "raw results"]
     generate_indices(bases, results, benchmarking_results, repo_dir)
     generate_directory_indices(benchmarking_results)
+
+    memory_benchmarking_results = filter_broken_memory_results(benchmarking_results)
+
     for plot_func, args, kwargs in rich.progress.track(
         [
             (
@@ -384,7 +411,7 @@ def _main(repo_dir: Path, force: bool = False, bases: Sequence[str] | None = Non
             ),
             (
                 plot.longitudinal_plot,
-                (benchmarking_results, repo_dir / "memory_long.png"),
+                (memory_benchmarking_results, repo_dir / "memory_long.png"),
                 dict(
                     getter=lambda r: r.memory_change_float,
                     differences=("less", "more"),
@@ -393,7 +420,7 @@ def _main(repo_dir: Path, force: bool = False, bases: Sequence[str] | None = Non
             ),
             (
                 plot.flag_effect_plot,
-                (benchmarking_results, repo_dir / "memory_configs.png"),
+                (memory_benchmarking_results, repo_dir / "memory_configs.png"),
                 dict(
                     getter=lambda r: r.memory_change_float,
                     differences=("less", "more"),
