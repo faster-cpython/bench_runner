@@ -14,9 +14,9 @@ class Flag:
 
 
 FLAGS = [
-    Flag("tier2", "PYTHON_UOPS", "Enable the Tier 2 interpreter", "T2"),
-    Flag("jit", "JIT", "Enable the JIT", "JIT"),
-    Flag("nogil", "NOGIL", "Enable free threading", "NOGIL"),
+    Flag("tier2", "PYTHON_UOPS", "tier 2 interpreter", "T2"),
+    Flag("jit", "JIT", "JIT", "JIT"),
+    Flag("nogil", "NOGIL", "free threading", "NOGIL"),
 ]
 
 
