@@ -359,7 +359,8 @@ def generate_directory_indices(results: Iterable[Result]) -> None:
 
 def filter_broken_memory_results(results):
     # TODO: Remove me at some point in the future
-    # Some memory results on macOS are broken.  Let's just exclude them from the longitudinal plots.
+    # Some memory results on macOS are broken.  Let's just exclude them from the
+    # longitudinal plots.
 
     excluded_results = {
         "bm-20240215-darwin-arm64-python-v3.13.0a4-3.13.0a4-9d34f60",
