@@ -12,12 +12,12 @@ Here are some recent and important revisions. 👉 [Complete list of results](RE
 
 `*` indicates that the exact same versions of pyperformance was not used.
 
-![Longitudinal speed improvement](/longitudinal.png)
+![Longitudinal speed improvement](/longitudinal.svg)
 
 Improvement of the geometric mean of key merged benchmarks, computed with `pyperf compare`.
 The results have a resolution of 0.01 (1%).
 
-![Configuration speed improvement](/configs.png)
+![Configuration speed improvement](/configs.svg)
 
 ## Documentation
 
@@ -45,7 +45,7 @@ When the benchmarking is complete, the results are published to this repository 
 Each set of benchmarks will have:
 
 - The raw `.json` results from pyperformance.
-- Comparisons against important reference releases, as well as the merge base of the branch if `benchmark_base` was selected.  These include
+- Comparisons against important reference releases, as well as the merge base of the branch if `benchmark_base` was selected. These include
   - A markdown table produced by `pyperf compare_to`.
   - A set of "violin" plots showing the distribution of results for each benchmark.
 

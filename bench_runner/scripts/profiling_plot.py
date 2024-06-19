@@ -350,7 +350,7 @@ def _main(input_dir: Path, output_prefix: Path):
     ax.legend(bbox_to_anchor=(1.05, 1.0), loc="upper left")
     ax.set_xlim([0, 1])
 
-    fig.savefig(output_prefix.with_suffix(".png"))
+    fig.savefig(output_prefix.with_suffix(".svg"))
 
     fig, ax = plt.subplots(figsize=(5, 3), layout="constrained")
     values = [x[0] for x in sorted_categories]
@@ -373,7 +373,7 @@ def _main(input_dir: Path, output_prefix: Path):
         values, labels=labels, colors=colors, hatch=hatches, textprops={"fontsize": 6}
     )
 
-    fig.savefig(output_prefix.with_suffix(".pie.png"), dpi=200)
+    fig.savefig(output_prefix.with_suffix(".pie.svg"), dpi=200)
 
 
 def main():

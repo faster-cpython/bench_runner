@@ -147,8 +147,9 @@ def test_run_benchmarks(benchmarks_checkout):
     assert returncode == 1
 
 
-def test_should_run_exists_noforce(benchmarks_checkout, capsys):
+def test_should_run_exists_noforce(benchmarks_checkout, capsys, monkeypatch):
     repo = _copy_repo(benchmarks_checkout)
+    monkeypatch.chdir(repo)
 
     should_run._main(
         False,
@@ -166,8 +167,9 @@ def test_should_run_exists_noforce(benchmarks_checkout, capsys):
     assert (repo / "results" / "bm-20220323-3.10.4-9d38120").is_dir()
 
 
-def test_should_run_diff_machine_noforce(benchmarks_checkout, capsys):
+def test_should_run_diff_machine_noforce(benchmarks_checkout, capsys, monkeypatch):
     repo = _copy_repo(benchmarks_checkout)
+    monkeypatch.chdir(repo)
 
     should_run._main(
         False,
@@ -185,8 +187,9 @@ def test_should_run_diff_machine_noforce(benchmarks_checkout, capsys):
     assert len(list((repo / "results" / "bm-20220323-3.10.4-9d38120").iterdir())) == 1
 
 
-def test_should_run_all_noforce(benchmarks_checkout, capsys):
+def test_should_run_all_noforce(benchmarks_checkout, capsys, monkeypatch):
     repo = _copy_repo(benchmarks_checkout)
+    monkeypatch.chdir(repo)
 
     should_run._main(
         False,
@@ -204,8 +207,9 @@ def test_should_run_all_noforce(benchmarks_checkout, capsys):
     assert len(list((repo / "results" / "bm-20220323-3.10.4-9d38120").iterdir())) == 1
 
 
-def test_should_run_noexists_noforce(benchmarks_checkout, capsys):
+def test_should_run_noexists_noforce(benchmarks_checkout, capsys, monkeypatch):
     repo = _copy_repo(benchmarks_checkout)
+    monkeypatch.chdir(repo)
     shutil.rmtree(repo / "results" / "bm-20220323-3.10.4-9d38120")
 
     should_run._main(
@@ -226,6 +230,7 @@ def test_should_run_noexists_noforce(benchmarks_checkout, capsys):
 
 def test_should_run_exists_force(benchmarks_checkout, capsys, monkeypatch):
     repo = _copy_repo(benchmarks_checkout)
+    monkeypatch.chdir(repo)
 
     removed_paths = []
 
@@ -253,14 +258,15 @@ def test_should_run_exists_force(benchmarks_checkout, capsys, monkeypatch):
     assert captured.out.splitlines()[-1].strip() == "should_run=true"
     assert (repo / "results" / "bm-20220323-3.10.4-9d38120").is_dir()
     assert set(x.name for x in removed_paths) == {
-        "bm-20220323-linux-x86_64-python-main-3.10.4-9d38120-vs-3.11.0b3.png",
+        "bm-20220323-linux-x86_64-python-main-3.10.4-9d38120-vs-3.11.0b3.svg",
         "README.md",
         "bm-20220323-linux-x86_64-python-main-3.10.4-9d38120-vs-3.11.0b3.md",
     }
 
 
-def test_should_run_noexists_force(benchmarks_checkout, capsys):
+def test_should_run_noexists_force(benchmarks_checkout, capsys, monkeypatch):
     repo = _copy_repo(benchmarks_checkout)
+    monkeypatch.chdir(repo)
     shutil.rmtree(repo / "results" / "bm-20220323-3.10.4-9d38120")
 
     should_run._main(
@@ -279,8 +285,9 @@ def test_should_run_noexists_force(benchmarks_checkout, capsys):
     assert not (repo / "results" / "bm-20220323-3.10.4-9d38120").is_dir()
 
 
-def test_should_run_checkout_failed(tmp_path, capsys):
+def test_should_run_checkout_failed(tmp_path, capsys, monkeypatch):
     repo = _copy_repo(tmp_path)
+    monkeypatch.chdir(repo)
     cpython_path = tmp_path / "cpython"
     cpython_path.mkdir()
     subprocess.check_call(["git", "init"], cwd=cpython_path)

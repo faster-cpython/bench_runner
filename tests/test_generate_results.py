@@ -35,13 +35,13 @@ def _run_for_bases(bases, repo_path, force=False, has_base=[], check_readmes=Tru
 
         if any(base in dirpath.name for base in has_base):
             assert files_by_type[".md"] == 4
-            assert files_by_type[".png"] == 4
+            assert files_by_type[".svg"] == 4
         elif any(base in dirpath.name for base in bases):
             assert files_by_type[".md"] in (2, 3)
-            assert files_by_type[".png"] in (1, 2)
+            assert files_by_type[".svg"] in (1, 2)
         else:
             assert files_by_type[".md"] in (3, 4)
-            assert files_by_type[".png"] in (2, 3)
+            assert files_by_type[".svg"] in (2, 3)
 
         # Make sure all files in the directory have a link
         contents = (dirpath / "README.md").read_text()
