@@ -104,9 +104,9 @@ class BenchmarkComparison(Comparison):
         if self.base_filename is None:
             return
         yield (self.write_table, ".md", "table")
-        yield (self.write_timing_plot, ".png", "time plot")
+        yield (self.write_timing_plot, ".svg", "time plot")
         if self.head.system != "windows" and self.base == "base":
-            yield (self.write_memory_plot, "-mem.png", "memory plot")
+            yield (self.write_memory_plot, "-mem.svg", "memory plot")
 
     @functools.cached_property
     def _contents(self) -> str | None:
@@ -534,9 +534,9 @@ class Result:
                 return ("pystats raw", None)
             case (["vs", base], ".md"):
                 return ("table", base)
-            case (["vs", base], ".png"):
+            case (["vs", base], ".svg"):
                 return ("time plot", base)
-            case (["vs", base, "mem"], ".png"):
+            case (["vs", base, "mem"], ".svg"):
                 return ("memory plot", base)
         raise ValueError(
             f"Unknown result type (extra={self.extra} suffix={self.suffix})"

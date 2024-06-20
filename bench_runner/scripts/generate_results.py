@@ -401,17 +401,17 @@ def _main(repo_dir: Path, force: bool = False, bases: Sequence[str] | None = Non
         [
             (
                 plot.longitudinal_plot,
-                (benchmarking_results, repo_dir / "longitudinal.png"),
+                (benchmarking_results, repo_dir / "longitudinal.svg"),
                 {},
             ),
             (
                 plot.flag_effect_plot,
-                (benchmarking_results, repo_dir / "configs.png"),
+                (benchmarking_results, repo_dir / "configs.svg"),
                 {},
             ),
             (
                 plot.longitudinal_plot,
-                (memory_benchmarking_results, repo_dir / "memory_long.png"),
+                (memory_benchmarking_results, repo_dir / "memory_long.svg"),
                 dict(
                     getter=lambda r: r.memory_change_float,
                     differences=("less", "more"),
@@ -420,7 +420,7 @@ def _main(repo_dir: Path, force: bool = False, bases: Sequence[str] | None = Non
             ),
             (
                 plot.flag_effect_plot,
-                (memory_benchmarking_results, repo_dir / "memory_configs.png"),
+                (memory_benchmarking_results, repo_dir / "memory_configs.svg"),
                 dict(
                     getter=lambda r: r.memory_change_float,
                     differences=("less", "more"),

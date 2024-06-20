@@ -19,6 +19,6 @@ TYPE_TO_ICON = {
 
 def apply_suffix(path: Path, suffix: str) -> Path:
     """
-    Like Path.with_suffix but allows adding things like "-mem.png".
+    Like Path.with_suffix but allows adding things like "-mem.svg".
     """
     return path.parent / (path.stem + suffix)

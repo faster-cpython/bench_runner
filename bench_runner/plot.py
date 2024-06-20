@@ -7,6 +7,7 @@ import functools
 from operator import attrgetter
 from pathlib import Path
 import re
+import tempfile
 from typing import Callable, Iterable
 
 
@@ -14,6 +15,7 @@ from matplotlib import pyplot as plt
 import matplotlib
 import numpy as np
 import rich_argparse
+from scour import scour
 import simdjson
 
 
@@ -44,6 +46,26 @@ INTERPRETER_HEAVY = {
     "unpack_sequence",
     "unpickle_pure_python",
 }
+
+
+def savefig(output_filename: Path, **kwargs):
+    class Options:
+        quiet = True
+        remove_descriptive_elements = True
+        enable_comment_stripping = True
+        indent_type = "none"
+        strip_ids = True
+        shorten_ids = True
+        digits = 3
+
+    plt.savefig(output_filename, **kwargs)
+    if output_filename.suffix == ".svg":
+        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+            with open(output_filename) as fd:
+                scour.start(Options(), fd, tmp)
+            output_filename.unlink()
+            Path(tmp.name).rename(output_filename)
+    plt.close()
 
 
 @functools.cache
@@ -153,8 +175,7 @@ def plot_diff(
     axs.grid()
     axs.set_title(title)
 
-    plt.savefig(output_filename)
-    plt.close()
+    savefig(output_filename)
 
 
 def get_micro_version(version: str) -> str:
@@ -323,8 +344,7 @@ def longitudinal_plot(
 
     fig.suptitle(title)
 
-    plt.savefig(output_filename, dpi=150)
-    plt.close()
+    savefig(output_filename, dpi=150)
 
     with data_cache.open("w") as fd:
         simdjson.dump(data, fd, indent=2)
@@ -419,8 +439,7 @@ def flag_effect_plot(
     for ax in axs:
         ax.set_xlim((minx, maxx))
 
-    plt.savefig(output_filename, dpi=150)
-    plt.close()
+    savefig(output_filename, dpi=150)
 
     with data_cache.open("w") as fd:
         simdjson.dump(data, fd, indent=2)

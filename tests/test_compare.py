@@ -27,7 +27,7 @@ def test_compare_1_to_n(tmp_path, monkeypatch):
     assert len(files) == 7
     expected_files = {"README.md"}
     for hash in hashes[1:]:
-        for suffix in [".md", ".png", "-mem.png"]:
+        for suffix in [".md", ".svg", "-mem.svg"]:
             expected_files.add(f"linux-{hash}-vs-{hashes[0]}{suffix}")
     assert set(x.name for x in files) == expected_files
 
@@ -38,8 +38,8 @@ def test_compare_1_to_n(tmp_path, monkeypatch):
 
         | commit | change |
         | -- | -- |
-        | eb0004c (eb0004c) | 1.57x ↑[📄](linux-eb0004c-vs-9d38120.md)[📈](linux-eb0004c-vs-9d38120.png)[🧠](linux-eb0004c-vs-9d38120-mem.png) |
-        | b0e1f9c (b0e1f9c) | 1.70x ↑[📄](linux-b0e1f9c-vs-9d38120.md)[📈](linux-b0e1f9c-vs-9d38120.png)[🧠](linux-b0e1f9c-vs-9d38120-mem.png) |
+        | eb0004c (eb0004c) | 1.57x ↑[📄](linux-eb0004c-vs-9d38120.md)[📈](linux-eb0004c-vs-9d38120.svg)[🧠](linux-eb0004c-vs-9d38120-mem.svg) |
+        | b0e1f9c (b0e1f9c) | 1.70x ↑[📄](linux-b0e1f9c-vs-9d38120.md)[📈](linux-b0e1f9c-vs-9d38120.svg)[🧠](linux-b0e1f9c-vs-9d38120-mem.svg) |
         """  # noqa
     ).strip()
     assert expected in content
@@ -61,7 +61,7 @@ def test_compare_n_to_n(tmp_path, monkeypatch):
         for hash2 in hashes:
             if hash1 == hash2:
                 continue
-            for suffix in [".md", ".png", "-mem.png"]:
+            for suffix in [".md", ".svg", "-mem.svg"]:
                 expected_files.add(f"linux-{hash2}-vs-{hash1}{suffix}")
     assert set(x.name for x in files) == expected_files
 
@@ -72,9 +72,9 @@ def test_compare_n_to_n(tmp_path, monkeypatch):
 
         |  | 9d38120 (9d38120) | eb0004c (eb0004c) | b0e1f9c (b0e1f9c) |
         | -- | -- | -- | -- |
-        | 9d38120 |  | 1.57x ↑[📄](linux-eb0004c-vs-9d38120.md)[📈](linux-eb0004c-vs-9d38120.png)[🧠](linux-eb0004c-vs-9d38120-mem.png) | 1.70x ↑[📄](linux-b0e1f9c-vs-9d38120.md)[📈](linux-b0e1f9c-vs-9d38120.png)[🧠](linux-b0e1f9c-vs-9d38120-mem.png) |
-        | eb0004c | 1.57x ↓[📄](linux-9d38120-vs-eb0004c.md)[📈](linux-9d38120-vs-eb0004c.png)[🧠](linux-9d38120-vs-eb0004c-mem.png) |  | 1.08x ↑[📄](linux-b0e1f9c-vs-eb0004c.md)[📈](linux-b0e1f9c-vs-eb0004c.png)[🧠](linux-b0e1f9c-vs-eb0004c-mem.png) |
-        | b0e1f9c | 1.70x ↓[📄](linux-9d38120-vs-b0e1f9c.md)[📈](linux-9d38120-vs-b0e1f9c.png)[🧠](linux-9d38120-vs-b0e1f9c-mem.png) | 1.08x ↓[📄](linux-eb0004c-vs-b0e1f9c.md)[📈](linux-eb0004c-vs-b0e1f9c.png)[🧠](linux-eb0004c-vs-b0e1f9c-mem.png) |  |
+        | 9d38120 |  | 1.57x ↑[📄](linux-eb0004c-vs-9d38120.md)[📈](linux-eb0004c-vs-9d38120.svg)[🧠](linux-eb0004c-vs-9d38120-mem.svg) | 1.70x ↑[📄](linux-b0e1f9c-vs-9d38120.md)[📈](linux-b0e1f9c-vs-9d38120.svg)[🧠](linux-b0e1f9c-vs-9d38120-mem.svg) |
+        | eb0004c | 1.57x ↓[📄](linux-9d38120-vs-eb0004c.md)[📈](linux-9d38120-vs-eb0004c.svg)[🧠](linux-9d38120-vs-eb0004c-mem.svg) |  | 1.08x ↑[📄](linux-b0e1f9c-vs-eb0004c.md)[📈](linux-b0e1f9c-vs-eb0004c.svg)[🧠](linux-b0e1f9c-vs-eb0004c-mem.svg) |
+        | b0e1f9c | 1.70x ↓[📄](linux-9d38120-vs-b0e1f9c.md)[📈](linux-9d38120-vs-b0e1f9c.svg)[🧠](linux-9d38120-vs-b0e1f9c-mem.svg) | 1.08x ↓[📄](linux-eb0004c-vs-b0e1f9c.md)[📈](linux-eb0004c-vs-b0e1f9c.svg)[🧠](linux-eb0004c-vs-b0e1f9c-mem.svg) |  |
         """  # noqa
     ).strip()
     assert expected in content

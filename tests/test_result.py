@@ -14,12 +14,14 @@ DATA_PATH = Path(__file__).parent / "data"
 
 def _copy_results(tmp_path):
     results_path = tmp_path / "results"
+    shutil.copyfile(DATA_PATH / "bases.txt", tmp_path / "bases.txt")
     shutil.copytree(DATA_PATH / "results", tmp_path / "results")
     return results_path
 
 
-def test_load_all_results(tmp_path):
+def test_load_all_results(tmp_path, monkeypatch):
     results_path = _copy_results(tmp_path)
+    monkeypatch.chdir(tmp_path)
 
     results = mod_result.load_all_results(["3.10.4", "3.11.0b3"], results_path)
 

@@ -104,7 +104,7 @@ With this base, there are files with the following suffixes:
 
 - `.json`: The raw results from `pyperformance`.
 - `-vs-{base}.md`: A table comparing the results against the given base, as returned by `pyperf compare_to`.
-- `-vs-{base}.png`: A set of violin plots with the distribution of differences for each benchmark.
+- `-vs-{base}.svg`: A set of violin plots with the distribution of differences for each benchmark.
 - `-pystats.json`: The raw results from a pystats run.
 - `-pystats.md`: The results of a pystats run, summarized in human-readable form.
 
