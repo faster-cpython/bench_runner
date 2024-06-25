@@ -68,8 +68,6 @@ def get_runners(path: Path | None = None) -> list[Runner]:
             )
         )
 
-    assert len(runners)
-
     return runners
 
 
