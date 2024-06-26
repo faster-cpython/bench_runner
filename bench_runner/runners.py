@@ -68,6 +68,9 @@ def get_runners(path: Path | None = None) -> list[Runner]:
             )
         )
 
+    if len(runners) == 0:
+        raise RuntimeError(f"No runners are defined in `{path}`. Please set up some runners first.")
+
     return runners
 
 
