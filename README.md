@@ -13,8 +13,10 @@ Create a new empty repository on Github and clone it locally.
 Add bench_runner to your `requirements.txt`.  Since there are no PyPI releases (yet), you can install it from a tag in the git repo:
 
 ```text
-git+https://github.com/faster-cpython/bench_runner@v0.2.2#egg=bench_runner
+git+https://github.com/faster-cpython/bench_runner@{VERSION}#egg=bench_runner
 ```
+
+Replace the {VERSION} above with the latest version tag of `bench_runner`.
 
 Create a virtual environment and install your requirements to it, for example:
 
