@@ -16,6 +16,8 @@ Add bench_runner to your `requirements.txt`.  Since there are no PyPI releases (
 git+https://github.com/faster-cpython/bench_runner@{VERSION}#egg=bench_runner
 ```
 
+Replace the {VERSION} above with the latest version tag of `bench_runner`.
+
 Create a virtual environment and install your requirements to it, for example:
 
 ```bash session
