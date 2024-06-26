@@ -24,20 +24,6 @@ source venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
-Run the install script to generate the files to make the Github Actions work (from the root of your repo):
-
-```bash session
-python -m bench_runner install
-```
-
-This will create some files in `.github/workflows` as well as some configuration files at the root of your repo.
-Commit them to your repository, and push up to Github.
-
-```bash session
-git commit -a -m "Initial commit"
-git push origin main
-```
-
 ### Add some self-hosted runners
 
 Provision the machine to have the build requirements for CPython and the base
@@ -71,6 +57,22 @@ hostname = pyperf
 ```
 
 **TODO**: Describe the special pystats runner
+
+### Generate workflows
+
+Run the install script to generate the files to make the Github Actions work (from the root of your repo):
+
+```bash session
+python -m bench_runner install
+```
+
+This will create some files in `.github/workflows` as well as some configuration files at the root of your repo.
+Commit them to your repository, and push up to Github.
+
+```bash session
+git commit -a -m "Initial commit"
+git push origin main
+```
 
 ### Try a benchmarking run
 
