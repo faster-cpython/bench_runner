@@ -35,6 +35,9 @@ from numpy.typing import NDArray
 import simdjson
 
 
+from bench_runner import util
+
+
 ACC_MAXSU = 2
 
 
@@ -66,6 +69,8 @@ def create_matrices(
     a: Mapping[str, NDArray[np.float64]], b: Mapping[str, NDArray[np.float64]]
 ) -> tuple[dict[str, NDArray[np.float64]], dict[str, NDArray[np.float64]]]:
     benchmarks = sorted(list(set(a.keys()) & set(b.keys())))
+    excluded = util.get_excluded_benchmarks()
+    benchmarks = [bm for bm in benchmarks if bm not in excluded]
     return {bm: a[bm] for bm in benchmarks}, {bm: b[bm] for bm in benchmarks}
 
 
