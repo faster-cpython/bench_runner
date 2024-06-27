@@ -28,7 +28,11 @@ def apply_suffix(path: Path, suffix: str) -> Path:
 @functools.cache
 def get_excluded_benchmarks() -> set[str]:
     filename = Path("excluded_benchmarks.txt")
+    excluded = set()
     if filename.is_file():
         with filename.open() as fd:
-            return set(x.strip() for x in fd.readlines() if x.strip())
-    return set()
+            for bm in fd.readlines():
+                bm = bm.strip()
+                if bm and not bm.startswith("#"):
+                    excluded.add(bm)
+    return excluded
