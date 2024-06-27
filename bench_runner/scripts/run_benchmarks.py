@@ -349,17 +349,11 @@ def run_summarize_stats(
             )
 
 
-def get_excluded_benchmarks() -> list[str]:
-    filename = Path("excluded_benchmarks.txt")
-    if filename.is_file():
-        with filename.open() as fd:
-            return [x.strip() for x in fd.readlines()]
-    return []
-
-
 def select_benchmarks(benchmarks: str):
     if benchmarks == "all":
-        return ",".join(["all", *[f"-{x}" for x in get_excluded_benchmarks() if x]])
+        return ",".join(
+            ["all", *[f"-{x}" for x in util.get_excluded_benchmarks() if x]]
+        )
     return benchmarks
 
 

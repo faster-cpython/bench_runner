@@ -28,6 +28,7 @@ from . import git
 from . import hpt
 from . import plot
 from . import runners
+from . import util
 
 
 CombinedData = list[tuple[str, np.ndarray | None, float]]
@@ -195,9 +196,10 @@ class BenchmarkComparison(Comparison):
                 values.sort()
                 return values, float(values.mean())
 
+        excluded = util.get_excluded_benchmarks()
         combined_data = []
         for name, ref in ref_data.items():
-            if len(ref) != 0 and name in head_data:
+            if len(ref) != 0 and name in head_data and name not in excluded:
                 head = head_data[name]
                 if len(ref) == len(head):
                     combined_data.append((name, *calculate_diffs(ref, head)))
@@ -626,18 +628,21 @@ class Result:
 
     def get_timing_data(self) -> dict[str, np.ndarray]:
         data = {}
+        excluded = util.get_excluded_benchmarks()
 
         for benchmark in self.contents["benchmarks"]:
             name = benchmark.get("metadata", self.contents["metadata"])["name"]
-            row = []
-            for run in benchmark["runs"]:
-                row.extend(run.get("values", []))
-            data[name] = np.array(row, dtype=np.float64)
+            if name not in excluded:
+                row = []
+                for run in benchmark["runs"]:
+                    row.extend(run.get("values", []))
+                data[name] = np.array(row, dtype=np.float64)
 
         return data
 
     def get_memory_data(self) -> dict[str, np.ndarray]:
         data = {}
+        excluded = util.get_excluded_benchmarks()
 
         # On MacOS, there was a bug in pyperf where the `mem_max_rss` value was
         # erroneously multiplied by 1024.  (BSD defines maxrss in bytes, Linux
@@ -649,16 +654,17 @@ class Result:
 
         for benchmark in self.contents["benchmarks"]:
             name = benchmark.get("metadata", self.contents["metadata"])["name"]
-            row = []
-            for run in benchmark["runs"]:
-                metadata = run.get("metadata", {})
-                if mem := metadata.get("command_max_rss"):
-                    row.append(mem)
-                elif mem := metadata.get("mem_max_rss"):
-                    if needs_correction:
-                        mem /= 1024
-                    row.append(mem)
-            data[name] = np.array(row, dtype=np.float64)
+            if name not in excluded:
+                row = []
+                for run in benchmark["runs"]:
+                    metadata = run.get("metadata", {})
+                    if mem := metadata.get("command_max_rss"):
+                        row.append(mem)
+                    elif mem := metadata.get("mem_max_rss"):
+                        if needs_correction:
+                            mem /= 1024
+                        row.append(mem)
+                data[name] = np.array(row, dtype=np.float64)
 
         return data
 
