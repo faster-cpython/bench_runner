@@ -31,7 +31,7 @@ test = [
     "black==24.4.2",
     "filelock==3.15.4",
     "flake8==7.1.0",
-    "pyright==1.1.368",
+    "pyright==1.1.369",
     "pytest==8.2.2",
     "pytest-xdist==3.6.1",
 ]
