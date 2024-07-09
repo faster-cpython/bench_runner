@@ -348,7 +348,7 @@ def _main(input_dir: Path, output_prefix: Path):
 
     ax.set_xlabel("percentage time")
     ax.legend(bbox_to_anchor=(1.05, 1.0), loc="upper left")
-    ax.set_xlim([0, 1])
+    ax.set_xlim((0, 1))
 
     fig.savefig(output_prefix.with_suffix(".svg"))
 
