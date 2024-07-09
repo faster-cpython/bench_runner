@@ -7,7 +7,7 @@ import functools
 from pathlib import Path
 import re
 import tempfile
-from typing import Callable, Iterable
+from typing import Callable, Iterable, Sequence
 
 
 from matplotlib import pyplot as plt
@@ -255,12 +255,14 @@ def longitudinal_plot(
     else:
         data = {}
 
+    axs: Sequence[matplotlib.Axes]
+
     fig, axs = plt.subplots(
         len(cfg["versions"]),
         1,
         figsize=(10, 5 * len(cfg["versions"])),
         layout="constrained",
-    )
+    )  # type: ignore
 
     results = [r for r in results if r.fork == "python"]
 
@@ -381,9 +383,11 @@ def flag_effect_plot(
     else:
         data = {}
 
+    axs: Sequence[matplotlib.Axes]
+
     fig, axs = plt.subplots(
         len(flags), 1, figsize=(10, 5 * len(flags)), layout="constrained"
-    )
+    )  # type: ignore
 
     results = [r for r in results if r.fork == "python"]
 
