@@ -4,7 +4,6 @@ from __future__ import annotations
 import argparse
 import datetime
 import functools
-from operator import attrgetter
 from pathlib import Path
 import re
 import tempfile
@@ -300,7 +299,9 @@ def longitudinal_plot(
             else:
                 continue
 
-            runner_results.sort(key=attrgetter("commit_datetime"))
+            runner_results.sort(
+                key=lambda x: datetime.datetime.fromisoformat(x.commit_datetime)
+            )
             dates = [
                 datetime.datetime.fromisoformat(x.commit_datetime)
                 for x in runner_results
@@ -413,7 +414,7 @@ def flag_effect_plot(
                             get_comparison_value(base_results[cpython_hash], r),
                         )
                     )
-            line.sort()
+            line.sort(key=lambda x: datetime.datetime.fromisoformat(x[0]))
 
             dates = [datetime.datetime.fromisoformat(x[0]) for x in line]
             changes = [x[1] for x in line]
