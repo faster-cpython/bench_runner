@@ -154,6 +154,9 @@ def _main(commits: Sequence[str], output_dir: Path, comparison_type: str):
         else:
             machines &= get_machines(subresults)
 
+    if "azure" in machines:
+        machines.remove("azure")
+
     if len(machines) == 0:
         raise ValueError("No single machine in common with all of the results")
 
