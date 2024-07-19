@@ -163,6 +163,7 @@ jobs:
       - name: Install dependencies from PyPI
         run: |
           python -m venv venv
+          venv/bin/python -m pip install --upgrade pip
           venv/bin/python -m pip install -r requirements.txt
       - name: Should we run?
         if: ${{ always() }}
@@ -252,6 +253,7 @@ jobs:
       - name: Install dependencies from PyPI
         run: |
           python3 -m venv venv
+          venv/bin/python -m pip install --upgrade pip
           venv/bin/python -m pip install -r requirements.txt
       - name: Should we run?
         if: ${{ always() }}
