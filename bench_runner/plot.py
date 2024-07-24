@@ -58,13 +58,14 @@ def savefig(output_filename: Path, **kwargs):
         digits = 3
 
     plt.savefig(output_filename, **kwargs)
+    plt.close("all")
+
     if output_filename.suffix == ".svg":
         with tempfile.NamedTemporaryFile(delete=False) as tmp:
             with open(output_filename) as fd:
                 scour.start(Options(), fd, tmp)
             output_filename.unlink()
             Path(tmp.name).rename(output_filename)
-    plt.close()
 
 
 @functools.cache
