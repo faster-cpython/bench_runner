@@ -5,7 +5,6 @@ import argparse
 from collections import defaultdict
 import datetime
 import io
-import multiprocessing
 from pathlib import Path
 import sys
 from typing import Iterable, TextIO, Sequence
@@ -68,13 +67,15 @@ def save_generated_results(results: Iterable[Result], force: bool = False) -> No
                     if not filename.exists() or force:
                         work.append((func, filename))
 
-    with multiprocessing.Pool() as pool:
-        for _ in rich.progress.track(
-            pool.imap_unordered(_worker, work),
-            description="Generating results",
-            total=len(work),
-        ):
-            pass
+    assert len(list(set(x[1] for x in work))) == len(work)
+
+    rich.print(f"Generating {len(work)} derived results")
+
+    for func, filename in rich.progress.track(
+        work,
+        description="Generating results",
+    ):
+        func(filename)
 
 
 def output_results_index(
