@@ -12,6 +12,7 @@ import functools
 from operator import itemgetter
 from pathlib import Path
 import re
+from typing import IO
 
 
 from matplotlib import pyplot as plt
@@ -27,24 +28,26 @@ SANITY_CHECK = True
 CATEGORIES: dict[str, list[str]] = {
     "interpreter": [
         "_Py_GetBaseOpcode",
-        "_PyCode_Quicken",
-        "_PyCode_Validate",
+        "_Py_call_instrumentation_line",
+        "_PyCode_.+",
         "_PyEval.+",
         "_PyFrame_ClearExceptCode",
         "_PyFrame_New_NoTrack",
         "_PyFrame_Traverse",
         "_PyPegen_.+",
-        "_PyThreadState_PopFrame",
+        "_PyThreadState_.+",
         "advance",
+        "call_instrumentation_vector.*",
         "initialize_locals",
-        "intern_string_constants",
         "PyAST_.+",
         "PyEval_.+",
     ],
     "lookup": [
         "_Py_dict_lookup",
+        "_Py_hashtable_.+",
         "_Py_type_getattro",
         "_PyType_Lookup",
+        "_PyType_LookupRef",
         "builtin_getattr",
         "find_name_in_mro",
         "lookdict_split",
@@ -80,6 +83,8 @@ CATEGORIES: dict[str, list[str]] = {
         ".+dealloc",
         ".+Dealloc",
         ".+Realloc",
+        "memset.+",
+        "memcpy.+",
     ],
     "dynamic": [
         "_?PyMapping_.+",
@@ -102,7 +107,7 @@ CATEGORIES: dict[str, list[str]] = {
         "StopIteration.+",
         "type_.+",
     ],
-    "library": ["_?sre_.+", "pattern_.+"],
+    "library": ["_?sre_.+", "pattern_.+", "convertitem.+", "sys_trace_.+"],
     "int": [
         "_?PyLong_.+",
         "Balloc",
@@ -131,7 +136,7 @@ CATEGORIES: dict[str, list[str]] = {
     ],
     "list": [
         "_?PyList_.+",
-        "list_.+",
+        "_?list_.+",
         "listiter_.+",
     ],
     "float": [
@@ -143,6 +148,9 @@ CATEGORIES: dict[str, list[str]] = {
         "_copy_characters.+",
         "ascii_decode",
         "bytes_.+",
+        "intern_common.+",
+        "intern_constants",
+        "intern_string_constants",
         "PyBytes_.+",
         "replace",
         "resize_compact",
@@ -159,8 +167,13 @@ CATEGORIES: dict[str, list[str]] = {
         "deque_.+",
         "dequeiter_.+",
         "enum_.+",
+        "gen_iternext",
+        "make_gen",
         "PyBool_.+",
         "PyBuffer_.+",
+        "_?PyGen_.+",
+        "_?PySet_.+",
+        "range_.+",
         "set_.+",
         "setiter_.+",
     ],
@@ -184,7 +197,7 @@ CATEGORIES: dict[str, list[str]] = {
         "_PyFunction_Vectorcall",
         "cfunction_call.*",
         "cfunction_vectorcall.+",
-        "method_vectorcall.+",
+        "method_vectorcall.*",
         "vectorcall_method",
         "vgetargs1_impl",
         "vgetargskeywords.constprop.0",
@@ -193,7 +206,14 @@ CATEGORIES: dict[str, list[str]] = {
         "PyImport.+",
         "r_.+",
     ],
-    "compiler": ["uop_optimize", "_PyJIT_.+"],
+    "compiler": [
+        "_Py_uop_analyse_and_optimize",
+        "optimize_uops",
+        "uop_optimize",
+        "_PyJIT_.+",
+        "tok_.+",
+    ],
+    "async": ["async_.+"],
 }
 
 COLOR_ORDER = ["jit", "kernel", "libc", "library"] + list(CATEGORIES.keys())
@@ -232,100 +252,84 @@ def category_for_obj_sym(obj: str, sym: str) -> str:
     return "unknown"
 
 
-def _main(input_dir: Path, output_prefix: Path):
-    results = defaultdict(lambda: defaultdict(float))
-    categories = defaultdict(lambda: defaultdict(float))
+def handle_benchmark(
+    csv_path: Path,
+    md: IO[str],
+    results: defaultdict[str, defaultdict[str, float]],
+    categories: defaultdict[str, defaultdict[tuple[str, str], float]],
+):
+    stem = csv_path.stem.split(".", 1)[0]
 
-    if not input_dir.exists() or len(list(input_dir.glob("*.csv"))) == 0:
-        print("No profiling data. Skipping.")
-        return
+    md.write(f"\n## {stem}\n\n")
+    md.write("| percentage | object | symbol | category |\n")
+    md.write("| ---: | :--- | :--- | :--- |\n")
 
-    with output_prefix.with_suffix(".md").open("w") as md:
-        for csv_path in sorted(input_dir.glob("*.csv")):
-            stem = csv_path.stem.split(".", 1)[0]
+    # `python` processes that have symbols coming from a shared object
+    # called pythonX.XX or libpythonX.XX.so are from the orchestrating
+    # Python, not the one under benchmarking, so they should be skipped.
+    tainted_pids = set()
+    with csv_path.open(newline="") as fd:
+        csvreader = csv.reader(fd)
+        for _ in csvreader:
+            break
 
-            if stem.startswith("sqlalchemy"):
+        for self_time, pid, _, obj, _ in csvreader:
+            if re.match(r"python[0-9]+\.[0-9]+", obj) or re.match(
+                r"libpython[0-9]+\.[0-9]+\.so", obj
+            ):
+                tainted_pids.add(pid)
+
+    times = defaultdict(float)
+    with csv_path.open(newline="") as fd:
+        csvreader = csv.reader(fd)
+        for _ in csvreader:
+            break
+
+        for self_time, pid, command, obj, sym in csvreader:
+            if pid in tainted_pids:
                 continue
 
-            md.write(f"\n## {stem}\n\n")
-            md.write("| percentage | object | symbol | category |\n")
-            md.write("| ---: | :--- | :--- | :--- |\n")
+            if command != "python":
+                continue
 
-            with csv_path.open(newline="") as fd:
-                csvreader = csv.reader(fd)
-                for _ in csvreader:
-                    break
+            self_time = float(self_time)
+            if self_time > 1.0:
+                print(f"{stem} Invalid data")
+            if obj == "[JIT]":
+                times[("[JIT]", "jit")] += self_time
+            else:
+                times[(obj, sym)] += self_time
 
-                # Add up all the JIT entries into a single row
-                rows = []
-                total = 0.0
-                jit_time = 0.0
-                for row in csvreader:
-                    self_time, _, obj, sym = row
-                    self_time = float(self_time)
-                    if self_time > 100.0:
-                        print(f"{stem} Invalid data")
-                    total += self_time
-                    if obj == "[JIT]":
-                        jit_time += self_time
-                    else:
-                        rows.append((self_time, obj, sym))
-                if jit_time != 0.0:
-                    rows.append((jit_time, "[JIT]", "jit"))
+    total = sum(times.values())
+    assert total <= 1.0
+    scale = 1.0 / total
+    rows = [(v * scale, k[0], k[1]) for k, v in times.items()]
+    rows.sort(reverse=True)
 
-                if total >= 100.0:
-                    rows = [
-                        (self_time / 100.0, obj, sym) for (self_time, obj, sym) in rows
-                    ]
+    for self_time, obj, sym in rows:
+        if self_time <= 0.0:
+            break
 
-                rows.sort(reverse=True)
+        category = category_for_obj_sym(obj, sym)
+        categories[category][(obj, sym)] += self_time
 
-                for self_time, obj, sym in rows:
-                    # python3.8 is the "parent" python orchestrating pyperformance
-                    if obj == "python3.8":
-                        continue
+        results[stem][category] += self_time
 
-                    if self_time <= 0.0:
-                        break
+        if self_time >= 0.0025:
+            md.write(f"| {self_time:.2%} | `{obj}` | `{sym}` | {category} |\n")
 
-                    category = category_for_obj_sym(obj, sym)
-                    categories[category][(obj, sym)] += self_time
 
-                    results[stem][category] += self_time
-
-                    if self_time >= 0.005:
-                        md.write(
-                            f"| {self_time:.2%} | `{obj}` | `{sym}` | {category} |\n"
-                        )
-
-        sorted_categories = sorted(
-            [
-                (sum(val.values()) / len(results), key)
-                for (key, val) in categories.items()
-            ],
-            reverse=True,
-        )
-
-        md.write("\n\n## Categories\n")
-        for total, category in sorted_categories:
-            matches = categories[category]
-            md.write(f"\n### {category}\n\n")
-            md.write(f"{total:.2%} total\n\n")
-            md.write("| percentage | object | symbol |\n")
-            md.write("| ---: | :--- | :--- |\n")
-            for (obj, sym), self_time in sorted(
-                matches.items(), key=itemgetter(1), reverse=True
-            ):
-                if self_time < 0.005:
-                    break
-                md.write(f"| {self_time / len(results):.2%} | {obj} | {sym} |\n")
-
+def plot_bargraph(
+    results: defaultdict[str, defaultdict[str, float]],
+    categories: list[tuple[float, str]],
+    output_filename: Path,
+):
     fig, ax = plt.subplots(figsize=(8, len(results) * 0.3), layout="constrained")
 
     bottom = np.zeros(len(results))
     names = list(results.keys())[::-1]
 
-    for val, category in sorted_categories:
+    for val, category in categories:
         if category == "unknown":
             continue
         values = np.array(
@@ -350,15 +354,15 @@ def _main(input_dir: Path, output_prefix: Path):
     ax.legend(bbox_to_anchor=(1.05, 1.0), loc="upper left")
     ax.set_xlim((0, 1))
 
-    fig.savefig(output_prefix.with_suffix(".svg"))
+    fig.savefig(output_filename)
 
+
+def plot_pie(categories: list[tuple[float, str]], output_filename: Path):
     fig, ax = plt.subplots(figsize=(5, 3), layout="constrained")
-    values = [x[0] for x in sorted_categories]
-    labels = [
-        i < 10 and f"{x[1]} {x[0]:.2%}" or "" for i, x in enumerate(sorted_categories)
-    ]
-    colors = [get_color_and_hatch(cat[1])[0] for cat in sorted_categories]
-    hatches = [get_color_and_hatch(cat[1])[1] for cat in sorted_categories]
+    values = [x[0] for x in categories]
+    labels = [i < 10 and f"{x[1]} {x[0]:.2%}" or "" for i, x in enumerate(categories)]
+    colors = [get_color_and_hatch(cat[1])[0] for cat in categories]
+    hatches = [get_color_and_hatch(cat[1])[1] for cat in categories]
 
     if sum(values) < 1.0:
         other = 1.0 - sum(values)
@@ -373,7 +377,45 @@ def _main(input_dir: Path, output_prefix: Path):
         values, labels=labels, colors=colors, hatch=hatches, textprops={"fontsize": 6}
     )
 
-    fig.savefig(output_prefix.with_suffix(".pie.svg"), dpi=200)
+    fig.savefig(output_filename, dpi=200)
+
+
+def _main(input_dir: Path, output_prefix: Path):
+    results = defaultdict(lambda: defaultdict(float))
+    categories = defaultdict(lambda: defaultdict(float))
+
+    if not input_dir.exists() or len(list(input_dir.glob("*.csv"))) == 0:
+        print("No profiling data. Skipping.")
+        return
+
+    with output_prefix.with_suffix(".md").open("w") as md:
+        for csv_path in sorted(input_dir.glob("*.csv")):
+            handle_benchmark(csv_path, md, results, categories)
+
+        sorted_categories = sorted(
+            [
+                (sum(val.values()) / len(results), key)
+                for (key, val) in categories.items()
+            ],
+            reverse=True,
+        )
+
+        md.write("\n\n## Categories\n")
+        for total, category in sorted_categories:
+            matches = categories[category]
+            md.write(f"\n### {category}\n\n")
+            md.write(f"{total:.2%} total\n\n")
+            md.write("| percentage | object | symbol |\n")
+            md.write("| ---: | :--- | :--- |\n")
+            for (obj, sym), self_time in sorted(
+                matches.items(), key=itemgetter(1), reverse=True
+            ):
+                if self_time < 0.0025:
+                    break
+                md.write(f"| {self_time / len(results):.2%} | {obj} | {sym} |\n")
+
+    plot_bargraph(results, sorted_categories, output_prefix.with_suffix(".svg"))
+    plot_pie(sorted_categories, output_prefix.with_suffix(".pie.svg"))
 
 
 def main():

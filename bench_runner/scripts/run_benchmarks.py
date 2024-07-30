@@ -185,22 +185,27 @@ def perf_to_csv(lines: Iterable[str], output: Path):
             continue
         if total is None:
             raise ValueError("Could not find total sample count")
-        _, period, _, shared, _, symbol = line.split(maxsplit=5)
+        _, period, command, _, symbol, shared, _ = line.split(maxsplit=6)
+        pid, command = command.split(":")
         self_time = float(int(period)) / total
         if self_time > 0.0:
-            rows.append([self_time, 0.0, shared, symbol])
+            rows.append([self_time, pid, command, shared, symbol])
 
     rows.sort(key=itemgetter(0), reverse=True)
 
     with output.open("w") as fd:
         csvwriter = csv.writer(fd)
-        csvwriter.writerow(["self", "children", "object", "symbol"])
+        csvwriter.writerow(["self", "pid", "command", "shared_obj", "symbol"])
         for row in rows:
             csvwriter.writerow(row)
 
 
 def collect_perf(python: Path, benchmarks: str):
     all_benchmarks = get_benchmark_names(benchmarks)
+
+    if PROFILING_RESULTS.is_dir():
+        shutil.rmtree(PROFILING_RESULTS)
+    PROFILING_RESULTS.mkdir()
 
     perf_data = Path("perf.data")
     for benchmark in all_benchmarks:
@@ -231,6 +236,8 @@ def collect_perf(python: Path, benchmarks: str):
                         "-g",
                         "none",
                         "--show-total-period",
+                        "-s",
+                        "pid,symbol,dso",
                         "-i",
                         "perf.data",
                     ],
