@@ -71,6 +71,9 @@ jobs:
           git config --global core.symlinks true
       - name: Checkout benchmarking
         uses: actions/checkout@v4
+      - name: git gc
+        run: |
+          git gc
       - name: Checkout CPython
         uses: actions/checkout@v4
         with:
@@ -80,6 +83,7 @@ jobs:
           fetch-depth: 50
       - name: Install dependencies from PyPI
         run: |
+          Remove-Item venv -Recurse -ErrorAction SilentlyContinue
           py -m venv venv
           venv\Scripts\python.exe -m pip install --upgrade pip
           venv\Scripts\python.exe -m pip install -r requirements.txt
@@ -147,6 +151,9 @@ jobs:
     steps:
       - name: Checkout benchmarking
         uses: actions/checkout@v4
+      - name: git gc
+        run: |
+          git gc
       - uses: fregante/setup-git-user@v2
       - name: Setup system Python
         if: ${{ runner.arch == 'X64' }}
@@ -162,6 +169,7 @@ jobs:
           fetch-depth: 50
       - name: Install dependencies from PyPI
         run: |
+          rm -rf venv
           python -m venv venv
           venv/bin/python -m pip install --upgrade pip
           venv/bin/python -m pip install -r requirements.txt
@@ -243,6 +251,9 @@ jobs:
     steps:
       - name: Checkout benchmarking
         uses: actions/checkout@v4
+      - name: git gc
+        run: |
+          git gc
       - name: Checkout CPython
         uses: actions/checkout@v4
         with:
@@ -252,6 +263,7 @@ jobs:
           fetch-depth: 50
       - name: Install dependencies from PyPI
         run: |
+          rm -rf venv
           python3 -m venv venv
           venv/bin/python -m pip install --upgrade pip
           venv/bin/python -m pip install -r requirements.txt

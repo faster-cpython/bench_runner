@@ -50,6 +50,9 @@ jobs:
     steps:
       - name: Checkout benchmarking
         uses: actions/checkout@v4
+      - name: git gc
+        run: |
+          git gc
       - name: Setup system Python
         uses: actions/setup-python@v5
         with:
@@ -63,12 +66,14 @@ jobs:
           fetch-depth: 50
       - name: Install dependencies from PyPI
         run: |
-          python -m pip install -r requirements.txt
+          rm -rf venv
+          python -m venv venv
+          venv/bin/python -m pip install -r requirements.txt
       - name: Should we run?
         if: ${{ always() }}
         id: should_run
         run: |
-          python -m bench_runner should_run ${{ inputs.force }} ${{ inputs.fork }} ${{ inputs.ref }} all true ${{ env.flags }} >> $GITHUB_OUTPUT
+          venv/bin/python -m bench_runner should_run ${{ inputs.force }} ${{ inputs.fork }} ${{ inputs.ref }} all true ${{ env.flags }} >> $GITHUB_OUTPUT
       - name: Checkout python-macrobenchmarks
         uses: actions/checkout@v4
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
@@ -99,11 +104,11 @@ jobs:
       - name: Install pyperformance into the system python
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
-          python -m pip install --no-binary :all: ./pyperformance
+          venv/bin/python -m pip install --no-binary :all: ./pyperformance
       - name: Running pyperformance
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
-          python -m bench_runner run_benchmarks pystats cpython/python ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.benchmarks || 'all' }} ${{ env.flags }} --run_id ${{ github.run_id }} ${{ inputs.individual == true && '--individual' || '' }}
+          venv/bin/python -m bench_runner run_benchmarks pystats cpython/python ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.benchmarks || 'all' }} ${{ env.flags }} --run_id ${{ github.run_id }} ${{ inputs.individual == true && '--individual' || '' }}
       - name: Pull benchmarking
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
