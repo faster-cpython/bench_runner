@@ -45,7 +45,7 @@ name: _pystats
 
 jobs:
   collect-stats:
-    runs-on: [self-hosted, linux, cloud]
+    runs-on: [self-hosted, linux, azure]
     steps:
       - name: Checkout benchmarking
         uses: actions/checkout@v4
