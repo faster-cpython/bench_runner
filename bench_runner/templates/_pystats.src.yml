@@ -45,6 +45,7 @@ name: _pystats
 
 jobs:
   collect-stats:
+    # TODO: Replace "azure" with "cloud"
     runs-on: [self-hosted, linux, azure]
     steps:
       - name: Checkout benchmarking
