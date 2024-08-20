@@ -31,6 +31,10 @@ run-name: benchmarking ${{ inputs.fork }}/${{ inputs.ref }}
         description: "Also collect pystats for this commit"
         type: boolean
         default: false
+      publish:
+        description: "Publish results to the corresponding public repo"
+        type: boolean
+        default: true
 
 jobs:
   # Determine the base commit of the selected commit. The output is passed to
@@ -127,7 +131,7 @@ jobs:
 
   publish:
     uses: ./.github/workflows/_publish.yml
-    if: ${{ always() }}
+    if: ${{ inputs.publish }}
     needs: [generate]
     secrets: inherit
 
