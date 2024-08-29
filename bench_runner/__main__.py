@@ -8,6 +8,7 @@ import rich
 COMMANDS = {
     "backfill": "Schedule benchmarking a number of commits",
     "compare": "Compare a matrix of specific results",
+    "find_failures": "Find the benchmarks that failed in the last weekly run",
     "generate_results": "Create all of the derived artifacts from raw data",
     "get_merge_base": (
         "Get the merge base of the selected commit, and determine if it should run"

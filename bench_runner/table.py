@@ -80,3 +80,15 @@ def write_md_list(fd: TextIO, entries: Iterable[str]) -> None:
     for val in entries:
         fd.write(f"- {val}\n")
     fd.write("\n")
+
+
+def write_details(fd: TextIO, summary: str, lines: Iterable[str]) -> None:
+    """
+    Writes a <details> section.
+    """
+    fd.write("<details>\n")
+    fd.write(f"<summary>{summary}</summary>\n\n")
+    for line in lines:
+        fd.write(line)
+        fd.write("\n")
+    fd.write("\n</details>\n\n")
