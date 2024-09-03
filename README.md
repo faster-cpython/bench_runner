@@ -10,7 +10,7 @@ For example, you can see [the Faster CPython team's benchmarking results](https:
 
 Create a new empty repository on Github and clone it locally.
 
-Add bench_runner to your `requirements.txt`.  Since there are no PyPI releases (yet), you can install it from a tag in the git repo:
+Add bench_runner to your `requirements.txt`. Since there are no PyPI releases (yet), you can install it from a tag in the git repo:
 
 ```text
 git+https://github.com/faster-cpython/bench_runner@{VERSION}#egg=bench_runner
@@ -25,40 +25,6 @@ python -m venv venv
 source venv/bin/activate
 python -m pip install -r requirements.txt
 ```
-
-### Add some self-hosted runners
-
-Provision the machine to have the build requirements for CPython and the base
-requirements for Github Actions according to the [provisioning
-instructions](PROVISIONING.md).
-
-Then, add it to the pool of runners by following the instructions on Github's
-`Settings -> Actions -> Runners -> Add New Runner` to add a new runner.
-
-The default responses to all questions should be fine *except* pay careful attention to set the labels correctly.
-Each runner must have the following labels:
-
-- One of `linux`, `macos` or `windows`.
-- `bare-metal` (to distinguish it from VMs in the cloud).
-- `$os-$arch-$nickname`, where:
-  - `$os` is one of `linux`, `macos`, `windows`
-  - `$arch` is one of `x86_64` or `arm64` (others may be supported in future)
-  - `$nickname` is a unique nickname for the runner.
-
-Once the runner is set up, [enable it as a
-service](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/configuring-the-self-hosted-runner-application-as-a-service)
-so it will start automatically on boot.
-
-In addition, the metadata about the runner must be added to `runners.ini`, for example:
-
-```ini
-[linux]
-os = linux
-arch = x86_64
-hostname = pyperf
-```
-
-**TODO**: Describe the special pystats runner
 
 ### Generate workflows
 
@@ -76,29 +42,84 @@ git commit -a -m "Initial commit"
 git push origin main
 ```
 
+The `bench_runner.toml` file created at the root of your repository contains configuration specific to your instance.
+More details about this configuration are below.
+
+### Add some self-hosted runners
+
+Provision the machine to have the build requirements for CPython and the base requirements for Github Actions according to the [provisioning instructions](PROVISIONING.md).
+
+Then, add it to the pool of runners by following the instructions on Github's `Settings -> Actions -> Runners -> Add New Runner` to add a new runner.
+
+The default responses to all questions should be fine _except_ pay careful attention to set the labels correctly.
+Each runner must have the following labels:
+
+- One of `linux`, `macos` or `windows`.
+- `bare-metal` (to distinguish it from VMs in the cloud).
+- `$os-$arch-$nickname`, where:
+  - `$os` is one of `linux`, `macos`, `windows`
+  - `$arch` is one of `x86_64` or `arm64` (others may be supported in future)
+  - `$nickname` is a unique nickname for the runner.
+
+Once the runner is set up, [enable it as a service](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/configuring-the-self-hosted-runner-application-as-a-service) so it will start automatically on boot.
+
+In addition, the metadata about the runner must be added to `runners` section in `bench_runner.toml`, for example:
+
+```toml
+[[runners]]
+[runners.linux]
+os = linux
+arch = x86_64
+hostname = pyperf
+```
+
+You may also want to add a specific machine to collect pystats.
+Since this machine doesn't need to run on bare metal to have accurate timings, it usually is a cloud instance.
+Give this machine the special label `cloud` to indicate it is available for collecting pystats.
+Additionally, flag it as `available = false` in its configuration so it won't be used to collect timings.
+
+```
+[runners.pystats]
+os = "linux"
+arch = "x86_64"
+hostname = "cpython-benchmarking-azure"
+available = false
+```
+
 ### Try a benchmarking run
 
-There are instructions for running a benchmarking action already in the `README.md` of your repo.
-Look there and give it a try!
+There are instructions for running a benchmarking action already in the `README.md` of your repo. Look there and give it a try!
 
-### Configuration
+### Additional configuration
 
 #### Set of benchmarks
 
-By default, all of the benchmarks in `pyperformance` and `python-macrobenchmarks` are run.  To configure the set of benchmarks, or add more, edit the `benchmarks.manifest` file.
+By default, all of the benchmarks in `pyperformance` and `python-macrobenchmarks` are run. To configure the set of benchmarks, or add more, edit the `benchmarks.manifest` file.
 The format of this file is documented with `pyperformance`.
+
+You can also exclude specific benchmarks by adding them to the `benchmarks/excluded_benchmarks` value in your `bench_runner.toml` file.
 
 #### Reference versions
 
 All benchmarked commits are automatically compared to key "reference" versions, as well as their merge base, if available.
-
-The reference versions are defined in the `bases.txt` file.
-
+The reference versions are defined in the `bases/versions` value in your `bench_runner.toml` file.
 Don't forget to actually collect benchmark data for those tags -- it's doesn't happen automatically.
 
-#### Longitudinal plot
+By default, pyperformance will determine the number of times to run each benchmark dynamically at runtime, by choosing a number at which the timing
+measurement becomes stable.
+However, this can make comparing benchmark runs less accurate.
+It is recommended to specify one of your base benchmarking runs as the source of a hardcoded number of loops.
+To do so, add a symlink called `loops.json` to the root of your repository that points to a baseline benchmarking run, for example:
 
-**TODO**: The longitudinal plot isn't currently configurable.
+```sh
+ln -s results/bm-20231002-3.12.0-0fb18b0/bm-20231002-linux-x86_64-python-v3.12.0-3.12.0-0fb18b0.json loops.json
+```
+
+#### Longitudinal plots
+
+The longitudinal plots are configured in the `plot` section of `bench_runner.toml`.
+
+**TODO: Describe this in more detail**
 
 ## Developer
 

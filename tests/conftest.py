@@ -89,6 +89,8 @@ def setup_repositories(tmp_path_factory, worker_id):
     root = root_tmp_dir / "benchmarking"
 
     if worker_id == "master":
+        if root.exists():
+            shutil.rmtree(root)
         _setup_repositories(root)
     else:
         with FileLock(str(root_tmp_dir / "file.lock")):

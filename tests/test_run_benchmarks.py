@@ -69,7 +69,9 @@ def test_update_metadata(benchmarks_checkout, monkeypatch):
 
 
 def test_run_benchmarks(benchmarks_checkout):
-    shutil.copyfile(DATA_PATH / "runners.ini", benchmarks_checkout / "runners.ini")
+    shutil.copyfile(
+        DATA_PATH / "bench_runner.toml", benchmarks_checkout / "bench_runner.toml"
+    )
 
     venv_dir = benchmarks_checkout / "venv"
     venv_python = venv_dir / "bin" / "python"
@@ -310,7 +312,9 @@ def test_should_run_checkout_failed(tmp_path, capsys, monkeypatch):
 
 
 def test_run_benchmarks_flags(benchmarks_checkout):
-    shutil.copyfile(DATA_PATH / "runners.ini", benchmarks_checkout / "runners.ini")
+    shutil.copyfile(
+        DATA_PATH / "bench_runner.toml", benchmarks_checkout / "bench_runner.toml"
+    )
 
     venv_dir = benchmarks_checkout / "venv"
     venv_python = venv_dir / "bin" / "python"

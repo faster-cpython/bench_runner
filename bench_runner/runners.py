@@ -7,6 +7,9 @@ import os
 from pathlib import Path
 
 
+from . import config
+
+
 class Runner:
     def __init__(
         self,
@@ -40,37 +43,26 @@ class Runner:
 
 
 @functools.cache
-def get_runners(path: Path | None = None) -> list[Runner]:
-    if path is None:
-        path = Path("runners.ini")
-
-    config = configparser.ConfigParser()
-    # Don't convert keys to lowercase
-    config.optionxform = str  # type: ignore
-    config.read(path)
+def get_runners() -> list[Runner]:
+    conf = config.get_bench_runner_config().get("runners", [{}])[0]
+    print(conf)
     runners = []
-    for nickname in config.sections():
-        section = config[nickname]
-
-        envvars = {
-            key[4:]: val for key, val in section.items() if key.startswith("env-")
-        }
-
+    for nickname, section in conf.items():
         runners.append(
             Runner(
                 nickname,
                 section["os"],
                 section["arch"],
                 section["hostname"],
-                section.getboolean("available", True),
-                envvars,
-                section.get("github-runner-name"),
+                section.get("available", True),
+                section.get("env", {}),
+                section.get("github_runner_name"),
             )
         )
 
     if len(runners) == 0:
         raise RuntimeError(
-            f"No runners are defined in `{path}`. Please set up some runners first."
+            f"{conf} No runners are defined in `bench_runner.toml`. Please set up some runners first."
         )
 
     return runners
