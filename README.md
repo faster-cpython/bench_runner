@@ -68,9 +68,9 @@ In addition, the metadata about the runner must be added to `runners` section in
 ```toml
 [[runners]]
 [runners.linux]
-os = linux
-arch = x86_64
-hostname = pyperf
+os = "linux"
+arch = "x86_64"
+hostname = "pyperf"
 ```
 
 You may also want to add a specific machine to collect pystats.
