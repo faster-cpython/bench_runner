@@ -20,7 +20,7 @@ excluded_benchmarks = []
 os = "linux"
 arch = "x86_64"
 hostname = "pyperf"
-available = True
+available = true
 
 [plot]
 bases = ["3.11.0"]
