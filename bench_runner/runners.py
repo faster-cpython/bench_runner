@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 
-import configparser
 import functools
 import os
-from pathlib import Path
 
 
 from . import config
@@ -62,7 +60,8 @@ def get_runners() -> list[Runner]:
 
     if len(runners) == 0:
         raise RuntimeError(
-            f"{conf} No runners are defined in `bench_runner.toml`. Please set up some runners first."
+            "No runners are defined in `bench_runner.toml`. "
+            "Please set up some runners first."
         )
 
     return runners
