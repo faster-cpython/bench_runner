@@ -25,6 +25,7 @@ except ImportError:
 matplotlib.use("agg")
 
 
+from . import config
 from . import flags as mflags
 from . import result
 
@@ -74,8 +75,7 @@ def savefig(output_filename: Path, **kwargs):
 
 @functools.cache
 def get_plot_config():
-    with Path("plotconfig.json").open() as fd:
-        content = json.load(fd)
+    content = config.get_bench_runner_config().get("plot", {})
 
     for key in ["bases", "runners", "names", "colors", "styles", "versions", "markers"]:
         assert key in content
