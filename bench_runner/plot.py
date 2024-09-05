@@ -15,7 +15,11 @@ import matplotlib
 import numpy as np
 import rich_argparse
 from scour import scour
-import simdjson
+
+try:
+    import simdjson as json
+except ImportError:
+    import json
 
 
 matplotlib.use("agg")
@@ -71,7 +75,7 @@ def savefig(output_filename: Path, **kwargs):
 @functools.cache
 def get_plot_config():
     with Path("plotconfig.json").open() as fd:
-        content = simdjson.load(fd)
+        content = json.load(fd)
 
     for key in ["bases", "runners", "names", "colors", "styles", "versions", "markers"]:
         assert key in content
@@ -252,7 +256,7 @@ def longitudinal_plot(
     data_cache = output_filename.with_suffix(".json")
     if data_cache.is_file():
         with data_cache.open() as fd:
-            data = simdjson.load(fd)
+            data = json.load(fd)
     else:
         data = {}
 
@@ -351,7 +355,7 @@ def longitudinal_plot(
     savefig(output_filename, dpi=150)
 
     with data_cache.open("w") as fd:
-        simdjson.dump(data, fd, indent=2)
+        json.dump(data, fd, indent=2)
 
 
 def flag_effect_plot(
@@ -380,7 +384,7 @@ def flag_effect_plot(
     data_cache = output_filename.with_suffix(".json")
     if data_cache.is_file():
         with data_cache.open() as fd:
-            data = simdjson.load(fd)
+            data = json.load(fd)
     else:
         data = {}
 
@@ -448,7 +452,7 @@ def flag_effect_plot(
     savefig(output_filename, dpi=150)
 
     with data_cache.open("w") as fd:
-        simdjson.dump(data, fd, indent=2)
+        json.dump(data, fd, indent=2)
 
 
 if __name__ == "__main__":

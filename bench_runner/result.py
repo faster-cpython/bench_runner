@@ -19,7 +19,11 @@ import numpy as np
 from packaging import version
 import pyperf
 import rich.progress
-import simdjson
+
+try:
+    import simdjson as json
+except ImportError:
+    import json
 
 
 from . import bases as mbases
@@ -547,7 +551,7 @@ class Result:
     @functools.cached_property
     def contents(self) -> dict[str, Any]:
         with self.filename.open("rb") as fd:
-            return simdjson.load(fd)
+            return json.load(fd)
 
     @property
     def metadata(self) -> dict[str, Any]:
