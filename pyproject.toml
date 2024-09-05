@@ -17,7 +17,7 @@ classifiers = [
 dependencies = [
     "matplotlib==3.9.0",
     "pyperf==2.7.0",
-    "pysimdjson==6.0.2",
+    "pysimdjson==6.0.2; python_version < '3.13'",
     "rich==13.8.0",
     "rich-argparse==1.5.2",
     "ruamel.yaml==0.18.6",
