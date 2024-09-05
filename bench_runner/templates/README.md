@@ -6,12 +6,20 @@
 
 Here are some recent and important revisions. 👉 [Complete list of results](RESULTS.md).
 
+[Currently failing benchmarks](failures.md).
+
+**Key:** 📄: table, 📈: time plot, 🧠: memory plot
 <!-- START table -->
 
 <!-- END table -->
 
 `*` indicates that the exact same versions of pyperformance was not used.
 
+For the results above, the "faster/slower" result is a geometric mean of each of the benchmarks. The "reliability (rel)" number is the likelihood that the change is faster or slower based on the [Hierarchical Performance Testing (HPT)](#hpt) method. For more details, visit each individual result's README.md.
+
+## Longitudinal results
+
+Below are longitudinal timing results. There are also [🧠 longitudinal memory results](memory.md).
 ![Longitudinal speed improvement](/longitudinal.svg)
 
 Improvement of the geometric mean of key merged benchmarks, computed with `pyperf compare`.
@@ -48,6 +56,7 @@ Each set of benchmarks will have:
 - Comparisons against important reference releases, as well as the merge base of the branch if `benchmark_base` was selected. These include
   - A markdown table produced by `pyperf compare_to`.
   - A set of "violin" plots showing the distribution of results for each benchmark.
+  - A set of plots showing the memory change for each benchmark (for immediate bases only, on non-Windows platforms).
 
 The most convenient way to get results locally is to clone this repo and `git pull` from it.
 
@@ -56,8 +65,8 @@ The most convenient way to get results locally is to clone this repo and `git pu
 To automate benchmarking runs, it may be more convenient to use the [GitHub CLI](https://cli.github.com/).
 Once you have `gh` installed and configured, you can run benchmarks by cloning this repository and then from inside it:
 
-```bash session
-gh workflow run benchmark.yml -f fork=me -f ref=my_branch
+```bash
+$ gh workflow run benchmark.yml -f fork=me -f ref=my_branch
 ```
 
 Any of the parameters described above are available at the commandline using the `-f key=value` syntax.
