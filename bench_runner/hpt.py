@@ -32,7 +32,11 @@ from typing import Any, Mapping
 
 import numpy as np
 from numpy.typing import NDArray
-import simdjson
+
+try:
+    import simdjson as json
+except ImportError:
+    import json
 
 
 from bench_runner import util
@@ -45,7 +49,7 @@ def load_from_json(
     json_path: Path,
 ) -> dict[str, NDArray[np.float64]]:
     with json_path.open() as fd:
-        content = simdjson.load(fd)
+        content = json.load(fd)
 
     return load_data(content)
 

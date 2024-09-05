@@ -9,7 +9,11 @@ from typing import Sequence
 import rich
 import rich.progress
 import rich_argparse
-import simdjson
+
+try:
+    import simdjson as json
+except ImportError:
+    import json
 
 
 from bench_runner import result
@@ -20,7 +24,7 @@ def remove_benchmark(
     filename: Path, remove: set[str], keep_hash: set[str], dry_run: bool
 ):
     with filename.open() as fd:
-        data = simdjson.load(fd)
+        data = json.load(fd)
 
     if data["metadata"]["benchmark_hash"] in keep_hash:
         return
@@ -38,7 +42,7 @@ def remove_benchmark(
 
     if not dry_run:
         with filename.open("w") as fd:
-            simdjson.dump(data, fd, indent=2)
+            json.dump(data, fd, indent=2)
 
 
 def _main(benchmarks: Sequence[str], keep_hash: Sequence[str], dry_run: bool = False):
