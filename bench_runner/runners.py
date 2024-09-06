@@ -43,7 +43,6 @@ class Runner:
 @functools.cache
 def get_runners() -> list[Runner]:
     conf = config.get_bench_runner_config().get("runners", [{}])[0]
-    print(conf)
     runners = []
     for nickname, section in conf.items():
         runners.append(
