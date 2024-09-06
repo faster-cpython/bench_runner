@@ -108,7 +108,7 @@ def run_benchmarks(
         *extra_args,
     ]
 
-    print(f"RUNNING: {args}")
+    print(f"RUNNING: {' '.join(str(x) for x in args)}")
 
     subprocess.call(args)
 
@@ -142,6 +142,11 @@ def collect_pystats(
     if flags is None:
         flags = []
 
+    # Clear all files in /tmp/py_stats. The _pystats.yml workflow already
+    # does this, but this helps when running and testing things locally.
+    for filename in pystats_dir.glob("*"):
+        filename.unlink()
+
     # We could technically run each benchmark in parallel (since we don't care
     # about performance timings), however, since the stats are written to the
     # same directory, they would get intertwined. At some point, specifying an
@@ -155,9 +160,7 @@ def collect_pystats(
                 pass
             else:
                 if individual:
-                    run_summarize_stats(
-                        python, fork, ref, benchmark, False, flags=flags
-                    )
+                    run_summarize_stats(python, fork, ref, benchmark, flags=flags)
 
             for filename in pystats_dir.iterdir():
                 os.rename(filename, Path(tempdir) / filename.name)
@@ -170,9 +173,7 @@ def collect_pystats(
         else:
             benchmark_links = []
 
-        run_summarize_stats(
-            python, fork, ref, "all", True, benchmark_links, flags=flags
-        )
+        run_summarize_stats(python, fork, ref, "all", benchmark_links, flags=flags)
 
 
 def perf_to_csv(lines: Iterable[str], output: Path):
@@ -295,7 +296,6 @@ def run_summarize_stats(
     fork: str,
     ref: str,
     benchmark: str,
-    output_json: bool,
     benchmarks: Iterable[str] | None = None,
     flags: Iterable[str] | None = None,
 ) -> None:
@@ -317,8 +317,7 @@ def run_summarize_stats(
     pystats_json = result.filename.with_suffix(".json")
 
     args = [str(python), summarize_stats_path]
-    if output_json:
-        args.extend(["--json-output", pystats_json])
+    args.extend(["--json-output", pystats_json])
 
     table = subprocess.check_output(args, encoding="utf-8")
 
@@ -350,14 +349,13 @@ def run_summarize_stats(
             fd.write("\n")
         fd.write(table)
 
-    if output_json:
-        if pystats_json.is_file():
-            update_metadata(pystats_json, fork, ref)
-        else:
-            print(
-                "WARNING: No pystats.json file generated. "
-                "This is expected with CPython < 3.12"
-            )
+    if pystats_json.is_file():
+        update_metadata(pystats_json, fork, ref)
+    else:
+        print(
+            "WARNING: No pystats.json file generated. "
+            "This is expected with CPython < 3.12"
+        )
 
 
 def select_benchmarks(benchmarks: str):

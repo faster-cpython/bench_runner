@@ -532,11 +532,9 @@ class Result:
                 return ("raw results", None)
             case (["pystats", "vs", base], ".md"):
                 return ("pystats diff", base)
-            case (["pystats"], ".md"):
-                return ("pystats table", None)
             case (["pystats", *_], ".md"):
-                return (None, None)
-            case (["pystats"], ".json"):
+                return ("pystats table", None)
+            case (["pystats", *_], ".json"):
                 return ("pystats raw", None)
             case (["vs", base], ".md"):
                 return ("table", base)
