@@ -10,6 +10,9 @@ versions = ["3.11.0"]
 # List any benchmarks you want to exclude from results here
 excluded_benchmarks = []
 
+[notify]
+notification_issue = 182
+
 # Each of the "runners" section has the following values:
 # os: one of 'linux', 'darwin', 'windows'
 # arch: 'amd64' or 'arm64' (used for display only)
