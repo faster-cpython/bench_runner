@@ -1,3 +1,7 @@
+# After making changes to this file, re-run:
+#    python -m bench_runner install
+# to have the changes reflected in the generated workflow files
+
 [bases]
 # List the base versions you want to compare every benchmark run to
 versions = ["3.11.0"]
