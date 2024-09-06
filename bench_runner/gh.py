@@ -9,6 +9,7 @@ import subprocess
 from typing import Any, Mapping
 
 
+from . import config
 from . import flags as mflags
 from . import runners
 
@@ -70,8 +71,13 @@ def benchmark(
 
 
 def send_notification(body):
+    conf = config.get_bench_runner_config()
+    notification_issue = conf.get("notify", {}).get("notification_issue", 0)
+
     print("Sending Github notification:")
     print("---")
     print(body)
     print("---")
-    subprocess.check_call(["gh", "issue", "comment", "182", "--body", body])
+    subprocess.check_call(
+        ["gh", "issue", "comment", str(notification_issue), "--body", body]
+    )
