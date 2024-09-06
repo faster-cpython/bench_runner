@@ -217,8 +217,8 @@ def annotate_y_axis(ax, differences: tuple[str, str]):
     )
 
 
-tier2_date = datetime.datetime.fromisoformat("2023-11-11T00:00:00Z")
-jit_date = datetime.datetime.fromisoformat("2024-01-31T00:00:00Z")
+tier2_date = datetime.datetime.fromisoformat("2023-11-11")
+jit_date = datetime.datetime.fromisoformat("2024-01-31")
 
 
 def add_axvline(ax, dt: datetime.datetime, name: str):
