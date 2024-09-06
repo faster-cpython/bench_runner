@@ -25,9 +25,9 @@ def _main(
     cpython: Path = Path("cpython"),
     results_dir: Path = Path("results"),
 ) -> None:
-    if sys.version_info[:2] < (3, 11):
+    if sys.version_info[:2] < (3, 10):
         print(
-            "The benchmarking infrastructure requires Python 3.11 or later.",
+            "The benchmarking infrastructure requires Python 3.10 or later.",
             file=sys.stderr,
         )
         sys.exit(1)

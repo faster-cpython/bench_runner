@@ -5,17 +5,17 @@ Utilities to use the `gh` CLI for workflow automation.
 from __future__ import annotations
 
 
-from pathlib import Path
 import subprocess
 from typing import Any, Mapping
 
 
+from . import config
 from . import flags as mflags
 from . import runners
 
 
-def get_machines(path: Path | None = None):
-    return [x.name for x in runners.get_runners(path) if x.available] + ["all"]
+def get_machines():
+    return [x.name for x in runners.get_runners() if x.available] + ["all"]
 
 
 def _get_flags(d: Mapping[str, Any]) -> list[str]:
@@ -37,7 +37,6 @@ def benchmark(
     machine: str | None = None,
     benchmark_base: bool | None = None,
     flags: list[str] | None = None,
-    _runner_path: Path | None = None,
 ) -> None:
     if not (fork is None or isinstance(fork, str)):
         raise TypeError(f"fork must be a str, got {type(fork)}")
@@ -45,7 +44,7 @@ def benchmark(
     if not (ref is None or isinstance(ref, str)):
         raise TypeError(f"ref must be a str, got {type(ref)}")
 
-    machines = get_machines(_runner_path)
+    machines = get_machines()
     if not (machine is None or machine in machines):
         raise ValueError(f"machine must be one of {machines}")
 
@@ -72,8 +71,13 @@ def benchmark(
 
 
 def send_notification(body):
+    conf = config.get_bench_runner_config()
+    notification_issue = conf.get("notify", {}).get("notification_issue", 0)
+
     print("Sending Github notification:")
     print("---")
     print(body)
     print("---")
-    subprocess.check_call(["gh", "issue", "comment", "182", "--body", body])
+    subprocess.check_call(
+        ["gh", "issue", "comment", str(notification_issue), "--body", body]
+    )
