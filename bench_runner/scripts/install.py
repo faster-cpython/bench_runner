@@ -225,14 +225,6 @@ def _main(check: bool) -> None:
 
     env = load_yaml(TEMPLATE_PATH / "env.yml")
 
-    for src_path in TEMPLATE_PATH.glob("*.src.yml"):
-        dst_path = WORKFLOW_PATH / (src_path.name[:-8] + ".yml")
-        generator = GENERATORS.get(src_path.name, generate_generic)
-        src = load_yaml(src_path)
-        dst = generator(src)
-        dst = {"env": env, **dst}
-        write_yaml(dst_path, dst, check)
-
     for path in TEMPLATE_PATH.glob("*"):
         if path.name.endswith(".src.yml") or path.name == "env.yml":
             continue
@@ -242,6 +234,14 @@ def _main(check: bool) -> None:
                 fail_check(ROOT_PATH / path.name)
             else:
                 shutil.copyfile(path, ROOT_PATH / path.name)
+
+    for src_path in TEMPLATE_PATH.glob("*.src.yml"):
+        dst_path = WORKFLOW_PATH / (src_path.name[:-8] + ".yml")
+        generator = GENERATORS.get(src_path.name, generate_generic)
+        src = load_yaml(src_path)
+        dst = generator(src)
+        dst = {"env": env, **dst}
+        write_yaml(dst_path, dst, check)
 
 
 def main():

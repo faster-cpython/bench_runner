@@ -44,6 +44,7 @@ git push origin main
 
 The `bench_runner.toml` file created at the root of your repository contains configuration specific to your instance.
 More details about this configuration are below.
+Every time you make a change to the `bench_runner.toml` file, you will need to rerun `python -m bench_runer install` to have the changes reflected.
 
 ### Add some self-hosted runners
 
