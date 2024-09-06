@@ -1,4 +1,3 @@
-import contextlib
 from pathlib import Path
 import subprocess
 import textwrap
@@ -55,10 +54,9 @@ def test_get_merge_base(capsys, checkout, monkeypatch):
 
 
 def test_hard_coded(capsys, checkout, monkeypatch):
-    monkeypatch.chdir(DATA_PATH)
+    monkeypatch.chdir(checkout)
 
-    with contextlib.chdir(checkout):
-        get_merge_base._main(False, "linux-x86_64-linux", False, [])
+    get_merge_base._main(False, "linux-x86_64-linux", False, [])
 
     captured = capsys.readouterr()
 

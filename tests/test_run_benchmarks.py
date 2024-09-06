@@ -1,4 +1,3 @@
-import contextlib
 import json
 from pathlib import Path
 import platform
@@ -69,7 +68,9 @@ def test_update_metadata(benchmarks_checkout, monkeypatch):
 
 
 def test_run_benchmarks(benchmarks_checkout):
-    shutil.copyfile(DATA_PATH / "runners.ini", benchmarks_checkout / "runners.ini")
+    shutil.copyfile(
+        DATA_PATH / "bench_runner.toml", benchmarks_checkout / "bench_runner.toml"
+    )
 
     venv_dir = benchmarks_checkout / "venv"
     venv_python = venv_dir / "bin" / "python"
@@ -241,18 +242,17 @@ def test_should_run_exists_force(benchmarks_checkout, capsys, monkeypatch):
 
     monkeypatch.setattr(git, "remove", remove)
 
-    with contextlib.chdir(repo):
-        generate_results._main(repo, force=False, bases=["3.11.0b3"])
-        should_run._main(
-            True,
-            "python",
-            "main",
-            "linux-x86_64-linux",
-            False,
-            ",,",
-            benchmarks_checkout / "cpython",
-            repo / "results",
-        )
+    generate_results._main(repo, force=False, bases=["3.11.0b3"])
+    should_run._main(
+        True,
+        "python",
+        "main",
+        "linux-x86_64-linux",
+        False,
+        ",,",
+        benchmarks_checkout / "cpython",
+        repo / "results",
+    )
 
     captured = capsys.readouterr()
     assert captured.out.splitlines()[-1].strip() == "should_run=true"
@@ -310,7 +310,9 @@ def test_should_run_checkout_failed(tmp_path, capsys, monkeypatch):
 
 
 def test_run_benchmarks_flags(benchmarks_checkout):
-    shutil.copyfile(DATA_PATH / "runners.ini", benchmarks_checkout / "runners.ini")
+    shutil.copyfile(
+        DATA_PATH / "bench_runner.toml", benchmarks_checkout / "bench_runner.toml"
+    )
 
     venv_dir = benchmarks_checkout / "venv"
     venv_python = venv_dir / "bin" / "python"

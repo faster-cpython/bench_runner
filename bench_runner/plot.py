@@ -25,6 +25,7 @@ except ImportError:
 matplotlib.use("agg")
 
 
+from . import config as mconfig
 from . import flags as mflags
 from . import result
 
@@ -74,8 +75,7 @@ def savefig(output_filename: Path, **kwargs):
 
 @functools.cache
 def get_plot_config():
-    with Path("plotconfig.json").open() as fd:
-        content = json.load(fd)
+    content = mconfig.get_bench_runner_config().get("plot", {})
 
     for key in ["bases", "runners", "names", "colors", "styles", "versions", "markers"]:
         assert key in content
@@ -215,10 +215,6 @@ def annotate_y_axis(ax, differences: tuple[str, str]):
         clip_on=True,
         verticalalignment="top",
     )
-
-
-tier2_date = datetime.datetime.fromisoformat("2023-11-11T00:00:00Z")
-jit_date = datetime.datetime.fromisoformat("2024-01-31T00:00:00Z")
 
 
 def add_axvline(ax, dt: datetime.datetime, name: str):
