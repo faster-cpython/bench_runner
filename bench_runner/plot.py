@@ -56,7 +56,7 @@ def savefig(output_filename: Path, **kwargs):
     class Options:
         quiet = True
         remove_descriptive_elements = True
-        enable_comment_stripping = True
+        strip_comments = True
         indent_type = "none"
         strip_ids = True
         shorten_ids = True
