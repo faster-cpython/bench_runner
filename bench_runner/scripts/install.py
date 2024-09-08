@@ -2,6 +2,7 @@
 Regenerates some Github Actions workflow files from templates.
 """
 
+from . import config
 import argparse
 import copy
 import functools
@@ -159,6 +160,10 @@ def generate__benchmark(src: Any) -> Any:
     return dst
 
 
+def get_skip_publish_mirror() -> bool:
+    return config.get_bench_runner_config().get("publish_mirror", False).get("skip", False)
+
+
 def generate_benchmark(dst: Any) -> Any:
     """
     Generates benchmark.yml from benchmark.src.yml.
@@ -189,6 +194,9 @@ def generate_benchmark(dst: Any) -> Any:
         f"${{{{ inputs.{flag.gha_variable} == true && '{flag.short_name}' || '' }}}}"
         for flag in flags.FLAGS
     )
+
+    if get_skip_publish_mirror():
+        del dst["jobs"]["publish"]
 
     return dst
 
