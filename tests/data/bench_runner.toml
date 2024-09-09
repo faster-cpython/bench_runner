@@ -22,3 +22,6 @@ names = ["linux", "linux2", "linux-aarch64", "macos", "win64", "win32"]
 colors = ["C0", "C0", "C4", "C2", "C3", "C3"]
 styles = ["-", ":", "--", "-", "-", ":"]
 markers = ["s", "s", "s", "^", ".", "."]
+
+[publish_mirror]
+skip = false
