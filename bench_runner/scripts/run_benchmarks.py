@@ -18,6 +18,9 @@ import rich_argparse
 
 try:
     import simdjson as json
+
+    # Try this to see if it fixes a bug
+    raise ImportError()
 except ImportError:
     import json
 
