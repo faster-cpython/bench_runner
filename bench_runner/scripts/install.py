@@ -2,7 +2,6 @@
 Regenerates some Github Actions workflow files from templates.
 """
 
-from . import config
 import argparse
 import copy
 import functools
@@ -19,6 +18,7 @@ from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import LiteralScalarString
 
 
+from bench_runner import config
 from bench_runner import flags
 from bench_runner import runners
 
