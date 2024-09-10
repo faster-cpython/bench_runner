@@ -26,17 +26,13 @@ from __future__ import annotations
 
 import io
 import functools
+import json
 from pathlib import Path
 from typing import Any, Mapping
 
 
 import numpy as np
 from numpy.typing import NDArray
-
-try:
-    import simdjson as json
-except ImportError:
-    import json
 
 
 from bench_runner import util

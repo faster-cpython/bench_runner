@@ -11,6 +11,8 @@ versions = ["3.11.0"]
 excluded_benchmarks = []
 
 [notify]
+# The number of the issue in your repo that will have comments added to
+# it to send nofications
 notification_issue = 182
 
 # Each of the "runners" section has the following values:

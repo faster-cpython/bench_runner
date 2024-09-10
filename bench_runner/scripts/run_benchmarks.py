@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 import os
 from operator import itemgetter
 from pathlib import Path
@@ -15,14 +16,6 @@ from typing import Iterable, Union
 
 
 import rich_argparse
-
-try:
-    import simdjson as json
-
-    # Try this to see if it fixes a bug
-    raise ImportError()
-except ImportError:
-    import json
 
 
 from bench_runner import flags

@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import defaultdict
 import functools
 import io
+import json
 from operator import itemgetter
 from pathlib import Path
 import re
@@ -19,11 +20,6 @@ import numpy as np
 from packaging import version
 import pyperf
 import rich.progress
-
-try:
-    import simdjson as json
-except ImportError:
-    import json
 
 
 from . import bases as mbases

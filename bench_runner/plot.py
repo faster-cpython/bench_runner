@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import datetime
 import functools
+import json
 from pathlib import Path
 import re
 import tempfile
@@ -15,11 +16,6 @@ import matplotlib
 import numpy as np
 import rich_argparse
 from scour import scour
-
-try:
-    import simdjson as json
-except ImportError:
-    import json
 
 
 matplotlib.use("agg")
