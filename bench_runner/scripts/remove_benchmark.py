@@ -2,6 +2,7 @@ from __future__ import annotations
 
 
 import argparse
+import json
 from pathlib import Path
 from typing import Sequence
 
@@ -9,11 +10,6 @@ from typing import Sequence
 import rich
 import rich.progress
 import rich_argparse
-
-try:
-    import simdjson as json
-except ImportError:
-    import json
 
 
 from bench_runner import result
