@@ -170,7 +170,7 @@ def get_most_recent_pystats(results: Iterable[Result]) -> Result | None:
     candidate_pystats = [
         result
         for result in results
-        if result.result_info[0] == "pystats raw"
+        if result.result_info == ("pystats raw", None, None)
         and result.fork == "python"
         and result.flags == ["PYTHON_UOPS"]
     ]
@@ -309,8 +309,8 @@ def get_directory_indices_entries(
             if filename.name == "README.md":
                 continue
             result = Result.from_filename(filename)
-            type, base = result.result_info
-            if type is not None:
+            type, base, benchmark = result.result_info
+            if type is not None and benchmark is None:
                 entries.append(
                     (
                         dirpath,
