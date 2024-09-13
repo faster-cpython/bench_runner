@@ -5,6 +5,7 @@ import os
 import rich_argparse
 
 
+from bench_runner import config
 from bench_runner import flags as mflags
 from bench_runner import gh
 
@@ -25,11 +26,14 @@ def _main(
     github_repo = os.environ.get("GITHUB_REPOSITORY", "UNKNOWN")
 
     lines = ["🤖 This is the friendly benchmarking bot with some new results!", ""]
-    line = (
-        f"@{actor}: "
-        f"[{fork}/{ref}]"
-        f"(https://github.com/{github_repo}-public/tree/main/results/{dirname})"
+    line = f"@{actor}: " f"[{fork}/{ref}]"
+    skip_publish = (
+        config.get_bench_runner_config().get("publish_mirror", {}).get("skip", False)
     )
+    if skip_publish:
+        line += f"(https://github.com/{github_repo}/tree/main/results/{dirname})"
+    else:
+        line += f"(https://github.com/{github_repo}-public/tree/main/results/{dirname})"
     print(f"::notice ::{line}")
     lines.append(line)
 
