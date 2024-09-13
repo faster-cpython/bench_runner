@@ -522,22 +522,30 @@ class Result:
         return self._filename
 
     @functools.cached_property
-    def result_info(self) -> tuple[str | None, str | None]:
+    def result_info(self) -> tuple[str | None, str | None, str | None]:
         match (self.extra, self.suffix):
             case ([], ".json"):
-                return ("raw results", None)
+                return ("raw results", None, None)
             case (["pystats", "vs", base], ".md"):
-                return ("pystats diff", base)
-            case (["pystats", *_], ".md"):
-                return ("pystats table", None)
-            case (["pystats", *_], ".json"):
-                return ("pystats raw", None)
+                return ("pystats diff", base, None)
+            case (["pystats", *benchmark], ".md"):
+                if benchmark:
+                    benchmark = benchmark[0]
+                else:
+                    benchmark = None
+                return ("pystats table", None, benchmark)
+            case (["pystats", *benchmark], ".json"):
+                if benchmark:
+                    benchmark = benchmark[0]
+                else:
+                    benchmark = None
+                return ("pystats raw", None, benchmark)
             case (["vs", base], ".md"):
-                return ("table", base)
+                return ("table", base, None)
             case (["vs", base], ".svg"):
-                return ("time plot", base)
+                return ("time plot", base, None)
             case (["vs", base, "mem"], ".svg"):
-                return ("memory plot", base)
+                return ("memory plot", base, None)
         raise ValueError(
             f"Unknown result type (extra={self.extra} suffix={self.suffix})"
         )
