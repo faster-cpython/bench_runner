@@ -796,6 +796,7 @@ def match_to_bases(
                         and result.flags == ["NOGIL"]
                     ),
                 )
+                found_base = found_base or found_base_diff_flag_NOGIL
 
         if not found_base and result.fork == "python" and result.flags != []:
             # Compare builds with flags with builds with no flags
