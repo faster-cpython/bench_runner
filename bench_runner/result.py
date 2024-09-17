@@ -781,7 +781,9 @@ def match_to_bases(
             )
 
             Base_default_vs_PR_NOGIL = (
-                config.get_bench_runner_config().get("comparisons_diff_flags", {}).get("Base_default_vs_PR_NOGIL", False)
+                config.get_bench_runner_config()
+                .get("comparisons_diff_flags", {})
+                .get("Base_default_vs_PR_NOGIL", False)
             )
 
             if Base_default_vs_PR_NOGIL:
