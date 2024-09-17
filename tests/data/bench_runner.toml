@@ -25,3 +25,6 @@ markers = ["s", "s", "s", "^", ".", "."]
 
 [publish_mirror]
 skip = false
+
+[comparisons_diff_flags]
+Base_default_vs_PR_NOGIL = false

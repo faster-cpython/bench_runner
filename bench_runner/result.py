@@ -23,6 +23,7 @@ import rich.progress
 
 
 from . import bases as mbases
+from . import config
 from . import flags as mflags
 from . import git
 from . import hpt
@@ -778,6 +779,23 @@ def match_to_bases(
                     and ref.flags == result.flags
                 ),
             )
+
+            Base_default_vs_PR_NOGIL = (
+                config.get_bench_runner_config().get("comparisons_diff_flags", {}).get("Base_default_vs_PR_NOGIL", False)
+            )
+
+            if Base_default_vs_PR_NOGIL:
+                found_base_diff_flag_NOGIL = find_match(
+                    result,
+                    candidates,
+                    "base_vs_PR_NOGIL",
+                    lambda ref: (
+                        _merge_base.startswith(ref.cpython_hash)
+                        and ref.flags != result.flags
+                        and ref.flags == []
+                        and result.flags == ["NOGIL"]
+                    ),
+                )
 
         if not found_base and result.fork == "python" and result.flags != []:
             # Compare builds with flags with builds with no flags
