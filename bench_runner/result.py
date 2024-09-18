@@ -792,8 +792,7 @@ def match_to_bases(
                     candidates,
                     "default_base",
                     lambda ref: (
-                        _merge_base.startswith(ref.cpython_hash)
-                        and ref.flags == []
+                        _merge_base.startswith(ref.cpython_hash) and ref.flags == []
                     ),
                 )
                 found_base = found_base or found_default_base
