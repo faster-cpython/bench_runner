@@ -5,6 +5,8 @@
 [bases]
 # List the base versions you want to compare every benchmark run to
 versions = ["3.11.0"]
+# List of configuration flags that are compared against the default build of its commit merge base.
+compare_to_default = ["NOGIL"]
 
 [benchmarks]
 # List any benchmarks you want to exclude from results here

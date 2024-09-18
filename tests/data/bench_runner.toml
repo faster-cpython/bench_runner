@@ -1,5 +1,6 @@
 [bases]
 versions = ["base2", "base4"]
+compare_to_default = ["NOGIL"]
 
 [[runners]]
 [runners.linux]
@@ -25,6 +26,3 @@ markers = ["s", "s", "s", "^", ".", "."]
 
 [publish_mirror]
 skip = false
-
-[comparisons_diff_flags]
-Base_default_vs_PR_NOGIL = false

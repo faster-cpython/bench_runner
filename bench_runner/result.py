@@ -780,25 +780,23 @@ def match_to_bases(
                 ),
             )
 
-            Base_default_vs_PR_NOGIL = (
+            compare_to_default = (
                 config.get_bench_runner_config()
-                .get("comparisons_diff_flags", {})
-                .get("Base_default_vs_PR_NOGIL", False)
+                .get("bases", {})
+                .get("compare_to_default", [])
             )
 
-            if Base_default_vs_PR_NOGIL:
-                found_base_diff_flag_NOGIL = find_match(
+            if "NOGIL" in compare_to_default and result.flags == ["NOGIL"]:
+                found_default_base = find_match(
                     result,
                     candidates,
-                    "base_vs_PR_NOGIL",
+                    "default_base",
                     lambda ref: (
                         _merge_base.startswith(ref.cpython_hash)
-                        and ref.flags != result.flags
                         and ref.flags == []
-                        and result.flags == ["NOGIL"]
                     ),
                 )
-                found_base = found_base or found_base_diff_flag_NOGIL
+                found_base = found_base or found_default_base
 
         if not found_base and result.fork == "python" and result.flags != []:
             # Compare builds with flags with builds with no flags
