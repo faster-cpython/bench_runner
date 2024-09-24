@@ -1,5 +1,6 @@
 [bases]
 versions = ["base2", "base4"]
+compare_to_default = ["NOGIL"]
 
 [[runners]]
 [runners.linux]

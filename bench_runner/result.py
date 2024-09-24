@@ -23,6 +23,7 @@ import rich.progress
 
 
 from . import bases as mbases
+from . import config
 from . import flags as mflags
 from . import git
 from . import hpt
@@ -778,6 +779,24 @@ def match_to_bases(
                     and ref.flags == result.flags
                 ),
             )
+
+            compare_to_default = (
+                config.get_bench_runner_config()
+                .get("bases", {})
+                .get("compare_to_default", [])
+            )
+
+            for flag in compare_to_default:
+                if result.flags == [flag]:
+                    found_default_base = find_match(
+                        result,
+                        candidates,
+                        "default_base_vs_" + flag,
+                        lambda ref: (
+                            _merge_base.startswith(ref.cpython_hash) and ref.flags == []
+                        ),
+                    )
+                    found_base = found_base or found_default_base
 
         if not found_base and result.fork == "python" and result.flags != []:
             # Compare builds with flags with builds with no flags
