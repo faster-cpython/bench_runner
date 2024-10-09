@@ -359,8 +359,10 @@ def flag_effect_plot(
     differences: tuple[str, str] = ("slower", "faster"),
     title="Performance improvement by configuration",
 ):
-    flags = [flag.name for flag in reversed(mflags.FLAGS)]
-    configs = [flag.description for flag in reversed(mflags.FLAGS)]
+    # We don't need to track the performance of the Tier 2 configuration
+    all_flags = [flag for flag in mflags.FLAGS if flag.name != "PYTHON_UOPS"]
+    flags = [flag.name for flag in reversed(all_flags)]
+    configs = [flag.description for flag in reversed(all_flags)]
 
     def get_comparison_value(ref, r):
         key = ",".join((str(ref.filename)[8:], str(r.filename)[8:]))
