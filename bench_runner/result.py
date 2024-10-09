@@ -186,16 +186,16 @@ class BenchmarkComparison(Comparison):
             ]
 
         def calculate_diffs(ref_values, head_values) -> tuple[np.ndarray | None, float]:
-            sig, t_score = pyperf._utils.is_significant(ref_values, head_values)
-
-            if not sig:
-                return None, 0.0
-            else:
-                ref_values = remove_outliers(ref_values)
-                head_values = remove_outliers(head_values)
-                values = np.outer(ref_values, 1.0 / head_values).flatten()
-                values.sort()
-                return values, float(values.mean())
+            if len(ref_values) > 3 and len(head_values) > 3:
+                sig, t_score = pyperf._utils.is_significant(ref_values, head_values)
+                if not sig:
+                    return None, 0.0
+                else:
+                    ref_values = remove_outliers(ref_values)
+                    head_values = remove_outliers(head_values)
+            values = np.outer(ref_values, 1.0 / head_values).flatten()
+            values.sort()
+            return values, float(values.mean())
 
         excluded = util.get_excluded_benchmarks()
         combined_data = []
@@ -659,19 +659,28 @@ class Result:
             self.contents["metadata"]["perf_version"]
         ) < version.parse("2.6.3")
 
+        def memory_value(metadata):
+            if mem := metadata.get("command_max_rss"):
+                return mem
+            elif mem := metadata.get("mem_max_rss"):
+                if needs_correction:
+                    mem /= 1024
+                return mem
+            return None
+
         for benchmark in self.contents["benchmarks"]:
-            name = benchmark.get("metadata", self.contents["metadata"])["name"]
+            metadata = benchmark.get("metadata", self.contents["metadata"])
+            name = metadata["name"]
             if name not in excluded:
-                row = []
-                for run in benchmark["runs"]:
-                    metadata = run.get("metadata", {})
-                    if mem := metadata.get("command_max_rss"):
-                        row.append(mem)
-                    elif mem := metadata.get("mem_max_rss"):
-                        if needs_correction:
-                            mem /= 1024
-                        row.append(mem)
-                data[name] = np.array(row, dtype=np.float64)
+                if mem := memory_value(metadata):
+                    data[name] = np.array([mem], dtype=np.float64)
+                else:
+                    row = []
+                    for run in benchmark["runs"]:
+                        metadata = run.get("metadata", {})
+                        if mem := memory_value(metadata):
+                            row.append(mem)
+                    data[name] = np.array(row, dtype=np.float64)
 
         return data
 
