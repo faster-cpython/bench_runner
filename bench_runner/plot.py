@@ -350,6 +350,23 @@ def longitudinal_plot(
         json.dump(data, fd, indent=2)
 
 
+def _standardize_xlims(axs: Sequence[matplotlib.Axes]) -> None:
+    if not len(axs):
+        return
+
+    minx, maxx = axs[0].get_xlim()
+    for ax in axs[1:]:
+        if not ax.has_data():
+            continue
+        xlim = ax.get_xlim()
+        minx = min(minx, xlim[0])
+        maxx = max(maxx, xlim[1])
+
+    for ax in axs:
+        if ax.has_data():
+            ax.set_xlim((minx, maxx))
+
+
 def flag_effect_plot(
     results: Iterable[result.Result],
     output_filename: Path,
@@ -438,10 +455,7 @@ def flag_effect_plot(
 
     fig.suptitle(title)
 
-    minx = min(ax.get_xlim()[0] for ax in axs[1:])
-    maxx = max(ax.get_xlim()[1] for ax in axs[1:])
-    for ax in axs:
-        ax.set_xlim((minx, maxx))
+    _standardize_xlims(axs)
 
     savefig(output_filename, dpi=150)
 
