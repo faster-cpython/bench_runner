@@ -386,6 +386,7 @@ class PystatsComparison(Comparison):
                     self.head.filename,
                 ],
                 encoding="utf-8",
+                stderr=subprocess.STDOUT,
             )
         except subprocess.CalledProcessError:
             return None
