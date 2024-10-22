@@ -133,7 +133,7 @@ def collect_pystats(
 
     all_benchmarks = get_benchmark_names(benchmarks)
 
-    extra_args = ["--same-loops", "loops.json"]
+    extra_args = ["--same-loops", "loops.json", "--hook", "pystats"]
 
     if flags is None:
         flags = []

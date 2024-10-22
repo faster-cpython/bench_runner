@@ -16,7 +16,7 @@ classifiers = [
 ]
 dependencies = [
     "matplotlib==3.9.0",
-    "pyperf==2.7.0",
+    "pyperf==2.8.0",
     "rich==13.9.2",
     "rich-argparse==1.5.2",
     "ruamel.yaml==0.18.6",
