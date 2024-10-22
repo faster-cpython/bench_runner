@@ -7,6 +7,9 @@ from typing import Iterable, Sequence, TextIO
 from urllib.parse import quote
 
 
+from .util import PathLike
+
+
 def output_table(
     fd: TextIO, head: Sequence[str], rows: Sequence[Sequence[str]]
 ) -> None:
@@ -23,7 +26,7 @@ def output_table(
         output_row(row)
 
 
-def replace_section(filename: Path, name: str, content: str) -> None:
+def replace_section(filename: PathLike, name: str, content: str) -> None:
     """
     Replace a table in a markdown file with the new content.
 
@@ -35,6 +38,7 @@ def replace_section(filename: Path, name: str, content: str) -> None:
     <!-- END {name} -->
     ```
     """
+    filename = Path(filename)
     lines = iter(filename.read_text().splitlines())
 
     with filename.open("w") as fd:
@@ -52,12 +56,12 @@ def replace_section(filename: Path, name: str, content: str) -> None:
                 fd.write(line + "\n")
 
 
-def md_link(text: str, link: str, root: Path | None = None) -> str:
+def md_link(text: str, link: str, root: PathLike | None = None) -> str:
     """
     Formats a Markdown link. The link is resolved relative to the given root.
     """
     if root is not None:
-        link = str(Path(link).resolve().relative_to(root.parent.resolve()))
+        link = str(Path(link).resolve().relative_to(Path(root).parent.resolve()))
     if not str(link).startswith("http"):
         link = "/".join(quote(x) for x in Path(link).parts)
     return f"[{text}]({link})"

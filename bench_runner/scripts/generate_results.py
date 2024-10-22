@@ -25,6 +25,7 @@ from bench_runner.result import (
 )
 from bench_runner import table
 from bench_runner import util
+from bench_runner.util import PathLike
 
 
 def _tuple_to_nested_dicts(entries: Iterable[tuple], d: dict | None = None) -> dict:
@@ -82,7 +83,7 @@ def save_generated_results(results: Iterable[Result], force: bool = False) -> No
 
 
 def output_results_index(
-    fd: TextIO, bases: Iterable[str], results: Iterable[Result], filename: Path
+    fd: TextIO, bases: Iterable[str], results: Iterable[Result], filename: PathLike
 ):
     """
     Outputs a results index table.
@@ -186,7 +187,7 @@ def get_most_recent_pystats(results: Iterable[Result]) -> Result | None:
 
 
 def generate_index(
-    filename: Path,
+    filename: PathLike,
     bases: Iterable[str],
     all_results: Iterable[Result],
     benchmarking_results: Iterable[Result],
@@ -218,7 +219,7 @@ def generate_indices(
     bases: Iterable[str],
     all_results: Iterable[Result],
     benchmarking_results: Iterable[Result],
-    repo_dir: Path,
+    repo_dir: PathLike,
 ) -> None:
     """
     Generate both indices:
@@ -228,6 +229,7 @@ def generate_indices(
 
     (For the ideas repo, the second file is at `results/README.md`).
     """
+    repo_dir = Path(repo_dir)
     generate_index(
         repo_dir / "README.md", bases, all_results, benchmarking_results, True
     )
@@ -365,7 +367,8 @@ def filter_broken_memory_results(results):
     return [r for r in results if r.nickname != "darwin"]
 
 
-def _main(repo_dir: Path, force: bool = False, bases: Sequence[str] | None = None):
+def _main(repo_dir: PathLike, force: bool = False, bases: Sequence[str] | None = None):
+    repo_dir = Path(repo_dir)
     results_dir = repo_dir / "results"
     if bases is None:
         bases = get_bases()

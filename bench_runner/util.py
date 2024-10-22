@@ -2,9 +2,13 @@ import functools
 import hashlib
 import os
 from pathlib import Path
+from typing import TypeAlias, Union
 
 
 from . import config
+
+
+PathLike: TypeAlias = Union[str, os.PathLike]
 
 
 def get_benchmark_hash() -> str:
@@ -21,11 +25,12 @@ TYPE_TO_ICON = {
 }
 
 
-def apply_suffix(path: Path, suffix: str) -> Path:
+def apply_suffix(path: PathLike, suffix: str) -> Path:
     """
     Like Path.with_suffix but allows adding things like "-mem.svg".
     """
-    return path.parent / (path.stem + suffix)
+    path_ = Path(path)
+    return path_.parent / (path_.stem + suffix)
 
 
 @functools.cache

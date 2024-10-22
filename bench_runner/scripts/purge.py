@@ -19,9 +19,10 @@ import rich_argparse
 from bench_runner.bases import get_bases, get_minimum_version_for_all_comparisons
 from bench_runner.result import load_all_results
 from bench_runner.scripts.generate_results import _main as generate_results
+from bench_runner.util import PathLike
 
 
-def dir_size(path: Path) -> int:
+def dir_size(path: PathLike) -> int:
     total = 0
     for root, _, files in os.walk(path):
         root = Path(root)
@@ -30,8 +31,10 @@ def dir_size(path: Path) -> int:
     return total
 
 
-def _main(repo_dir: Path, days: int, dry_run: bool, bases: Sequence[str] | None = None):
-    results_dir = repo_dir / "results"
+def _main(
+    repo_dir: PathLike, days: int, dry_run: bool, bases: Sequence[str] | None = None
+):
+    results_dir = Path(repo_dir) / "results"
     if bases is None:
         bases = get_bases()
     if len(bases) == 0:

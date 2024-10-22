@@ -21,6 +21,7 @@ from ruamel.yaml.scalarstring import LiteralScalarString
 from bench_runner import config
 from bench_runner import flags
 from bench_runner import runners
+from bench_runner.util import PathLike
 
 
 ROOT_PATH = Path()
@@ -28,9 +29,9 @@ TEMPLATE_PATH = Path(__file__).parents[1] / "templates"
 WORKFLOW_PATH = Path() / ".github" / "workflows"
 
 
-def fail_check(dst: Path):
+def fail_check(dst: PathLike):
     rich.print(
-        f"[red]{dst.relative_to(ROOT_PATH)} needs to be regenerated.[/red]",
+        f"[red]{Path(dst).relative_to(ROOT_PATH)} needs to be regenerated.[/red]",
         file=sys.stderr,
     )
     rich.print(
@@ -40,7 +41,7 @@ def fail_check(dst: Path):
     sys.exit(1)
 
 
-def write_yaml(dst: Path, contents: Any, check: bool):
+def write_yaml(dst: PathLike, contents: Any, check: bool):
     """
     Write `contents` to `dst` as YAML.
 
@@ -48,6 +49,7 @@ def write_yaml(dst: Path, contents: Any, check: bool):
     in CI to confirm that the file was regenerated after changes to the source
     file.
     """
+    dst = Path(dst)
 
     def do_write(contents, fd):
         fd.write("# Generated file: !!! DO NOT EDIT !!!\n")
@@ -70,11 +72,11 @@ def write_yaml(dst: Path, contents: Any, check: bool):
             do_write(contents, fd)
 
 
-def load_yaml(src: Path) -> Any:
+def load_yaml(src: PathLike) -> Any:
     """
     Load YAML from `src`.
     """
-    with src.open() as fd:
+    with Path(src).open() as fd:
         yaml = YAML()
         return yaml.load(fd)
 

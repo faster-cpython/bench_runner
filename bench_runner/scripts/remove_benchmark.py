@@ -14,12 +14,13 @@ import rich_argparse
 
 from bench_runner import result
 from bench_runner.scripts import generate_results
+from bench_runner.util import PathLike
 
 
 def remove_benchmark(
-    filename: Path, remove: set[str], keep_hash: set[str], dry_run: bool
+    filename: PathLike, remove: set[str], keep_hash: set[str], dry_run: bool
 ):
-    with filename.open() as fd:
+    with Path(filename).open() as fd:
         data = json.load(fd)
 
     if data["metadata"]["benchmark_hash"] in keep_hash:
@@ -37,7 +38,7 @@ def remove_benchmark(
     data["benchmarks"] = benchmarks
 
     if not dry_run:
-        with filename.open("w") as fd:
+        with Path(filename).open("w") as fd:
             json.dump(data, fd, indent=2)
 
 

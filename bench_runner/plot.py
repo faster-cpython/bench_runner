@@ -24,6 +24,7 @@ matplotlib.use("agg")
 from . import config as mconfig
 from . import flags as mflags
 from . import result
+from .util import PathLike
 
 
 INTERPRETER_HEAVY = {
@@ -48,7 +49,7 @@ INTERPRETER_HEAVY = {
 }
 
 
-def savefig(output_filename: Path, **kwargs):
+def savefig(output_filename: PathLike, **kwargs):
     class Options:
         quiet = True
         remove_descriptive_elements = True
@@ -57,6 +58,8 @@ def savefig(output_filename: Path, **kwargs):
         strip_ids = True
         shorten_ids = True
         digits = 3
+
+    output_filename = Path(output_filename)
 
     plt.savefig(output_filename, **kwargs)
     plt.close("all")
@@ -139,7 +142,7 @@ def formatter(val, pos):
 
 def plot_diff(
     combined_data: result.CombinedData,
-    output_filename: Path,
+    output_filename: PathLike,
     title: str,
     differences: tuple[str, str],
 ) -> None:
@@ -227,7 +230,7 @@ def add_axvline(ax, dt: datetime.datetime, name: str):
 
 def longitudinal_plot(
     results: Iterable[result.Result],
-    output_filename: Path,
+    output_filename: PathLike,
     getter: Callable[
         [result.BenchmarkComparison], float | None
     ] = lambda r: r.hpt_percentile_float(99),
@@ -243,6 +246,7 @@ def longitudinal_plot(
             data[key] = value
             return value
 
+    output_filename = Path(output_filename)
     cfg = get_plot_config()
 
     data_cache = output_filename.with_suffix(".json")
@@ -252,7 +256,7 @@ def longitudinal_plot(
     else:
         data = {}
 
-    axs: Sequence[matplotlib.Axes]
+    axs: Sequence[matplotlib.Axes]  # pyright: ignore
 
     fig, axs = plt.subplots(
         len(cfg["versions"]),
@@ -350,7 +354,7 @@ def longitudinal_plot(
         json.dump(data, fd, indent=2)
 
 
-def _standardize_xlims(axs: Sequence[matplotlib.Axes]) -> None:
+def _standardize_xlims(axs: Sequence[matplotlib.Axes]) -> None:  # pyright: ignore
     if not len(axs):
         return
 
@@ -369,13 +373,15 @@ def _standardize_xlims(axs: Sequence[matplotlib.Axes]) -> None:
 
 def flag_effect_plot(
     results: Iterable[result.Result],
-    output_filename: Path,
+    output_filename: PathLike,
     getter: Callable[
         [result.BenchmarkComparison], float | None
     ] = lambda r: r.hpt_percentile_float(99),
     differences: tuple[str, str] = ("slower", "faster"),
     title="Performance improvement by configuration",
 ):
+    output_filename = Path(output_filename)
+
     # We don't need to track the performance of the Tier 2 configuration
     all_flags = [flag for flag in mflags.FLAGS if flag.name != "PYTHON_UOPS"]
     flags = [flag.name for flag in reversed(all_flags)]
@@ -399,7 +405,7 @@ def flag_effect_plot(
     else:
         data = {}
 
-    axs: Sequence[matplotlib.Axes]
+    axs: Sequence[matplotlib.Axes]  # pyright: ignore
 
     fig, axs = plt.subplots(
         len(flags), 1, figsize=(10, 5 * len(flags)), layout="constrained"

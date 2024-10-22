@@ -10,10 +10,12 @@ try:
 except ImportError:
     import tomli as tomllib  # type: ignore
 
+from .util import PathLike
+
 
 @functools.cache
 def get_bench_runner_config(
-    filepath: Path = Path("bench_runner.toml"),
+    filepath: PathLike = Path("bench_runner.toml"),
 ):
-    with open(filepath, "rb") as fd:
+    with Path(filepath).open("rb") as fd:
         return tomllib.load(fd)

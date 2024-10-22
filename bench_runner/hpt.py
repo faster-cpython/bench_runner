@@ -35,16 +35,16 @@ import numpy as np
 from numpy.typing import NDArray
 
 
-from bench_runner import util
-
+from . import util
+from .util import PathLike
 
 ACC_MAXSU = 2
 
 
 def load_from_json(
-    json_path: Path,
+    json_path: PathLike,
 ) -> dict[str, NDArray[np.float64]]:
-    with json_path.open() as fd:
+    with Path(json_path).open() as fd:
         content = json.load(fd)
 
     return load_data(content)
@@ -311,7 +311,7 @@ def maxspeedup(
             return base_su
 
 
-def make_report(ref: Path, head: Path, alpha=0.1):
+def make_report(ref: PathLike, head: PathLike, alpha=0.1):
     # The original code inverted the inputs from the standard in bench_runner,
     # and it's easier to just flip them here.
     a, b = head, ref

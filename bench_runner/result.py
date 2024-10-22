@@ -30,6 +30,7 @@ from . import hpt
 from . import plot
 from . import runners
 from . import util
+from .util import PathLike
 
 
 CombinedData = list[tuple[str, np.ndarray | None, float]]
@@ -54,7 +55,7 @@ def _clean_for_url(string: str) -> str:
     return string.replace("-", "%2d")
 
 
-def _get_platform_value(python: Path, item: str) -> str:
+def _get_platform_value(python: PathLike, item: str) -> str:
     """
     Get a value from the platform module of the given Python interpreter.
     """
@@ -64,7 +65,7 @@ def _get_platform_value(python: Path, item: str) -> str:
     return output.strip().lower()
 
 
-def _get_architecture(python: Path) -> str:
+def _get_architecture(python: PathLike) -> str:
     machine = _get_platform_value(python, "machine")
     bits = eval(_get_platform_value(python, "architecture"))[0]
     if bits == "32bit":
@@ -152,7 +153,9 @@ class BenchmarkComparison(Comparison):
         fd.write(f"- memory change: {self._calculate_memory_change()}")
         return fd.getvalue()
 
-    def write_table(self, filename: Path) -> str | None:
+    def write_table(self, filename: PathLike) -> str | None:
+        filename = Path(filename)
+
         entries = [
             ("fork", unquote(self.head.fork)),
             ("ref", self.head.ref),
@@ -212,7 +215,7 @@ class BenchmarkComparison(Comparison):
         head_data = self.head.get_timing_data()
         return self._get_combined_data(ref_data, head_data)
 
-    def write_timing_plot(self, filename: Path) -> None:
+    def write_timing_plot(self, filename: PathLike) -> None:
         plot.plot_diff(
             self.get_timing_diff(),
             filename,
@@ -231,7 +234,7 @@ class BenchmarkComparison(Comparison):
         # Explicitly reversed so higher is bigger
         return self._get_combined_data(head_data, ref_data)
 
-    def write_memory_plot(self, filename: Path) -> None:
+    def write_memory_plot(self, filename: PathLike) -> None:
         plot.plot_diff(
             self.get_memory_diff(),
             filename,
@@ -376,7 +379,9 @@ class PystatsComparison(Comparison):
             return
         yield (self.write_pystats_diff, ".md", "pystats diff")
 
-    def write_pystats_diff(self, filename: Path) -> None:
+    def write_pystats_diff(self, filename: PathLike) -> None:
+        filename = Path(filename)
+
         try:
             contents = subprocess.check_output(
                 [
@@ -434,7 +439,8 @@ class Result:
         self.bases = {}
 
     @classmethod
-    def from_filename(cls, filename: Path) -> "Result":
+    def from_filename(cls, filename: PathLike) -> "Result":
+        filename = Path(filename)
         (
             name,
             _,
@@ -469,7 +475,7 @@ class Result:
     @classmethod
     def from_scratch(
         cls,
-        python: Path,
+        python: PathLike,
         fork: str,
         ref: str,
         extra: Iterable[str] | None = None,
@@ -687,7 +693,7 @@ class Result:
 
 
 def has_result(
-    results_dir: Path,
+    results_dir: PathLike,
     commit_hash: str,
     machine: str,
     pystats: bool,
@@ -822,14 +828,14 @@ def match_to_bases(
 
 def load_all_results(
     bases: Sequence[str] | None,
-    results_dir: Path,
+    results_dir: PathLike,
     sorted: bool = True,
     match: bool = True,
     progress: bool = True,
 ) -> list[Result]:
     results = []
 
-    for entry in results_dir.glob("**/*.json"):
+    for entry in Path(results_dir).glob("**/*.json"):
         result = Result.from_filename(entry)
         if result.result_info[0] not in ["raw results", "pystats raw"]:
             continue

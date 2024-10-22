@@ -20,6 +20,7 @@ from bench_runner import flags as mflags
 from bench_runner import result as mod_result
 from bench_runner import runners as mod_runners
 from bench_runner import util
+from bench_runner.util import PathLike
 
 
 ParsedCommits: TypeAlias = Sequence[
@@ -49,7 +50,7 @@ def get_machines(results: Iterable[mod_result.Result]) -> set[str]:
 
 
 def compare_pair(
-    output_dir: Path,
+    output_dir: PathLike,
     machine: str,
     ref_name: str,
     ref: mod_result.Result,
@@ -57,6 +58,8 @@ def compare_pair(
     head: mod_result.Result,
     counter: list[int],
 ) -> str:
+    output_dir = Path(output_dir)
+
     rich.print(f"Comparing {counter[0]+1}/{counter[1]}", end="\r")
     counter[0] += 1
 
@@ -79,7 +82,7 @@ def do_one_to_many(
     fd: TextIO,
     parsed_commits: ParsedCommits,
     machine: str,
-    output_dir: Path,
+    output_dir: PathLike,
     counter: list[int],
 ) -> None:
     _, _, first_name, first_results = parsed_commits[0]
@@ -100,7 +103,7 @@ def do_many_to_many(
     fd,
     parsed_commits: ParsedCommits,
     machine: str,
-    output_dir: Path,
+    output_dir: PathLike,
     counter: list[int],
 ) -> None:
     write_row(fd, ["", *[f"{x[2]} ({x[0]})" for x in parsed_commits]])
@@ -124,7 +127,7 @@ def do_many_to_many(
     fd.write("\n\nRows are 'bases', columns are 'heads'\n")
 
 
-def _main(commits: Sequence[str], output_dir: Path, comparison_type: str):
+def _main(commits: Sequence[str], output_dir: PathLike, comparison_type: str):
     results = mod_result.load_all_results(
         None, Path("results"), sorted=False, match=False
     )

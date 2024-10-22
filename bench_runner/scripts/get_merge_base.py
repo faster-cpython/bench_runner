@@ -10,10 +10,11 @@ from bench_runner import flags as mflags
 from bench_runner import git
 from bench_runner.result import has_result
 from bench_runner import util
+from bench_runner.util import PathLike
 
 
-def get_python_version(cpython: Path):
-    with (cpython / "Include" / "patchlevel.h").open() as fd:
+def get_python_version(cpython: PathLike):
+    with (Path(cpython) / "Include" / "patchlevel.h").open() as fd:
         for line in fd.readlines():
             if m := re.match(r'#define\s+PY_VERSION\s+"(.+)"', line.strip()):
                 return m.groups()[0]
@@ -25,7 +26,7 @@ def _main(
     machine: str,
     pystats: bool,
     flags: list[str],
-    cpython: Path = Path("cpython"),
+    cpython: PathLike = Path("cpython"),
 ) -> None:
     commit_hash = git.get_git_hash(cpython)
     print(f"head={commit_hash}")
