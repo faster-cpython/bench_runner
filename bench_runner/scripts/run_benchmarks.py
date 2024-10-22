@@ -12,7 +12,7 @@ import subprocess
 import sys
 import tempfile
 import textwrap
-from typing import Iterable, Union
+from typing import Iterable
 
 
 import rich_argparse
@@ -23,6 +23,7 @@ from bench_runner import git
 from bench_runner.result import Result
 from bench_runner.table import md_link
 from bench_runner import util
+from bench_runner.util import PathLike
 
 
 REPO_ROOT = Path()
@@ -61,7 +62,7 @@ def get_benchmark_names(benchmarks: str) -> list[str]:
 
 
 def run_benchmarks(
-    python: Union[Path, str],
+    python: PathLike,
     benchmarks: str,
     command_prefix: Iterable[str] | None = None,
     test_mode: bool = False,
@@ -122,7 +123,7 @@ def run_benchmarks(
 
 
 def collect_pystats(
-    python: Path,
+    python: PathLike,
     benchmarks: str,
     fork: str,
     ref: str,
@@ -172,7 +173,7 @@ def collect_pystats(
         run_summarize_stats(python, fork, ref, "all", benchmark_links, flags=flags)
 
 
-def perf_to_csv(lines: Iterable[str], output: Path):
+def perf_to_csv(lines: Iterable[str], output: PathLike):
     event_count_prefix = "# Event count (approx.): "
     total = None
 
@@ -194,14 +195,14 @@ def perf_to_csv(lines: Iterable[str], output: Path):
 
     rows.sort(key=itemgetter(0), reverse=True)
 
-    with output.open("w") as fd:
+    with Path(output).open("w") as fd:
         csvwriter = csv.writer(fd)
         csvwriter.writerow(["self", "pid", "command", "shared_obj", "symbol"])
         for row in rows:
             csvwriter.writerow(row)
 
 
-def collect_perf(python: Path, benchmarks: str):
+def collect_perf(python: PathLike, benchmarks: str):
     all_benchmarks = get_benchmark_names(benchmarks)
 
     if PROFILING_RESULTS.is_dir():
@@ -250,13 +251,13 @@ def collect_perf(python: Path, benchmarks: str):
 
 
 def update_metadata(
-    filename: Path,
+    filename: PathLike,
     fork: str,
     ref: str,
-    cpython: Path = Path("cpython"),
+    cpython: PathLike = Path("cpython"),
     run_id: str | None = None,
 ) -> None:
-    with filename.open() as fd:
+    with Path(filename).open() as fd:
         content = json.load(fd)
 
     metadata = content.setdefault("metadata", {})
@@ -275,12 +276,12 @@ def update_metadata(
     if actor is not None:
         metadata["github_actor"] = actor
 
-    with filename.open("w") as fd:
+    with Path(filename).open("w") as fd:
         json.dump(content, fd, indent=2)
 
 
 def copy_to_directory(
-    filename: Path, python: Path, fork: str, ref: str, flags: Iterable[str]
+    filename: PathLike, python: PathLike, fork: str, ref: str, flags: Iterable[str]
 ) -> None:
     result = Result.from_scratch(python, fork, ref, flags=flags)
     result.filename.parent.mkdir(parents=True, exist_ok=True)
@@ -288,7 +289,7 @@ def copy_to_directory(
 
 
 def run_summarize_stats(
-    python: Path,
+    python: PathLike,
     fork: str,
     ref: str,
     benchmark: str,
@@ -364,7 +365,7 @@ def select_benchmarks(benchmarks: str):
 
 def _main(
     mode: str,
-    python: Path,
+    python: PathLike,
     fork: str,
     ref: str,
     benchmarks: str,

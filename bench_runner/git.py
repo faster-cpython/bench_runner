@@ -10,9 +10,12 @@ import subprocess
 import rich
 
 
+from .util import PathLike
+
+
 def get_log(
     format: str,
-    dirname: Path,
+    dirname: PathLike,
     ref: str | None = None,
     n: int = 1,
     extra: list[str] | None = None,
@@ -42,22 +45,22 @@ def get_log(
     ).strip()
 
 
-def get_git_hash(dirname: Path) -> str:
+def get_git_hash(dirname: PathLike) -> str:
     return get_log("%h", dirname)
 
 
-def get_git_commit_date(dirname: Path) -> str:
+def get_git_commit_date(dirname: PathLike) -> str:
     return get_log("%cI", dirname)
 
 
-def remove(repodir: Path, path: Path) -> None:
+def remove(repodir: Path, path: PathLike) -> None:
     subprocess.check_output(
         ["git", "rm", str(path)],
         cwd=repodir,
     )
 
 
-def get_git_merge_base(dirname: Path) -> str | None:
+def get_git_merge_base(dirname: PathLike) -> str | None:
     # We need to make sure we have commits from main that are old enough to be
     # the base of this branch, but not so old that we waste a ton of bandwidth
     commit_date = datetime.datetime.fromisoformat(get_git_commit_date(dirname))
@@ -109,14 +112,14 @@ def get_git_merge_base(dirname: Path) -> str | None:
         return merge_base
 
 
-def get_tags(dirname: Path) -> list[str]:
+def get_tags(dirname: PathLike) -> list[str]:
     subprocess.check_call(["git", "fetch", "--tags"], cwd=dirname)
     return subprocess.check_output(
         ["git", "tag"], cwd=dirname, encoding="utf-8"
     ).splitlines()
 
 
-def get_commits_between(dirname: Path, ref1: str, ref2: str) -> list[str]:
+def get_commits_between(dirname: PathLike, ref1: str, ref2: str) -> list[str]:
     return list(
         subprocess.check_output(
             ["git", "rev-list", "--ancestry-path", f"{ref1}..{ref2}"],
@@ -126,6 +129,6 @@ def get_commits_between(dirname: Path, ref1: str, ref2: str) -> list[str]:
     )
 
 
-def bisect_commits(dirname: Path, ref1: str, ref2: str) -> str:
+def bisect_commits(dirname: PathLike, ref1: str, ref2: str) -> str:
     commits = get_commits_between(dirname, ref1, ref2)
     return commits[len(commits) // 2]

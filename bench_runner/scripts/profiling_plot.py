@@ -20,6 +20,9 @@ import numpy as np
 import rich_argparse
 
 
+from bench_runner.util import PathLike
+
+
 SANITY_CHECK = True
 
 
@@ -253,11 +256,13 @@ def category_for_obj_sym(obj: str, sym: str) -> str:
 
 
 def handle_benchmark(
-    csv_path: Path,
+    csv_path: PathLike,
     md: IO[str],
     results: defaultdict[str, defaultdict[str, float]],
     categories: defaultdict[str, defaultdict[tuple[str, str], float]],
 ):
+    csv_path = Path(csv_path)
+
     stem = csv_path.stem.split(".", 1)[0]
 
     md.write(f"\n## {stem}\n\n")
@@ -322,7 +327,7 @@ def handle_benchmark(
 def plot_bargraph(
     results: defaultdict[str, defaultdict[str, float]],
     categories: list[tuple[float, str]],
-    output_filename: Path,
+    output_filename: PathLike,
 ):
     fig, ax = plt.subplots(figsize=(8, len(results) * 0.3), layout="constrained")
 
@@ -357,7 +362,7 @@ def plot_bargraph(
     fig.savefig(output_filename)
 
 
-def plot_pie(categories: list[tuple[float, str]], output_filename: Path):
+def plot_pie(categories: list[tuple[float, str]], output_filename: PathLike):
     fig, ax = plt.subplots(figsize=(5, 3), layout="constrained")
     values = [x[0] for x in categories]
     labels = [i < 10 and f"{x[1]} {x[0]:.2%}" or "" for i, x in enumerate(categories)]
@@ -380,7 +385,10 @@ def plot_pie(categories: list[tuple[float, str]], output_filename: Path):
     fig.savefig(output_filename, dpi=200)
 
 
-def _main(input_dir: Path, output_prefix: Path):
+def _main(input_dir: PathLike, output_prefix: PathLike):
+    input_dir = Path(input_dir)
+    output_prefix = Path(output_prefix)
+
     results = defaultdict(lambda: defaultdict(float))
     categories = defaultdict(lambda: defaultdict(float))
 

@@ -13,7 +13,7 @@ except ImportError:
 
 @functools.cache
 def get_bench_runner_config(
-    filepath: Path = Path("bench_runner.toml"),
+    filepath: Path | str = Path("bench_runner.toml"),
 ):
-    with open(filepath, "rb") as fd:
+    with Path(filepath).open("rb") as fd:
         return tomllib.load(fd)

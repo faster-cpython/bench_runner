@@ -22,13 +22,14 @@ from bench_runner import gh
 from bench_runner import git
 from bench_runner import result as mod_result
 from bench_runner import runners
+from bench_runner.util import PathLike
 
 
 RunnerType: TypeAlias = runners.Runner
 
 
 @functools.cache
-def _get_hash_and_date(cpython: Path, ref: str) -> tuple[str, datetime.datetime]:
+def _get_hash_and_date(cpython: PathLike, ref: str) -> tuple[str, datetime.datetime]:
     hash, date = git.get_log("%H %cI", cpython, ref).split()
     return hash, datetime.datetime.fromisoformat(date)
 
@@ -38,7 +39,7 @@ class Commit:
     Represents a single commit to possibly benchmark.
     """
 
-    def __init__(self, cpython: Path, ref: str, source: str):
+    def __init__(self, cpython: PathLike, ref: str, source: str):
         self.cpython = cpython
         self.ref = ref
         self.source = source
@@ -61,7 +62,7 @@ class Commit:
 
 
 def get_all_with_prefix(
-    cpython: Path, tags: Iterable[str], prefix: str
+    cpython: PathLike, tags: Iterable[str], prefix: str
 ) -> Iterable[Commit]:
     """
     Get all tags with the given prefix.
@@ -72,7 +73,7 @@ def get_all_with_prefix(
 
 
 def get_latest_with_prefix(
-    cpython: Path, tags: Iterable[str], prefix: str
+    cpython: PathLike, tags: Iterable[str], prefix: str
 ) -> Iterable[Commit]:
     """
     Get the most recent (by commit date) tag with the given prefix.
@@ -97,7 +98,7 @@ def next_weekday(d: datetime.datetime, weekday: int) -> datetime.datetime:
     return d + datetime.timedelta(days_ahead)
 
 
-def get_weekly_since(cpython: Path, start_date: str) -> Iterable[Commit]:
+def get_weekly_since(cpython: PathLike, start_date: str) -> Iterable[Commit]:
     """
     Get weekly commits on Sundays since the given start date.
     """
@@ -123,7 +124,7 @@ def get_weekly_since(cpython: Path, start_date: str) -> Iterable[Commit]:
                 break
 
 
-def get_bisect(cpython: Path, refs: Sequence[str]) -> Iterable[Commit]:
+def get_bisect(cpython: PathLike, refs: Sequence[str]) -> Iterable[Commit]:
     if len(refs) != 2:
         raise ValueError(f"Each --bisect entry must contain 2 refs, got {len(refs)}")
 
@@ -177,7 +178,7 @@ def remove_existing(
 
 
 def get_commits(
-    cpython: Path,
+    cpython: PathLike,
     tags: Iterable[str],
     all_with_prefix: Iterable[str],
     latest_with_prefix: Iterable[str],
@@ -197,7 +198,9 @@ def get_commits(
         yield from get_bisect(cpython, entry)
 
 
-def deduplicate_commits(cpython: Path, commits: Iterable[Commit]) -> Iterable[Commit]:
+def deduplicate_commits(
+    cpython: PathLike, commits: Iterable[Commit]
+) -> Iterable[Commit]:
     commits_by_hash = defaultdict(list)
 
     for commit in commits:
@@ -226,7 +229,7 @@ def format_runners(
 
 
 def _main(
-    cpython: Path,
+    cpython: PathLike,
     all_with_prefix: Sequence[str] | None,
     latest_with_prefix: Sequence[str] | None,
     weekly_since: Sequence[str] | None,
