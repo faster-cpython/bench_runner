@@ -64,7 +64,10 @@ def save_generated_results(results: Iterable[Result], force: bool = False) -> No
             if compare.valid_comparison:
                 for func, suffix, _ in compare.get_files():
                     filename = util.apply_suffix(compare.base_filename, suffix)
-                    if not filename.exists() or force:
+                    if filename.exists() and force:
+                        filename.unlink()
+
+                    if not filename.exists():
                         work.append((func, filename))
 
     assert len(list(set(x[1] for x in work))) == len(work)
