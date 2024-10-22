@@ -31,4 +31,8 @@ def apply_suffix(path: Path, suffix: str) -> Path:
 @functools.cache
 def get_excluded_benchmarks() -> set[str]:
     conf = config.get_bench_runner_config()
-    return set(conf.get("benchmarks", {}).get("excluded", []))
+    benchmarks_section = conf.get("benchmarks", {})
+    for key in ("excluded", "excluded_benchmarks"):
+        if key in benchmarks_section:
+            return set(benchmarks_section[key])
+    return set()
