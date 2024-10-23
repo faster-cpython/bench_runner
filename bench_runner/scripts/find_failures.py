@@ -116,7 +116,7 @@ def write_output(fd: TextIO, failures: Failures) -> None:
                 table.write_details(
                     fd,
                     f"Log for {bm} on {machine} {config}",
-                    ["```"] + loglines + ["```"],
+                    ["```"] + loglines[-50:] + ["```"],
                 )
 
 
