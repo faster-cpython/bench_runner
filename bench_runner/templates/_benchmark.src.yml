@@ -77,6 +77,7 @@ jobs:
       - name: Checkout CPython
         uses: actions/checkout@v4
         with:
+          persist-credentials: false
           repository: ${{ inputs.fork }}/cpython
           path: cpython
           ref: ${{ inputs.ref }}
@@ -96,6 +97,7 @@ jobs:
         uses: actions/checkout@v4
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         with:
+          persist-credentials: false
           repository: pyston/python-macrobenchmarks
           path: pyston-benchmarks
           ref: ${{ env.PYSTON_BENCHMARKS_HASH }}
@@ -103,6 +105,7 @@ jobs:
         uses: actions/checkout@v4
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         with:
+          persist-credentials: false
           repository: mdboom/pyperformance
           path: pyperformance
           ref: ${{ env.PYPERFORMANCE_HASH }}
@@ -163,6 +166,7 @@ jobs:
       - name: Checkout CPython
         uses: actions/checkout@v4
         with:
+          persist-credentials: false
           repository: ${{ inputs.fork }}/cpython
           path: cpython
           ref: ${{ inputs.ref }}
@@ -182,6 +186,7 @@ jobs:
         uses: actions/checkout@v4
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         with:
+          persist-credentials: false
           repository: pyston/python-macrobenchmarks
           path: pyston-benchmarks
           ref: ${{ env.PYSTON_BENCHMARKS_HASH }}
@@ -189,6 +194,7 @@ jobs:
         uses: actions/checkout@v4
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         with:
+          persist-credentials: false
           repository: mdboom/pyperformance
           path: pyperformance
           ref: ${{ env.PYPERFORMANCE_HASH }}
@@ -257,6 +263,7 @@ jobs:
       - name: Checkout CPython
         uses: actions/checkout@v4
         with:
+          persist-credentials: false
           repository: ${{ inputs.fork }}/cpython
           path: cpython
           ref: ${{ inputs.ref }}
@@ -276,6 +283,7 @@ jobs:
         uses: actions/checkout@v4
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         with:
+          persist-credentials: false
           repository: pyston/python-macrobenchmarks
           path: pyston-benchmarks
           ref: ${{ env.PYSTON_BENCHMARKS_HASH }}
@@ -283,6 +291,7 @@ jobs:
         uses: actions/checkout@v4
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         with:
+          persist-credentials: false
           repository: mdboom/pyperformance
           path: pyperformance
           ref: ${{ env.PYPERFORMANCE_HASH }}
