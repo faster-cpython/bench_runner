@@ -18,6 +18,7 @@ jobs:
       - name: Checkout CPython
         uses: actions/checkout@v4
         with:
+          persist-credentials: false
           repository: python/cpython
           path: cpython
           ref: main
