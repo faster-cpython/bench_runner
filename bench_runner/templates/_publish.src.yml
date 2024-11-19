@@ -19,21 +19,13 @@ jobs:
   mirror:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout benchmarking-public
+      - name: Checkout benchmarking
         uses: actions/checkout@v4
         with:
-          path: public
           ref: main
-          repository: ${{ github.repository }}-public
-          token: ${{ secrets.BENCHMARK_MIRROR }}
+          fetch-depth: 0
       - name: Mirror
         run: |
-          cd public
-          git remote add upstream https://github.com/faster-cpython/benchmarking
-          git fetch upstream
-          git reset --hard upstream/main
-      - name: Push
-        if: ${{ !inputs.dry_run }}
-        run: |
-          cd public
-          git push origin main
+          gh repo sync ${{ github.repository }}-public
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
