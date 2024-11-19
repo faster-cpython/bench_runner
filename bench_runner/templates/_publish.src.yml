@@ -19,13 +19,8 @@ jobs:
   mirror:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout benchmarking
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
       - name: Mirror
         run: |
-          gh repo sync ${{ github.repository }}-public
+          gh repo sync ${{ github.repository }}-public --source ${{ github.repository }}
         env:
           GH_TOKEN: ${{ secrets.BENCHMARK_MIRROR }}
