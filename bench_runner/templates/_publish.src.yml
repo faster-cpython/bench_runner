@@ -22,6 +22,7 @@ jobs:
       - name: Checkout benchmarking
         uses: actions/checkout@v4
         with:
+          ref: main
           # This has to be enough depth to handle since the last time we published.
           # As a rule of thumb, (number of machines * 2, plus the generated stuff) * 2
           fetch-depth: 20
