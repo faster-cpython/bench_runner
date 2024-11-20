@@ -19,8 +19,13 @@ jobs:
   mirror:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout benchmarking
+        uses: actions/checkout@v4
+        with:
+          # This has to be enough depth to handle since the last time we published.
+          # As a rule of thumb, (number of machines * 2, plus the generated stuff) * 2
+          fetch-depth: 20
       - name: Mirror
         run: |
-          gh repo sync ${{ github.repository }}-public --source ${{ github.repository }}
-        env:
-          GH_TOKEN: ${{ secrets.BENCHMARK_MIRROR }}
+          git remote add public https://${{ secrets.BENCHMARK_MIRROR }}@github.com/${{ github.repository }}-public
+          git push -f public main
