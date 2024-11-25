@@ -147,6 +147,10 @@ class BenchmarkComparison(Comparison):
             )
         )
         fd.write("\n")
+        fd.write(
+            f"- Geometric mean (including insignificant results): {self.geometric_mean}"
+        )
+        fd.write("\n")
         fd.write(hpt.make_report(self.ref.filename, self.head.filename))
         fd.write("\n")
         fd.write("# Memory\n")
@@ -248,22 +252,24 @@ class BenchmarkComparison(Comparison):
         )
 
     @functools.cached_property
-    def geometric_mean(self) -> str:
+    def geometric_mean_float(self) -> float | None:
         if not self.valid_comparison:
-            return ""
+            return None
 
-        lines = self._contents_lines
+        data = self.get_timing_diff()
 
-        # We want to get the *last* geometric mean in the file, in case
-        # it's divided by tags
-        for line in lines[::-1]:
-            if "Geometric mean" in line:
-                geometric_mean = line.split("|")[3].strip()
-                break
+        product = np.prod(np.array([x[2] for x in data if x[1] is not None]))
+        return float(product ** (1.0 / len(data)))
+
+    @property
+    def geometric_mean(self) -> str:
+        gm = self.geometric_mean_float
+        if gm is None or gm == 1.0:
+            return "not sig"
+        elif gm > 1.0:
+            return f"{gm:.03f}x faster"
         else:
-            geometric_mean = "not sig"
-
-        return geometric_mean
+            return f"{1.0-gm:.03f}x slower"
 
     def _calculate_memory_change(self):
         # Windows doesn't have memory data
