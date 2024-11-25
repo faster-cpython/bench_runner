@@ -233,7 +233,7 @@ def longitudinal_plot(
     output_filename: PathLike,
     getter: Callable[
         [result.BenchmarkComparison], float | None
-    ] = lambda r: r.hpt_percentile_float(99),
+    ] = lambda r: r.geometric_mean_float,
     differences: tuple[str, str] = ("slower", "faster"),
     title="Performance improvement by configuration",
 ):
@@ -376,7 +376,7 @@ def flag_effect_plot(
     output_filename: PathLike,
     getter: Callable[
         [result.BenchmarkComparison], float | None
-    ] = lambda r: r.hpt_percentile_float(99),
+    ] = lambda r: r.geometric_mean_float,
     differences: tuple[str, str] = ("slower", "faster"),
     title="Performance improvement by configuration",
 ):
