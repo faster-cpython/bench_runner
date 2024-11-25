@@ -269,7 +269,7 @@ class BenchmarkComparison(Comparison):
         elif gm > 1.0:
             return f"{gm:.03f}x faster"
         else:
-            return f"{1.0-gm:.03f}x slower"
+            return f"{1.0+(1.0-gm):.03f}x slower"
 
     def _calculate_memory_change(self):
         # Windows doesn't have memory data
