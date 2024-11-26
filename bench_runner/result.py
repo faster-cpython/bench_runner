@@ -148,9 +148,9 @@ class BenchmarkComparison(Comparison):
         )
         fd.write("\n")
         fd.write(
-            f"- Geometric mean (including insignificant results): {self.geometric_mean}"
+            f"- Geometric mean (including insignificant results): {self._calculate_geometric_mean()}"
         )
-        fd.write("\n")
+        fd.write("\n\n")
         fd.write(hpt.make_report(self.ref.filename, self.head.filename))
         fd.write("\n")
         fd.write("# Memory\n")
@@ -261,8 +261,7 @@ class BenchmarkComparison(Comparison):
         product = np.prod(np.array([x[2] for x in data if x[1] is not None]))
         return float(product ** (1.0 / len(data)))
 
-    @property
-    def geometric_mean(self) -> str:
+    def _calculate_geometric_mean(self) -> str:
         gm = self.geometric_mean_float
         if gm is None or gm == 1.0:
             return "not sig"
@@ -270,6 +269,22 @@ class BenchmarkComparison(Comparison):
             return f"{gm:.03f}x faster"
         else:
             return f"{1.0+(1.0-gm):.03f}x slower"
+
+    @property
+    def geometric_mean(self) -> str:
+        if not self.valid_comparison:
+            return ""
+
+        lines = self._contents_lines
+
+        for line in lines[::-1]:
+            if "Geometric mean (including insignificant results)" in line:
+                geometric_mean = line.split(":", maxsplit=1)[-1].strip()
+                break
+        else:
+            geometric_mean = "not sig"
+
+        return geometric_mean
 
     def _calculate_memory_change(self):
         # Windows doesn't have memory data
