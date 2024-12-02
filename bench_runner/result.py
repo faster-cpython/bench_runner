@@ -148,7 +148,8 @@ class BenchmarkComparison(Comparison):
         )
         fd.write("\n")
         fd.write(
-            f"- Geometric mean (including insignificant results): {self._calculate_geometric_mean()}"
+            "- Geometric mean (including insignificant results): "
+            f"{self._calculate_geometric_mean()}"
         )
         fd.write("\n\n")
         fd.write(hpt.make_report(self.ref.filename, self.head.filename))
