@@ -182,16 +182,16 @@ def perf_to_csv(lines: Iterable[str], output: PathLike):
         line = line.strip()
         if line.startswith(event_count_prefix):
             total = int(line[len(event_count_prefix) :].strip())
-            continue
-        if line.startswith("#") or line == "":
-            continue
-        if total is None:
+        elif line.startswith("#") or line == "":
+            pass
+        elif total is None:
             raise ValueError("Could not find total sample count")
-        _, period, command, _, symbol, shared, _ = line.split(maxsplit=6)
-        pid, command = command.split(":")
-        self_time = float(int(period)) / total
-        if self_time > 0.0:
-            rows.append([self_time, pid, command, shared, symbol])
+        else:
+            _, period, command, _, symbol, shared, _ = line.split(maxsplit=6)
+            pid, command = command.split(":")
+            self_time = float(int(period)) / total
+            if self_time > 0.0:
+                rows.append([self_time, pid, command, shared, symbol])
 
     rows.sort(key=itemgetter(0), reverse=True)
 
