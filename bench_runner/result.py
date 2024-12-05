@@ -18,7 +18,6 @@ from urllib.parse import unquote
 
 import numpy as np
 from packaging import version
-import pyperf
 import rich.progress
 
 
@@ -195,7 +194,7 @@ class BenchmarkComparison(Comparison):
 
         def calculate_diffs(ref_values, head_values) -> tuple[np.ndarray | None, float]:
             if len(ref_values) > 3 and len(head_values) > 3:
-                sig, t_score = pyperf._utils.is_significant(ref_values, head_values)
+                sig, t_score = util.is_significant(ref_values, head_values)
                 if not sig:
                     return None, 0.0
                 else:
