@@ -258,7 +258,9 @@ def get_directory_indices_entries(
         dirpath = result.filename.parent
         dirpaths.add(dirpath)
         refs[dirpath].add(result.ref)
-        entries.append((dirpath, None, None, f"fork: {unquote(result.fork)}"))
+        entries.append(
+            (dirpath, None, None, f"fork: {unquote(result.fork)}/{unquote(result.ref)}")
+        )
         entries.append((dirpath, None, None, f"version: {result.version}"))
         config = ",".join(mflags.flags_to_human(result.flags))
         entries.append((dirpath, None, None, f"config: {config}"))
@@ -266,7 +268,7 @@ def get_directory_indices_entries(
         entries.append((dirpath, None, None, f"commit hash: {link}"))
         entries.append((dirpath, None, None, f"commit date: {result.commit_datetime}"))
         if result.commit_merge_base is not None:
-            link = table.link_to_hash(result.commit_merge_base, result.fork)
+            link = table.link_to_hash(result.commit_merge_base, "python")
             entries.append((dirpath, None, None, f"commit merge base: {link}"))
         if result.github_action_url is not None:
             link = table.md_link("GitHub Action run", result.github_action_url)
