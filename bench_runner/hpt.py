@@ -178,20 +178,20 @@ def prepare_one_row(
     rank, rep = get_rank(por_x)
     wl = get_ranksum(rank[:n], rep[:n])
     wr = get_ranksum(rank[n:], rep[n:])
-    ml = np.median(por_x[:n])
-    mr = np.median(por_x[n:])
+    ml = np.float64(np.median(por_x[:n]))
+    mr = np.float64(np.median(por_x[n:]))
 
     return wl, wr, ml, mr
 
 
-def unibench(ub_x: NDArray[np.float64], alpha: float) -> np.float64 | None:
+def unibench(ub_x: NDArray[np.float64], alpha: float) -> np.float64:
     wl, _, ml, mr = prepare_one_row(ub_x)
     target = float(wl)
 
     rst_lower, rst_upper = ranksum_table(len(ub_x) // 2, alpha)
     if target <= rst_lower or target >= rst_upper:
         return np.subtract(ml, mr)
-    return None
+    return np.float64(np.nan)
 
 
 def crossbench(cb_x: NDArray[np.float64]) -> tuple[float, float, float]:
@@ -230,7 +230,7 @@ def hpt_basic(
     meddiff = np.zeros((len(mtx_a),), float)
 
     for i, bm in enumerate(mtx_a.keys()):
-        hpt_x = np.hstack((multi * mtx_a[bm], mtx_b[bm]))
+        hpt_x = np.hstack((multi * mtx_a[bm], mtx_b[bm]), dtype=np.float64)
         meddiff[i] = unibench(hpt_x, alpha)
 
     return crossbench(meddiff)
