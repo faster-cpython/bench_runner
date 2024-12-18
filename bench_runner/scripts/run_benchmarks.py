@@ -360,6 +360,8 @@ def select_benchmarks(benchmarks: str):
         return ",".join(
             ["all", *[f"-{x}" for x in util.get_excluded_benchmarks() if x]]
         )
+    elif benchmarks == "all_and_excluded":
+        return "all"
     return benchmarks
 
 
