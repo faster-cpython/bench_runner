@@ -35,7 +35,7 @@ jobs:
       fork: python
       ref: ${{ needs.determine_head.outputs.commit }}
       machine: all
-      benchmarks: all
+      benchmarks: all_and_excluded
       pgo: true
       tier2: false
     secrets: inherit
@@ -47,7 +47,7 @@ jobs:
       fork: python
       ref: ${{ needs.determine_head.outputs.commit }}
       machine: all
-      benchmarks: all
+      benchmarks: all_and_excluded
       pgo: true
       tier2: false
       jit: true
@@ -60,7 +60,7 @@ jobs:
       fork: python
       ref: ${{ needs.determine_head.outputs.commit }}
       machine: all
-      benchmarks: all
+      benchmarks: all_and_excluded
       pgo: true
       tier2: false
       jit: false
