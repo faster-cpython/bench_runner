@@ -58,4 +58,6 @@ def test_benchmark_cmdline(monkeypatch):
         "jit=false",
         "-f",
         "nogil=false",
+        "-f",
+        "clang=false",
     ]

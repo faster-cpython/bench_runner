@@ -48,9 +48,6 @@ name: _benchmark
       benchmarks:
         description: "Benchmarks to run (comma-separated; empty runs all benchmarks)"
         type: string
-      pgo:
-        description: "Build with PGO"
-        type: boolean
       force:
         description: "Rerun and replace results if commit already exists"
         type: boolean
@@ -109,6 +106,11 @@ jobs:
           repository: mdboom/pyperformance
           path: pyperformance
           ref: ${{ env.PYPERFORMANCE_HASH }}
+      - name: Build with clang
+        if: ${{ inputs.clang }}
+        run: |
+          Write-Error "Using the latest clang compiler on Windows isn't currently supported by bench-runner"
+          exit 1
       - name: Build Python
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
@@ -116,6 +118,7 @@ jobs:
           PCbuild\build.bat ($env:BUILD_FLAGS -split ' ') ${{ inputs.pgo == true && '--pgo' || '' }} ${{ inputs.jit == true && '--experimental-jit' || '' }} ${{ inputs.tier2 == true && '--experimental-jit-interpreter' || '' }} ${{ inputs.nogil == true && '--disable-gil' || '' }} -c Release
           # Copy the build products to a place that libraries can find them.
           Copy-Item -Path $env:BUILD_DEST -Destination "libs" -Recurse
+          $env:BUILD_DEST\python.exe -VV
       - name: Install pyperformance
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
@@ -198,12 +201,19 @@ jobs:
           repository: mdboom/pyperformance
           path: pyperformance
           ref: ${{ env.PYPERFORMANCE_HASH }}
+      - name: Build with clang
+        if: ${{ inputs.clang }}
+        run: |
+          echo "CC=`which clang-19`" >> $GITHUB_ENV
+          echo "LLVM_AR=`which llvm-ar-19`" >> $GITHUB_ENV
+          echo "LLVM_PROFDATA=`which llvm-profdata-19`" >> $GITHUB_ENV
       - name: Build Python
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
           cd cpython
           ./configure ${{ inputs.pgo == true && '--enable-optimizations --with-lto=yes' || '' }} ${{ inputs.tier2 == true && '--enable-experimental-jit=interpreter' || '' }} ${{ inputs.jit == true && '--enable-experimental-jit=yes' || '' }} ${{ inputs.nogil == true && '--disable-gil' || '' }}
           make ${{ runner.arch == 'ARM64' && '-j' || '-j4' }}
+          ./python -VV
       - name: Install pyperformance
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
@@ -299,12 +309,20 @@ jobs:
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
           echo "PKG_CONFIG_PATH=$(brew --prefix openssl@1.1)/lib/pkgconfig" >> $GITHUB_ENV
+      - name: Build with clang
+        if: ${{ inputs.clang }}
+        run: |
+          echo "PATH=$(brew --prefix llvm)/bin:$PATH" >> $GITHUB_ENV
+          echo "CC=$(brew --prefix llvm)/bin/clang" >> $GITHUB_ENV
+          echo "LDFLAGS=-L$(brew --prefix llvm)/lib" >> $GITHUB_ENV
+          echo "CFLAGS=-I$(brew --prefix llvm)/include" >> $GITHUB_ENV
       - name: Build Python
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
           cd cpython
           ./configure ${{ inputs.pgo == true && '--enable-optimizations --with-lto=yes' || '' }} ${{ inputs.tier2 == true && '--enable-experimental-jit=interpreter' || '' }} ${{ inputs.jit == true && '--enable-experimental-jit=yes' || '' }} ${{ inputs.nogil == true && '--disable-gil' || '' }}
           make -j4
+          ./python.exe -VV
       # On macos ARM64, actions/setup-python isn't available, so we rely on a
       # pre-installed homebrew one, used through a venv
       - name: Install pyperformance
