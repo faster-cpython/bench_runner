@@ -17,6 +17,7 @@ FLAGS = [
     Flag("tier2", "PYTHON_UOPS", "tier 2 interpreter", "T2"),
     Flag("jit", "JIT", "JIT", "JIT"),
     Flag("nogil", "NOGIL", "free threading", "NOGIL"),
+    Flag("clang", "CLANG", "build with latest clang", "CLANG"),
 ]
 
 
