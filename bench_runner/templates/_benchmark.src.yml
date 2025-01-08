@@ -204,7 +204,9 @@ jobs:
       - name: Build with clang
         if: ${{ inputs.clang }}
         run: |
-          echo "CC=clang-19" >> $GITHUB_ENV
+          echo "CC=`which clang-19`" >> $GITHUB_ENV
+          echo "LLVM_AR=`which llvm-ar-19`" >> $GITHUB_ENV
+          echo "LLVM_PROFDATA=`which llvm-profdata-19`" >> $GITHUB_ENV
       - name: Build Python
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
