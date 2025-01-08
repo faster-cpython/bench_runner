@@ -309,7 +309,7 @@ jobs:
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
           echo "PKG_CONFIG_PATH=$(brew --prefix openssl@1.1)/lib/pkgconfig" >> $GITHUB_ENV
-      - name: Setup latest clang, if requested
+      - name: Build with clang
         if: ${{ inputs.clang }}
         run: |
           echo "PATH=$(brew --prefix llvm)/bin:$PATH" >> $GITHUB_ENV
