@@ -48,9 +48,6 @@ name: _benchmark
       benchmarks:
         description: "Benchmarks to run (comma-separated; empty runs all benchmarks)"
         type: string
-      pgo:
-        description: "Build with PGO"
-        type: boolean
       force:
         description: "Rerun and replace results if commit already exists"
         type: boolean
