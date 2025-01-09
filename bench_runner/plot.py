@@ -358,13 +358,19 @@ def _standardize_xlims(axs: Sequence[matplotlib.Axes]) -> None:  # pyright: igno
     if not len(axs):
         return
 
-    minx, maxx = axs[0].get_xlim()
-    for ax in axs[1:]:
+    minx = None
+    maxx = None
+    for ax in axs:
         if not ax.has_data():
             continue
-        xlim = ax.get_xlim()
-        minx = min(minx, xlim[0])
-        maxx = max(maxx, xlim[1])
+        data = ax.get_lines()[0].get_data()[0]
+        if len(data) > 1:
+            xlim = ax.get_xlim()
+            if minx is None or maxx is None:
+                minx, maxx = xlim
+            else:
+                minx = min(minx, xlim[0])
+                maxx = max(maxx, xlim[1])
 
     for ax in axs:
         if ax.has_data():
