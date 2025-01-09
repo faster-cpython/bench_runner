@@ -106,16 +106,11 @@ jobs:
           repository: mdboom/pyperformance
           path: pyperformance
           ref: ${{ env.PYPERFORMANCE_HASH }}
-      - name: Build with clang
-        if: ${{ inputs.clang }}
-        run: |
-          Write-Error "Using the latest clang compiler on Windows isn't currently supported by bench-runner"
-          exit 1
       - name: Build Python
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
           cd cpython
-          PCbuild\build.bat ($env:BUILD_FLAGS -split ' ') ${{ inputs.pgo == true && '--pgo' || '' }} ${{ inputs.jit == true && '--experimental-jit' || '' }} ${{ inputs.tier2 == true && '--experimental-jit-interpreter' || '' }} ${{ inputs.nogil == true && '--disable-gil' || '' }} -c Release
+          PCbuild\build.bat ($env:BUILD_FLAGS -split ' ') ${{ inputs.pgo == true && '--pgo' || '' }} ${{ inputs.jit == true && '--experimental-jit' || '' }} ${{ inputs.tier2 == true && '--experimental-jit-interpreter' || '' }} ${{ inputs.nogil == true && '--disable-gil' || '' }} -c Release ${{ inputs.clang == true && '"/p:PlatformToolset=clangcl"' }}
           # Copy the build products to a place that libraries can find them.
           Copy-Item -Path $env:BUILD_DEST -Destination "libs" -Recurse
       - name: Install pyperformance
@@ -125,6 +120,7 @@ jobs:
       - name: Running pyperformance
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
+          cpython\$env:BUILD_DEST\python.exe -VV
           venv\Scripts\python.exe -m bench_runner run_benchmarks benchmark cpython\$env:BUILD_DEST\python.exe ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.benchmarks || 'all' }} "${{ env.flags }}" --run_id ${{ github.run_id }}
       # Pull again, since another job may have committed results in the meantime
       - name: Pull benchmarking
