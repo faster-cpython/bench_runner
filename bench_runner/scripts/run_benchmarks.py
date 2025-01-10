@@ -41,8 +41,7 @@ class NoBenchmarkError(Exception):
 
 
 def get_benchmark_names(benchmarks: str) -> list[str]:
-    if benchmarks.strip() == "":
-        benchmarks = "all"
+    benchmarks = "all" if benchmarks.strip() == "" else benchmarks
 
     output = subprocess.check_output(
         [
@@ -58,7 +57,8 @@ def get_benchmark_names(benchmarks: str) -> list[str]:
         encoding="utf-8",
     )
 
-    return [line[2:].strip() for line in output.splitlines() if line.startswith("- ")]
+    # Process the output in a single list comprehension
+    return [line[2:] for line in output.splitlines() if line.startswith("- ")]
 
 
 def run_benchmarks(
