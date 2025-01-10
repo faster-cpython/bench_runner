@@ -43,29 +43,29 @@ class Runner:
 @functools.cache
 def get_runners() -> list[Runner]:
     conf = config.get_bench_runner_config().get("runners", [{}])[0]
-    runners = []
-    for nickname, section in conf.items():
-        runners.append(
-            Runner(
-                nickname,
-                section["os"],
-                section["arch"],
-                section["hostname"],
-                section.get("available", True),
-                section.get("env", {}),
-                section.get("github_runner_name"),
-            )
-        )
-
-    if len(runners) == 0:
+    if not conf:
         raise RuntimeError(
             "No runners are defined in `bench_runner.toml`. "
             "Please set up some runners first."
         )
 
+    runners = [
+        Runner(
+            nickname,
+            section["os"],
+            section["arch"],
+            section["hostname"],
+            section.get("available", True),
+            section.get("env", {}),
+            section.get("github_runner_name"),
+        )
+        for nickname, section in conf.items()
+    ]
+
     return runners
 
 
+@functools.cache
 def get_runners_by_hostname() -> dict[str, Runner]:
     return {x.hostname: x for x in get_runners()}
 
