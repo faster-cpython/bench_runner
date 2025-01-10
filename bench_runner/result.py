@@ -87,7 +87,7 @@ class Comparison:
         )
 
     def copy(self):
-        return type(self)(self.ref, self.head, self.base)
+        return Comparison(self.ref, self.head, self.base)
 
     @property
     def base_filename(self) -> Path | None:
