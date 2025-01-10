@@ -27,12 +27,18 @@ FLAG_MAPPING = {flag.gha_variable: flag.name for flag in FLAGS}
 def parse_flags(flag_str: str | None) -> list[str]:
     if flag_str is None:
         return []
-    flags = [flag.strip() for flag in flag_str.split(",") if flag.strip() != ""]
+
+    flag_mapping = FLAG_MAPPING
+    flags = flag_str.split(",")
+
     internal_flags = []
     for flag in flags:
-        if flag not in FLAG_MAPPING:
-            raise ValueError(f"Invalid flag {flag}")
-        internal_flags.append(FLAG_MAPPING[flag])
+        stripped_flag = flag.strip()
+        if stripped_flag:
+            if stripped_flag not in flag_mapping:
+                raise ValueError(f"Invalid flag {stripped_flag}")
+            internal_flags.append(flag_mapping[stripped_flag])
+
     return internal_flags
 
 
