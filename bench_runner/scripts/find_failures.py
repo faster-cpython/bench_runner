@@ -21,10 +21,11 @@ def iter_lines(log: str) -> Iterator[tuple[str, str, str]]:
         if len(parts) > 2:
             subparts = parts[2].split(" ", maxsplit=1)
             if len(subparts) > 1:
-                if " / " in parts[0]:
-                    config, machine = parts[0].split(" / ")
-                    if machine.startswith("benchmark-"):
-                        machine = machine[machine.find("-") + 1 : machine.rfind("-")]
+                config_machine = parts[0]
+                if " / " in config_machine:
+                    config, machine = config_machine.split(" / ")
+                    if "benchmark-" in machine:
+                        machine = machine.split("-")[1]
                     config = config.split("-")[-1]
                     if config == "weekly":
                         config = "default"
@@ -62,25 +63,26 @@ def parse_log(content: str) -> Failures:
     collected_lines = []
     current_benchmark_build = None
     current_benchmark_run = None
+    benchmark_run_pattern = re.compile(r"\[.+\] (.+)\.\.\.")
+    benchmark_fail_pattern = re.compile(r"ERROR: Benchmark (.+) failed: Benchmark died")
+    venv_creation_pattern = re.compile(r"\(.+\) creating venv for benchmark \((.+)\)")
+
     for machine, config, line in iter:
-        if match := re.match(r"\(.+\) creating venv for benchmark \((.+)\)", line):
-            current_benchmark_build = match.groups()[0]
+        if match := venv_creation_pattern.match(line):
+            current_benchmark_build = match.group(1)
             collected_lines = []
-        elif line.startswith("(benchmark will be skipped)"):
+        elif line == "(benchmark will be skipped)":
             assert current_benchmark_build
             failures[current_benchmark_build][machine][config] = (
                 "build",
                 collected_lines,
             )
-        elif match := re.match(r"\[.+\] (.+)\.\.\.", line):
-            current_benchmark_run = match.groups()[0]
+        elif match := benchmark_run_pattern.match(line):
+            current_benchmark_run = match.group(1)
             collected_lines = []
-        elif match := re.match(r"ERROR: Benchmark (.+) failed: Benchmark died", line):
+        elif match := benchmark_fail_pattern.match(line):
             assert current_benchmark_run
-            failures[current_benchmark_run][machine][config] = (
-                "run",
-                collected_lines,
-            )
+            failures[current_benchmark_run][machine][config] = ("run", collected_lines)
         else:
             collected_lines.append(line)
 
