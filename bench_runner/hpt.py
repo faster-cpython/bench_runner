@@ -230,7 +230,7 @@ def hpt_basic(
     meddiff = np.zeros((len(mtx_a),), float)
 
     for i, bm in enumerate(mtx_a.keys()):
-        hpt_x = np.hstack((multi * mtx_a[bm], mtx_b[bm]), dtype=np.float64)
+        hpt_x = np.hstack((multi * mtx_a[bm], mtx_b[bm]))
         meddiff[i] = unibench(hpt_x, alpha)
 
     return crossbench(meddiff)
@@ -249,66 +249,43 @@ def maxspeedup(
             "will lead to a meaningless conclusion"
         )
 
+    overflow_message = "Overflow: the maximum speedup is beyond the upper bound 10"
+
+    def binary_search_compute(
+        reli: float, alpha: float, low: float, high: float, scaling_func
+    ) -> float:
+        step = 0
+        myscale = 1.0
+        base_su = 0.0
+        while step < ACC_MAXSU:
+            while low < high - 1:
+                mid = (high + low) // 2
+                su = base_su + myscale * mid
+                metric = scaling_func(su)
+                if metric:
+                    low = mid
+                else:
+                    high = mid
+            base_su += low * myscale
+            myscale /= 10.0
+            step += 1
+            low = 0
+            high = 10
+        return base_su
+
     if better:
         su = 10.0
-        ret, _, _ = hpt_basic(mtx_a, mtx_b, alpha, su)
-        if ret < 1.0 - reli:
-            print("Overflow: the maximum speedup is beyond the upper bound 10")
-            return -1.0
-        else:
-            step = -1
-            myscale = 1.0
-            minimum = 1
-            maximum = 10
-            base_su = 0.0
-            while step < ACC_MAXSU:
-                mid = (maximum - minimum) // 2 + minimum
-                su = base_su + myscale * mid
-                ret, _, _ = hpt_basic(mtx_a, mtx_b, alpha, su)
-                if ret < 1 - reli:
-                    minimum = mid
-                else:
-                    maximum = mid
-
-                if minimum == maximum - 1:
-                    base_su += minimum * myscale
-                    myscale /= 10.0
-                    step += 1
-                    minimum = 0
-                    maximum = 10
-
-            return base_su
+        metric = lambda su: hpt_basic(mtx_a, mtx_b, alpha, su)[0] < 1 - reli
     else:
         su = 10.0
-        reci = 1.0 / su
-        ret, _, _ = hpt_basic(mtx_a, mtx_b, alpha, reci)
-        if ret > reli:
-            print("Overflow: the maximum speedup is beyond the upper bound 10")
-            return -1
-        else:
-            step = -1
-            myscale = 1.0
-            minimum = 1
-            maximum = 10
-            base_su = 0.0
-            while step < ACC_MAXSU:
-                mid = (maximum - minimum) // 2 + minimum
-                su = base_su + myscale * mid
-                reci = 1.0 / su
-                ret, _, _ = hpt_basic(mtx_a, mtx_b, alpha, reci)
-                if ret > reli:
-                    minimum = mid
-                else:
-                    maximum = mid
+        metric = lambda su: hpt_basic(mtx_a, mtx_b, alpha, 1 / su)[0] > reli
 
-                if minimum == maximum - 1:
-                    base_su += minimum * myscale
-                    myscale /= 10.0
-                    step += 1
-                    minimum = 0
-                    maximum = 10
-
-            return base_su
+    ret, _, _ = hpt_basic(mtx_a, mtx_b, alpha, su if better else 1 / su)
+    if (better and ret < 1.0 - reli) or (not better and ret > reli):
+        print(overflow_message)
+        return -1.0
+    else:
+        return binary_search_compute(reli, alpha, 1, 10, metric)
 
 
 def make_report(ref: PathLike, head: PathLike, alpha=0.1):
