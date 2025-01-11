@@ -12,10 +12,12 @@ from typing import Any, Mapping
 from . import config
 from . import flags as mflags
 from . import runners
+import functools
 
 
 def get_machines():
-    return [x.name for x in runners.get_runners() if x.available] + ["all"]
+    # Combining list comprehension and the function call to runners.get_runners only once
+    return [x.github_runner_name for x in get_runners_cached() if x.available] + ["all"]
 
 
 def _get_flags(d: Mapping[str, Any]) -> list[str]:
@@ -81,3 +83,26 @@ def send_notification(body):
     subprocess.check_call(
         ["gh", "issue", "comment", str(notification_issue), "--body", body]
     )
+
+
+@functools.cache
+def get_runners_cached() -> list[runners.Runner]:
+    conf = config.get_bench_runner_config().get("runners", [{}])[0]
+    if not conf:
+        raise RuntimeError(
+            "No runners are defined in `bench_runner.toml`. "
+            "Please set up some runners first."
+        )
+
+    return [
+        runners.Runner(
+            nickname,
+            section["os"],
+            section["arch"],
+            section["hostname"],
+            section.get("available", True),
+            section.get("env", {}),
+            section.get("github_runner_name"),
+        )
+        for nickname, section in conf.items()
+    ]
