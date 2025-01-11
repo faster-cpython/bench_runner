@@ -99,13 +99,14 @@ def flag_env():
 
 
 def add_flag_env(jobs: dict[str, Any]):
+    flag_value = flag_env()  # Compute flag_env once and reuse the result
     for job in jobs.values():
         if "steps" in job:
             job.setdefault("env", {})
-            job["env"]["flags"] = flag_env()
+            job["env"]["flags"] = flag_value
             for step in job["steps"]:
                 if "run" in step:
-                    step["run"] = step["run"].replace("${{ env.flags }}", flag_env())
+                    step["run"] = step["run"].replace("${{ env.flags }}", flag_value)
 
 
 def generate__benchmark(src: Any) -> Any:
