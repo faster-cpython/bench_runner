@@ -21,6 +21,7 @@ import rich_argparse
 
 
 from bench_runner.util import PathLike
+from functools import lru_cache
 
 
 SANITY_CHECK = True
@@ -222,6 +223,7 @@ CATEGORIES: dict[str, list[str]] = {
 COLOR_ORDER = ["jit", "kernel", "libc", "library"] + list(CATEGORIES.keys())
 
 
+@lru_cache(maxsize=None)
 def get_color_and_hatch(category: str) -> tuple[str, str]:
     hatches = ["", "//", "\\\\"]
     try:
