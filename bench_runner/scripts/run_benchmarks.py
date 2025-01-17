@@ -248,6 +248,8 @@ def collect_perf(python: PathLike, benchmarks: str):
                 perf_to_csv(
                     output.splitlines(), PROFILING_RESULTS / f"{benchmark}.perf.csv"
                 )
+            else:
+                print(f"No perf.data file generated for {benchmark}", file=sys.stderr)
 
 
 def update_metadata(
