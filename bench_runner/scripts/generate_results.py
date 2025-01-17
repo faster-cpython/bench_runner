@@ -171,19 +171,21 @@ def summarize_results(
 
 
 def get_most_recent_pystats(results: Iterable[Result]) -> Result | None:
-    candidate_pystats = [
-        result
-        for result in results
-        if result.result_info == ("pystats raw", None, None)
-        and result.fork == "python"
-        and result.flags in (["PYTHON_UOPS"], ["JIT"])
-    ]
-    if len(candidate_pystats):
-        return sorted(
-            candidate_pystats,
-            key=lambda x: (x.parsed_version, x.commit_datetime),
-            reverse=True,
-        )[0]
+    most_recent_pystats = None
+    most_recent_key = None
+
+    for result in results:
+        if (
+            result.result_info == ("pystats raw", None, None)
+            and result.fork == "python"
+            and result.flags in (["PYTHON_UOPS"], ["JIT"])
+        ):
+            current_key = (result.parsed_version, result.commit_datetime)
+            if most_recent_pystats is None or current_key > most_recent_key:
+                most_recent_pystats = result
+                most_recent_key = current_key
+
+    return most_recent_pystats
 
 
 def generate_index(
