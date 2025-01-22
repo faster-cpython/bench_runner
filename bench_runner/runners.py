@@ -6,6 +6,7 @@ import os
 
 
 from . import config
+from functools import lru_cache
 
 
 class Runner:
@@ -66,6 +67,7 @@ def get_runners() -> list[Runner]:
     return runners
 
 
+@lru_cache(maxsize=1)  # Cache this function to avoid re-computation
 def get_runners_by_hostname() -> dict[str, Runner]:
     return {x.hostname: x for x in get_runners()}
 
@@ -77,9 +79,15 @@ def get_runners_by_nickname() -> dict[str, Runner]:
 def get_nickname_for_hostname(hostname: str) -> str:
     # The envvar BENCHMARK_MACHINE_NICKNAME is used to override the machine that
     # results are reported for.
-    if "BENCHMARK_MACHINE_NICKNAME" in os.environ:
-        return os.environ["BENCHMARK_MACHINE_NICKNAME"]
-    return get_runners_by_hostname()[hostname].nickname
+    nickname = os.environ.get("BENCHMARK_MACHINE_NICKNAME")
+    if nickname is not None:
+        return nickname
+    runners_by_hostname = get_runners_by_hostname()
+    return (
+        runners_by_hostname[hostname].nickname
+        if hostname in runners_by_hostname
+        else ""
+    )
 
 
 def get_runner_by_nickname(nickname: str) -> Runner:
