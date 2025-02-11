@@ -122,6 +122,41 @@ The longitudinal plots are configured in the `plot` section of `bench_runner.tom
 
 **TODO: Describe this in more detail**
 
+#### Purging old data
+
+With a local checkout of your results repository you can perform some maintenance tasks.
+
+Clone your results repository, and then install the correct version of bench_runner into a virtual environment to use the bench_runner command:
+
+```
+git clone {YOUR_RESULTS_REPO}
+cd {YOUR_RESULTS_REPO}
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+Periodically, you will want to run the `purge` command to remove old results that aren't of a tagged Python release.
+
+```
+python -m bench_runner purge
+```
+
+To see more options that control what is deleted, run `python -m bench_runner purge --help`.
+
+After purging the results, you will usually want to squash the git history down to a single commit to save space in your repository.  **NOTE THAT THIS IS A DESTRUCTIVE OPERATION THAT WILL DELETE OLD DATA.**
+
+```
+git checkout --orphan new-main main
+git commit -m "Purging old results on ..."
+
+# Overwrite the old master branch reference with the new one
+git branch -M new-main main
+git push -f origin main
+```
+
+### Running 
+
 ## Developer
 
 To learn how to hack on this project, see the full [developer documentation](DEVELOPER.md).
