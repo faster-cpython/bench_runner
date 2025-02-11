@@ -67,6 +67,21 @@ jobs:
       nogil: true
     secrets: inherit
 
+  weekly-tailcall:
+    uses: ./.github/workflows/_benchmark.yml
+    needs: determine_head
+    with:
+      fork: python
+      ref: ${{ needs.determine_head.outputs.commit }}
+      machine: all
+      benchmarks: all_and_excluded
+      pgo: true
+      tier2: false
+      jit: false
+      nogil: false
+      clang: true
+    secrets: inherit
+
   pystats:
     uses: ./.github/workflows/_pystats.yml
     needs: determine_head
