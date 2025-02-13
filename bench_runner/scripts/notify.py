@@ -13,8 +13,12 @@ from bench_runner import gh
 def generate_dirname(
     date: str, version: str, cpython_hash: str, flags: list[str]
 ) -> str:
+    if len(flags):
+        flag_string = [",".join(sorted(flags))]
+    else:
+        flag_string = []
     return "-".join(
-        ["bm", date[:10].replace("-", ""), version, cpython_hash[:7], *flags]
+        ["bm", date[:10].replace("-", ""), version, cpython_hash[:7], *flag_string]
     )
 
 
