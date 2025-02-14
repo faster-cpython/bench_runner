@@ -189,9 +189,9 @@ def perf_to_csv(lines: Iterable[str], output: PathLike):
         else:
             _, period, command, _, symbol, shared, _ = line.split(maxsplit=6)
             pid, command = command.split(":")
-            self_time = float(int(period)) / total
-            if self_time > 0.0:
-                rows.append([self_time, pid, command, shared, symbol])
+            period = float(period)
+            if period > 0.0:
+                rows.append([period, pid, command, shared, symbol])
 
     rows.sort(key=itemgetter(0), reverse=True)
 

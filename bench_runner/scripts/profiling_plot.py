@@ -9,6 +9,7 @@ import argparse
 from collections import defaultdict
 import csv
 import functools
+import json
 from operator import itemgetter
 from pathlib import Path
 import re
@@ -25,6 +26,9 @@ from bench_runner.util import PathLike
 
 SANITY_CHECK = True
 
+# Must match the value in _benchmark.src.yml
+PERF_PERIOD = 1000000
+
 
 # Categories of functions, where each value is a list of regular expressions.
 # These are matched in-order.
@@ -40,6 +44,7 @@ CATEGORIES: dict[str, list[str]] = {
         "_PyPegen_.+",
         "_PyStack_.+",
         "_PyVectorcall_.+",
+        "_TAIL_CALL_.+",
         "advance",
         "call_instrumentation_vector.*",
         "initialize_locals",
@@ -289,7 +294,7 @@ def handle_benchmark(
     md: IO[str],
     results: defaultdict[str, defaultdict[str, float]],
     categories: defaultdict[str, defaultdict[tuple[str, str], float]],
-):
+) -> float:
     csv_path = Path(csv_path)
 
     stem = csv_path.stem.split(".", 1)[0]
@@ -314,6 +319,7 @@ def handle_benchmark(
                 tainted_pids.add(pid)
 
     times = defaultdict(float)
+    total = 0.0
     with csv_path.open(newline="") as fd:
         csvreader = csv.reader(fd)
         for _ in csvreader:
@@ -327,18 +333,14 @@ def handle_benchmark(
                 continue
 
             self_time = float(self_time)
-            if self_time > 1.0:
-                print(f"{stem} Invalid data")
             if obj == "[JIT]":
                 times[("[JIT]", "jit")] += self_time
             else:
                 times[(obj, sym)] += self_time
+            total += self_time
 
-    total = sum(times.values())
-    assert total <= 1.0
     scale = 1.0 / total
-    rows = [(v * scale, k[0], k[1]) for k, v in times.items()]
-    rows.sort(reverse=True)
+    rows = sorted(((v, *k) for k, v in times.items()), reverse=True)
 
     for self_time, obj, sym in rows:
         if self_time <= 0.0:
@@ -349,8 +351,11 @@ def handle_benchmark(
 
         results[stem][category] += self_time
 
-        if self_time >= 0.0025:
-            md.write(f"| {self_time:.2%} | `{obj}` | `{sym}` | {category} |\n")
+        scaled_time = self_time * scale
+        if scaled_time >= 0.0025:
+            md.write(f"| {scaled_time:.2%} | `{obj}` | `{sym}` | {category} |\n")
+
+    return total
 
 
 def plot_bargraph(
@@ -414,6 +419,62 @@ def plot_pie(categories: list[tuple[float, str]], output_filename: PathLike):
     fig.savefig(output_filename, dpi=200)
 
 
+def handle_tail_call_stats(
+    input_dir: PathLike,
+    categories: defaultdict[str, defaultdict[tuple[str, str], float]],
+    output_prefix: PathLike,
+):
+    input_dir = Path(input_dir)
+    output_prefix = Path(output_prefix)
+
+    tail_call_stats = defaultdict(float)
+    total_time = 0.0
+    for (_, sym), self_time in categories["interpreter"].items():
+        if (bytecode := sym.removeprefix("_TAIL_CALL_")) != sym:
+            tail_call_stats[bytecode] += self_time
+            total_time += self_time
+
+    if len(tail_call_stats) == 0:
+        return
+
+    pystats_file = input_dir / "pystats.json"
+
+    if not pystats_file.is_file():
+        print("No pystats.json file found. Skipping tail call stats.")
+        return
+
+    with pystats_file.open() as fd:
+        pystats = json.load(fd)
+
+    pystats_bytecodes = defaultdict(int)
+    total_count = 0
+    for key, val in pystats.items():
+        if match := re.match(r"opcode\[(.+)\]\.execution_count", key):
+            pystats_bytecodes[match.group(1)] += val
+            total_count += val
+
+    with open(output_prefix.with_suffix(".tail_calls.csv"), "w") as csvfile:
+        writer = csv.writer(csvfile, dialect="unix")
+        writer.writerow(
+            ["Bytecode", "% time", "count", "% count", "time per count (μs)"]
+        )
+        for bytecode, periods in sorted(
+            tail_call_stats.items(), key=itemgetter(1), reverse=True
+        ):
+            count = pystats_bytecodes[bytecode]
+            if count == 0:
+                continue
+            writer.writerow(
+                [
+                    bytecode,
+                    f"{periods / total_time:.02%}",
+                    count,
+                    f"{count / total_count:.02%}",
+                    f"{((periods / PERF_PERIOD) / count) * 1e6:03f}",
+                ]
+            )
+
+
 def _main(input_dir: PathLike, output_prefix: PathLike):
     input_dir = Path(input_dir)
     output_prefix = Path(output_prefix)
@@ -425,34 +486,37 @@ def _main(input_dir: PathLike, output_prefix: PathLike):
         print("No profiling data. Skipping.")
         return
 
+    total = 0.0
     with output_prefix.with_suffix(".md").open("w") as md:
         for csv_path in sorted(input_dir.glob("*.csv")):
-            handle_benchmark(csv_path, md, results, categories)
+            if ".tail_calls.csv" in csv_path.name:
+                continue
+            total += handle_benchmark(csv_path, md, results, categories)
 
         sorted_categories = sorted(
-            [
-                (sum(val.values()) / len(results), key)
-                for (key, val) in categories.items()
-            ],
+            [(sum(val.values()), key) for (key, val) in categories.items()],
             reverse=True,
         )
 
         md.write("\n\n## Categories\n")
-        for total, category in sorted_categories:
+        for category_total, category in sorted_categories:
             matches = categories[category]
             md.write(f"\n### {category}\n\n")
-            md.write(f"{total:.2%} total\n\n")
+            md.write(f"{category_total / total:.2%} total\n\n")
             md.write("| percentage | object | symbol |\n")
             md.write("| ---: | :--- | :--- |\n")
             for (obj, sym), self_time in sorted(
                 matches.items(), key=itemgetter(1), reverse=True
             ):
-                if self_time < 0.0025:
+                self_fraction = self_time / total
+                if self_fraction < 0.000025:
                     break
-                md.write(f"| {self_time / len(results):.2%} | {obj} | {sym} |\n")
+                md.write(f"| {self_fraction:.2%} | {obj} | {sym} |\n")
 
     plot_bargraph(results, sorted_categories, output_prefix.with_suffix(".svg"))
     plot_pie(sorted_categories, output_prefix.with_suffix(".pie.svg"))
+
+    handle_tail_call_stats(input_dir, categories, output_prefix)
 
 
 def main():
