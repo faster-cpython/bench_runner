@@ -38,9 +38,7 @@ CATEGORIES: dict[str, list[str]] = {
         "_Py_GetBaseOpcode",
         "_PyCode_.+",
         "_PyEval.+",
-        "_PyFrame_ClearExceptCode",
-        "_PyFrame_New_NoTrack",
-        "_PyFrame_Traverse",
+        "_PyFrame_.+",
         "_PyPegen_.+",
         "_PyStack_.+",
         "_PyVectorcall_.+",
@@ -79,6 +77,7 @@ CATEGORIES: dict[str, list[str]] = {
         "deduce_unreachable",
         "gc_collect.*",
         "mark_heap_visitor",
+        "mark_stacks",
         "PyObject_IS_GC",
         "scan_heap.+",
         "type_is_gc",
@@ -367,19 +366,22 @@ def plot_bargraph(
 
     bottom = np.zeros(len(results))
     names = list(results.keys())[::-1]
+    dens = {key: sum(val.values()) for key, val in results.items()}
+    den = sum(x[0] for x in categories)
 
     for val, category in categories:
         if category == "unknown":
             continue
         values = np.array(
-            [results[name].get(category, 0.0) for name in names], np.float64
+            [results[name].get(category, 0.0) / dens[name] for name in names],
+            np.float64,
         )
         color, hatch = get_color_and_hatch(category)
         ax.barh(
             names,
             values,
             0.5,
-            label=f"{category} {val:.2%}",
+            label=f"{category} {val / den:.2%}",
             left=bottom,
             hatch=hatch,
             color=color,
@@ -399,7 +401,10 @@ def plot_bargraph(
 def plot_pie(categories: list[tuple[float, str]], output_filename: PathLike):
     fig, ax = plt.subplots(figsize=(5, 3), layout="constrained")
     values = [x[0] for x in categories]
-    labels = [i < 10 and f"{x[1]} {x[0]:.2%}" or "" for i, x in enumerate(categories)]
+    den = sum(values)
+    labels = [
+        i < 10 and f"{x[1]} {x[0] / den:.2%}" or "" for i, x in enumerate(categories)
+    ]
     colors = [get_color_and_hatch(cat[1])[0] for cat in categories]
     hatches = [get_color_and_hatch(cat[1])[1] for cat in categories]
 
