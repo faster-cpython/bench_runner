@@ -31,6 +31,7 @@ from . import plot
 from . import runners
 from . import util
 from .util import PathLike
+from functools import lru_cache
 
 
 CombinedData = list[tuple[str, np.ndarray | None, float]]
@@ -55,9 +56,11 @@ def _clean_for_url(string: str) -> str:
     return string.replace("-", "%2d")
 
 
+@lru_cache(maxsize=None)
 def _get_platform_value(python: PathLike, item: str) -> str:
     """
     Get a value from the platform module of the given Python interpreter.
+    Uses caching to speed up subsequent identical queries.
     """
     output = subprocess.check_output(
         [python, "-c", f"import platform; print(platform.{item}())"], encoding="utf-8"
