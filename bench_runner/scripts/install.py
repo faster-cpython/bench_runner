@@ -180,7 +180,7 @@ def generate_benchmark(dst: Any) -> Any:
     user.
     """
     available_runners = [r for r in runners.get_runners() if r.available]
-    runner_choices = [*[x.name for x in available_runners], "all"]
+    runner_choices = [*[x.name for x in available_runners], "all", "__really_all"]
 
     dst["on"]["workflow_dispatch"]["inputs"]["machine"]["options"] = runner_choices
 
