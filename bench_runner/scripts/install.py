@@ -147,9 +147,15 @@ def generate__benchmark(src: Any) -> Any:
         runner_template["steps"].insert(0, setup_environment)
 
         runner_template["runs-on"].append(runner.github_runner_name)
-        runner_template["if"] = (
-            f"${{{{ (inputs.machine == '{runner.name}' || inputs.machine == 'all') }}}}"
-        )
+
+        machine_clauses = [
+            f"inputs.machine == '{runner.name}'",
+            "inputs.machine == '__really_all'",
+        ]
+        if runner.include_in_all:
+            machine_clauses.append("inputs.machine == 'all'")
+        runner_template["if"] = f"${{{{ ({' || '.join(machine_clauses)}) }}}}"
+
         dst["jobs"][f"benchmark-{runner.name}"] = runner_template
 
     add_flag_env(dst["jobs"])
