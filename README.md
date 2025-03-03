@@ -44,7 +44,7 @@ git push origin main
 
 The `bench_runner.toml` file created at the root of your repository contains configuration specific to your instance.
 More details about this configuration are below.
-Every time you make a change to the `bench_runner.toml` file, you will need to rerun `python -m bench_runer install` to have the changes reflected.
+Every time you make a change to the `bench_runner.toml` file, you will need to rerun `python -m bench_runner install` to have the changes reflected.
 
 ### Add some self-hosted runners
 
@@ -85,6 +85,12 @@ os = "linux"
 arch = "x86_64"
 hostname = "cpython-benchmarking-azure"
 available = false
+```
+
+If you don't want a machine to be included when the user selects "machine == 'all'", add:
+
+```
+include_in_all = false
 ```
 
 ### Try a benchmarking run
@@ -144,7 +150,7 @@ python -m bench_runner purge
 
 To see more options that control what is deleted, run `python -m bench_runner purge --help`.
 
-After purging the results, you will usually want to squash the git history down to a single commit to save space in your repository.  **NOTE THAT THIS IS A DESTRUCTIVE OPERATION THAT WILL DELETE OLD DATA.**
+After purging the results, you will usually want to squash the git history down to a single commit to save space in your repository. **NOTE THAT THIS IS A DESTRUCTIVE OPERATION THAT WILL DELETE OLD DATA.**
 
 ```
 git checkout --orphan new-main main
@@ -155,7 +161,7 @@ git branch -M new-main main
 git push -f origin main
 ```
 
-### Running 
+### Running
 
 ## Developer
 

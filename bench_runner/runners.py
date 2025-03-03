@@ -20,6 +20,7 @@ class Runner:
         # Override the Github self-hosted runner name if different from
         # os-arch-nickname
         github_runner_name: str | None,
+        include_in_all: bool = True,
     ):
         self.nickname = nickname
         self.os = os
@@ -30,6 +31,7 @@ class Runner:
         if github_runner_name is None:
             github_runner_name = self.name
         self.github_runner_name = github_runner_name
+        self.include_in_all = include_in_all
 
     @property
     def name(self) -> str:
@@ -54,6 +56,7 @@ def get_runners() -> list[Runner]:
                 section.get("available", True),
                 section.get("env", {}),
                 section.get("github_runner_name"),
+                section.get("include_in_all", True),
             )
         )
 
