@@ -74,7 +74,7 @@ def _main(
                     git.remove(results_dir.parent, filepath)
         should_run = True
     else:
-        should_run = machine == "all" or found_result is None
+        should_run = (machine in ("__really_all", "all")) or found_result is None
 
     print(f"should_run={str(should_run).lower()}")
 

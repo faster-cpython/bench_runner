@@ -723,7 +723,7 @@ def has_result(
     benchmark_hash: str,
     progress: bool = True,
 ) -> Result | None:
-    if machine == "all":
+    if machine in ("__really_all", "all"):
         nickname = None
     else:
         _, _, nickname = machine.split("-")

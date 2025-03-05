@@ -48,7 +48,7 @@ def _main(
             print("need_to_run=false")
         else:
             need_to_run = (
-                machine == "all"
+                machine in ("__really_all", "all")
                 or has_result(
                     Path("results"),
                     merge_base,
