@@ -240,7 +240,7 @@ def collect_perf(python: PathLike, benchmarks: str):
                 PROFILING_RESULTS / f"{benchmark}.perf.csv",
             )
         else:
-            print(f"No perf.data file generated for {benchmark}", file=sys.stderr)
+            print(f"No perf.data files generated for {benchmark}", file=sys.stderr)
 
     for filename in Path(".").glob(perf_data_glob):
         filename.unlink()
