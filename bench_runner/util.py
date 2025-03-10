@@ -1,5 +1,6 @@
 import functools
 import hashlib
+import itertools
 import os
 from pathlib import Path
 from typing import TypeAlias, Union
@@ -41,3 +42,16 @@ def get_excluded_benchmarks() -> set[str]:
         if key in benchmarks_section:
             return set(benchmarks_section[key])
     return set()
+
+
+def has_any_element(iterable):
+    """
+    Checks if an iterable (like a generator) has at least one element
+    without consuming the original iterable more than necessary.
+    """
+    first, iterable = itertools.tee(iterable, 2)  # Create two independent iterators
+    try:
+        next(first)  # Try to get the first element
+        return True  # If successful, the generator is not empty
+    except StopIteration:
+        return False  # If StopIteration is raised, the generator is empty

@@ -33,7 +33,7 @@ GITHUB_URL = "https://github.com/" + os.environ.get(
     "GITHUB_REPOSITORY", "faster-cpython/bench_runner"
 )
 # Environment variables that control the execution of CPython
-ENV_VARS = ["PYTHON_JIT"]
+ENV_VARS = ["PYTHON_JIT", "PYPERF_PERF_RECORD_EXTRA_OPTS"]
 
 
 class NoBenchmarkError(Exception):
@@ -64,7 +64,7 @@ def get_benchmark_names(benchmarks: str) -> list[str]:
 def run_benchmarks(
     python: PathLike,
     benchmarks: str,
-    command_prefix: Iterable[str] | None = None,
+    /,
     test_mode: bool = False,
     extra_args: Iterable[str] | None = None,
 ) -> None:
@@ -73,9 +73,6 @@ def run_benchmarks(
 
     if BENCHMARK_JSON.is_file():
         BENCHMARK_JSON.unlink()
-
-    if command_prefix is None:
-        command_prefix = []
 
     if test_mode:
         fast_arg = ["--fast"]
@@ -86,7 +83,6 @@ def run_benchmarks(
         extra_args = []
 
     args = [
-        *command_prefix,
         sys.executable,
         "-m",
         "pyperformance",
@@ -173,19 +169,36 @@ def collect_pystats(
         run_summarize_stats(python, fork, ref, "all", benchmark_links, flags=flags)
 
 
-def perf_to_csv(lines: Iterable[str], output: PathLike):
-    event_count_prefix = "# Event count (approx.): "
-    total = None
+def get_perf_lines(files: Iterable[PathLike]) -> Iterable[str]:
+    for filename in files:
+        p = subprocess.Popen(
+            [
+                "perf",
+                "report",
+                "--stdio",
+                "-g",
+                "none",
+                "--show-total-period",
+                "-s",
+                "pid,symbol,dso",
+                "-i",
+                str(filename),
+            ],
+            encoding="utf-8",
+            stdout=subprocess.PIPE,
+            bufsize=1,
+        )
+        assert p.stdout is not None  # for pyright
+        yield from iter(p.stdout.readline, "")
+        p.kill()
 
+
+def perf_to_csv(lines: Iterable[str], output: PathLike):
     rows = []
     for line in lines:
         line = line.strip()
-        if line.startswith(event_count_prefix):
-            total = int(line[len(event_count_prefix) :].strip())
-        elif line.startswith("#") or line == "":
+        if line.startswith("#") or line == "":
             pass
-        elif total is None:
-            raise ValueError("Could not find total sample count")
         else:
             _, period, command, _, symbol, shared, _ = line.split(maxsplit=6)
             pid, command = command.split(":")
@@ -209,47 +222,28 @@ def collect_perf(python: PathLike, benchmarks: str):
         shutil.rmtree(PROFILING_RESULTS)
     PROFILING_RESULTS.mkdir()
 
-    perf_data = Path("perf.data")
+    perf_data_glob = "perf.data.*"
     for benchmark in all_benchmarks:
-        if perf_data.exists():
-            perf_data.unlink()
+        for filename in Path(".").glob(perf_data_glob):
+            filename.unlink()
 
-        try:
-            run_benchmarks(
-                python,
-                benchmark,
-                command_prefix=[
-                    "perf",
-                    "record",
-                    "-o",
-                    "perf.data",
-                    "--",
-                ],
+        run_benchmarks(
+            python,
+            benchmark,
+            extra_args=["--hook", "perf_record"],
+        )
+
+        fileiter = Path(".").glob(perf_data_glob)
+        if util.has_any_element(fileiter):
+            perf_to_csv(
+                get_perf_lines(fileiter),
+                PROFILING_RESULTS / f"{benchmark}.perf.csv",
             )
-        except NoBenchmarkError:
-            pass
         else:
-            if perf_data.exists():
-                output = subprocess.check_output(
-                    [
-                        "perf",
-                        "report",
-                        "--stdio",
-                        "-g",
-                        "none",
-                        "--show-total-period",
-                        "-s",
-                        "pid,symbol,dso",
-                        "-i",
-                        "perf.data",
-                    ],
-                    encoding="utf-8",
-                )
-                perf_to_csv(
-                    output.splitlines(), PROFILING_RESULTS / f"{benchmark}.perf.csv"
-                )
-            else:
-                print(f"No perf.data file generated for {benchmark}", file=sys.stderr)
+            print(f"No perf.data files generated for {benchmark}", file=sys.stderr)
+
+    for filename in Path(".").glob(perf_data_glob):
+        filename.unlink()
 
 
 def update_metadata(
@@ -381,7 +375,7 @@ def _main(
     benchmarks = select_benchmarks(benchmarks)
 
     if mode == "benchmark":
-        run_benchmarks(python, benchmarks, [], test_mode)
+        run_benchmarks(python, benchmarks, test_mode=test_mode)
         update_metadata(BENCHMARK_JSON, fork, ref, run_id=run_id)
         copy_to_directory(BENCHMARK_JSON, python, fork, ref, flags)
     elif mode == "perf":
