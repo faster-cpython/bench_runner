@@ -51,7 +51,7 @@ def get_machines(results: Iterable[mod_result.Result]) -> set[str]:
 
 def compare_pair(
     output_dir: PathLike,
-    machine: str,
+    machine: str | None,
     ref_name: str,
     ref: mod_result.Result,
     head_name: str,
@@ -60,11 +60,17 @@ def compare_pair(
 ) -> str:
     output_dir = Path(output_dir)
 
-    rich.print(f"Comparing {counter[0]+1}/{counter[1]}", end="\r")
+    rich.print(
+        f"Comparing {counter[0]+1: 2}/{counter[1]: 2}: {head_name} vs. {ref_name}"
+    )
     counter[0] += 1
 
-    name = f"{machine}-{head_name}-vs-{ref_name}"
-    comparison = mod_result.BenchmarkComparison(ref, head, "base")
+    name_parts = []
+    if machine is not None:
+        name_parts.append(machine)
+    name_parts.extend([head_name, "vs", ref_name])
+    name = "-".join(name_parts)
+    comparison = mod_result.BenchmarkComparison(ref, head, "base", True)
     entry = [comparison.summary]
     for func, suffix, file_type in comparison.get_files():
         output_filename = util.apply_suffix(output_dir / name, suffix)
@@ -78,46 +84,56 @@ def write_row(fd: TextIO, columns: Iterable[str]):
     fd.write(f"| {' | '.join(columns)} |\n")
 
 
+def name_and_hash(name: str, hash: str) -> str:
+    if name == hash:
+        return name
+    return f"{name} ({hash})"
+
+
+def get_first_result_for_machine(
+    results: Iterable[mod_result.Result], machine: str | None
+) -> mod_result.Result:
+    return next(
+        result for result in results if machine is None or result.nickname == machine
+    )
+
+
 def do_one_to_many(
     fd: TextIO,
     parsed_commits: ParsedCommits,
-    machine: str,
+    machine: str | None,
     output_dir: PathLike,
     counter: list[int],
 ) -> None:
     _, _, first_name, first_results = parsed_commits[0]
-    first_result = next(
-        result for result in first_results if result.nickname == machine
-    )
+    first_result = get_first_result_for_machine(first_results, machine)
     write_row(fd, ["commit", "change"])
     write_row(fd, ["--"] * 2)
     for hash, _, name, results in parsed_commits[1:]:
-        result = next(result for result in results if result.nickname == machine)
+        result = get_first_result_for_machine(results, machine)
         link = compare_pair(
             output_dir, machine, first_name, first_result, name, result, counter
         )
-        write_row(fd, [f"{name} ({hash})", link])
+        write_row(fd, [name_and_hash(name, hash), link])
 
 
 def do_many_to_many(
     fd,
     parsed_commits: ParsedCommits,
-    machine: str,
+    machine: str | None,
     output_dir: PathLike,
     counter: list[int],
 ) -> None:
-    write_row(fd, ["", *[f"{x[2]} ({x[0]})" for x in parsed_commits]])
+    write_row(fd, ["", *[name_and_hash(x[2], x[0]) for x in parsed_commits]])
     write_row(fd, ["--"] * (len(parsed_commits) + 1))
     for hash1, flags1, name1, results1 in parsed_commits:
         columns = [name1]
-        result1 = next(result for result in results1 if result.nickname == machine)
+        result1 = get_first_result_for_machine(results1, machine)
         for hash2, flags2, name2, results2 in parsed_commits:
             if hash1 == hash2 and flags1 == flags2:
                 columns.append("")
             else:
-                result2 = next(
-                    result for result in results2 if result.nickname == machine
-                )
+                result2 = get_first_result_for_machine(results2, machine)
                 link = compare_pair(
                     output_dir, machine, name1, result1, name2, result2, counter
                 )
@@ -127,13 +143,10 @@ def do_many_to_many(
     fd.write("\n\nRows are 'bases', columns are 'heads'\n")
 
 
-def _main(commits: Sequence[str], output_dir: PathLike, comparison_type: str):
+def _main_with_hashes(commits: Sequence[str], output_dir: Path, comparison_type: str):
     results = mod_result.load_all_results(
         None, Path("results"), sorted=False, match=False
     )
-
-    if len(commits) < 2:
-        raise ValueError("Must provide at least 2 commits")
 
     parsed_commits = []
     machines = set()
@@ -163,10 +176,6 @@ def _main(commits: Sequence[str], output_dir: PathLike, comparison_type: str):
     if len(machines) == 0:
         raise ValueError("No single machine in common with all of the results")
 
-    output_dir_path = Path(output_dir)
-    if not output_dir_path.exists():
-        output_dir_path.mkdir()
-
     match comparison_type:
         case "1:n":
             total = (len(parsed_commits) - 1) * len(machines)
@@ -180,12 +189,59 @@ def _main(commits: Sequence[str], output_dir: PathLike, comparison_type: str):
     runners = mod_runners.get_runners_by_nickname()
 
     counter = [0, total]
-    with (output_dir_path / "README.md").open("w", encoding="utf-8") as fd:
+    with (output_dir / "README.md").open("w", encoding="utf-8") as fd:
         for machine in machines:
             fd.write(f"# {runners[machine].display_name}\n\n")
-            func(fd, parsed_commits, machine, output_dir_path, counter)
+            func(fd, parsed_commits, machine, output_dir, counter)
             fd.write("\n")
     rich.print()
+
+
+def _main_with_files(commits: Sequence[str], output_dir: Path, comparison_type: str):
+    parsed_results = []
+    for commit in commits:
+        if "," in commit:
+            commit_path, name = commit.split(",", 1)
+            commit_path = Path(commit_path)
+        else:
+            commit_path = Path(commit)
+            name = commit_path.stem
+        parsed_results.append(
+            (name, [], name, [mod_result.Result.from_arbitrary_filename(commit_path)])
+        )
+
+    match comparison_type:
+        case "1:n":
+            total = len(commits) - 1
+            func = do_one_to_many
+        case "n:n":
+            total = (len(commits) ** 2) - len(commits)
+            func = do_many_to_many
+        case _:
+            raise ValueError(f"Unknown comparison type {comparison_type}")
+
+    counter = [0, total]
+    with (output_dir / "README.md").open("w", encoding="utf-8") as fd:
+        fd.write("# Comparisons\n\n")
+        func(fd, parsed_results, None, output_dir, counter)
+        fd.write("\n")
+    rich.print()
+
+
+def _main(commits: Sequence[str], output_dir: PathLike, comparison_type: str):
+    if len(commits) < 2:
+        raise ValueError("Must provide at least 2 commits")
+
+    output_dir_path = Path(output_dir)
+    if not output_dir_path.exists():
+        output_dir_path.mkdir()
+
+    if all(commit.endswith(".json") for commit in commits):
+        _main_with_files(commits, output_dir_path, comparison_type)
+    elif any(commit.endswith(".json") for commit in commits):
+        raise ValueError("All commits must be either hashes or JSON files")
+    else:
+        _main_with_hashes(commits, output_dir_path, comparison_type)
 
 
 def main():
@@ -204,7 +260,8 @@ def main():
         "commit",
         nargs="+",
         help="""
-            Commits to compare. Must be a git commit hash prefix. May optionally
+            Commits or files to compare. If ends with ".json", it is a path to a
+            JSON file, otherwise, it is a git commit hash prefix. May optionally
             have a friendly name after a comma, e.g. c0ffee,main.  If ends with
             a "T", use the Tier 2 run for that commit. If ends with a "J", use
             the JIT run for that commit.  If ends with a "N", use the NOGIL run

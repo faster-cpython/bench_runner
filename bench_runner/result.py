@@ -74,11 +74,13 @@ def _get_architecture(python: PathLike) -> str:
 
 
 class Comparison:
-    def __init__(self, ref: "Result", head: "Result", base: str):
+    def __init__(
+        self, ref: "Result", head: "Result", base: str, force_valid: bool = False
+    ):
         self.ref = ref
         self.head = head
         self.base = base
-        self.valid_comparison = not (
+        self.valid_comparison = force_valid or not (
             self.ref == self.head
             or (
                 self.ref.cpython_hash == self.head.cpython_hash
@@ -108,7 +110,7 @@ class BenchmarkComparison(Comparison):
             return
         yield (self.write_table, ".md", "table")
         yield (self.write_timing_plot, ".svg", "time plot")
-        if self.head.system != "windows" and self.base == "base":
+        if not self.head.is_windows() and self.base == "base":
             yield (self.write_memory_plot, "-mem.svg", "memory plot")
 
     @functools.cached_property
@@ -289,7 +291,7 @@ class BenchmarkComparison(Comparison):
 
     def _calculate_memory_change(self):
         # Windows doesn't have memory data
-        if self.head.system == "windows":
+        if self.head.is_windows():
             return "unknown"
 
         combined_data = self.get_memory_diff()
@@ -495,6 +497,24 @@ class Result:
         return obj
 
     @classmethod
+    def from_arbitrary_filename(cls, filename: PathLike) -> "Result":
+        filename = Path(filename)
+        content = json.loads(filename.read_text())
+        obj = cls(
+            nickname="unknown",
+            machine="unknown",
+            fork="unknown",
+            ref=filename.stem,
+            version="unknown",
+            cpython_hash=content.get("metadata", {}).get("commit_id", "unknown"),
+            extra=[],
+            suffix=filename.suffix,
+            flags=[],
+        )
+        obj._filename = filename
+        return obj
+
+    @classmethod
     def from_scratch(
         cls,
         python: PathLike,
@@ -622,6 +642,14 @@ class Result:
     @property
     def system(self) -> str:
         return runners.get_runner_by_nickname(self.nickname).os
+
+    def is_windows(self) -> bool:
+        if self.nickname != "unknown":
+            return self.system == "windows"
+        else:
+            return (
+                self.metadata.get("platform", "unknown").lower().startswith("windows")
+            )
 
     @property
     def runner(self) -> str:
