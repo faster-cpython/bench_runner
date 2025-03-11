@@ -170,20 +170,26 @@ def summarize_results(
     return new_results
 
 
-def get_most_recent_pystats(results: Iterable[Result]) -> Result | None:
-    candidate_pystats = [
-        result
-        for result in results
-        if result.result_info == ("pystats raw", None, None)
-        and result.fork == "python"
-        and result.flags in (["PYTHON_UOPS"], ["JIT"])
-    ]
-    if len(candidate_pystats):
-        return sorted(
-            candidate_pystats,
-            key=lambda x: (x.parsed_version, x.commit_datetime),
-            reverse=True,
-        )[0]
+def get_most_recent_pystats(
+    results: Iterable[Result],
+) -> Iterable[tuple[list[str], Result]]:
+    for flags in ([], ["PYTHON_UOPS"], ["JIT"]):
+        candidate_pystats = [
+            result
+            for result in results
+            if result.result_info == ("pystats raw", None, None)
+            and result.fork == "python"
+            and result.flags == flags
+        ]
+        if len(candidate_pystats):
+            yield (
+                flags,
+                sorted(
+                    candidate_pystats,
+                    key=lambda x: (x.parsed_version, x.commit_datetime),
+                    reverse=True,
+                )[0],
+            )
 
 
 def generate_index(
@@ -198,13 +204,14 @@ def generate_index(
     """
     content = io.StringIO()
 
-    if (most_recent_pystats := get_most_recent_pystats(all_results)) is not None:
+    for flags, result in get_most_recent_pystats(all_results):
         link = table.md_link(
-            f"Most recent pystats on main ({most_recent_pystats.cpython_hash})",
-            str(util.apply_suffix(most_recent_pystats.filename, ".md")),
+            f"Most recent {','.join(flags)} pystats on main ({result.cpython_hash})",
+            str(util.apply_suffix(result.filename, ".md")),
             filename,
         )
-        content.write(f"{link}\n\n")
+        content.write(f"- {link}\n")
+    content.write("\n")
 
     for runner, results in results_by_runner(benchmarking_results):
         content.write(f"## {runner}\n")
