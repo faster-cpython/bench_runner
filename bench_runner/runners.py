@@ -42,6 +42,9 @@ class Runner:
         return f"{self.os} {self.arch} ({self.nickname})"
 
 
+unknown_runner = Runner("unknown", "unknown", "unknown", "unknown", False, {}, None)
+
+
 @functools.cache
 def get_runners() -> list[Runner]:
     conf = config.get_bench_runner_config().get("runners", [{}])[0]
@@ -82,8 +85,8 @@ def get_nickname_for_hostname(hostname: str) -> str:
     # results are reported for.
     if "BENCHMARK_MACHINE_NICKNAME" in os.environ:
         return os.environ["BENCHMARK_MACHINE_NICKNAME"]
-    return get_runners_by_hostname()[hostname].nickname
+    return get_runners_by_hostname().get(hostname, unknown_runner).nickname
 
 
 def get_runner_by_nickname(nickname: str) -> Runner:
-    return get_runners_by_nickname()[nickname]
+    return get_runners_by_nickname().get(nickname, unknown_runner)
