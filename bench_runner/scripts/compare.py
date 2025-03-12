@@ -9,7 +9,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 import sys
-from typing import TextIO, Iterable, Sequence, TypeAlias
+from typing import Literal, TextIO, Iterable, Sequence, TypeAlias
 
 
 import rich
@@ -25,7 +25,7 @@ from bench_runner.util import PathLike
 
 ParsedCommits: TypeAlias = Sequence[
     tuple[str, list[str], str, Iterable[mod_result.Result]]
-]
+]  # (commit_hash, flags, name, results)
 
 
 def parse_commit(commit: str) -> tuple[str, str, list[str]]:
@@ -143,7 +143,9 @@ def do_many_to_many(
     fd.write("\n\nRows are 'bases', columns are 'heads'\n")
 
 
-def _main_with_hashes(commits: Sequence[str], output_dir: Path, comparison_type: str):
+def _main_with_hashes(
+    commits: Sequence[str], output_dir: Path, comparison_type: Literal["1:n", "n:n"]
+):
     results = mod_result.load_all_results(
         None, Path("results"), sorted=False, match=False
     )
@@ -228,7 +230,9 @@ def _main_with_files(commits: Sequence[str], output_dir: Path, comparison_type: 
     rich.print()
 
 
-def _main(commits: Sequence[str], output_dir: PathLike, comparison_type: str):
+def _main(
+    commits: Sequence[str], output_dir: PathLike, comparison_type: Literal["1:n", "n:n"]
+):
     if len(commits) < 2:
         raise ValueError("Must provide at least 2 commits")
 

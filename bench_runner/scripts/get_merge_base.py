@@ -13,7 +13,7 @@ from bench_runner import util
 from bench_runner.util import PathLike
 
 
-def get_python_version(cpython: PathLike):
+def get_python_version(cpython: PathLike) -> str:
     with (Path(cpython) / "Include" / "patchlevel.h").open() as fd:
         for line in fd.readlines():
             if m := re.match(r'#define\s+PY_VERSION\s+"(.+)"', line.strip()):

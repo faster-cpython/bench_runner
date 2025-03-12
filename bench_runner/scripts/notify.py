@@ -30,7 +30,7 @@ def _main(
     github_repo = os.environ.get("GITHUB_REPOSITORY", "UNKNOWN")
 
     lines = ["🤖 This is the friendly benchmarking bot with some new results!", ""]
-    line = f"@{actor}: " f"[{fork}/{ref}]"
+    line = f"@{actor}: [{fork}/{ref}]"
     skip_publish = (
         config.get_bench_runner_config().get("publish_mirror", {}).get("skip", False)
     )

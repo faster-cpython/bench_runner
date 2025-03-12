@@ -47,11 +47,6 @@ def _tuple_to_nested_dicts(entries: Iterable[tuple], d: dict | None = None) -> d
     return d
 
 
-def _worker(args) -> None:
-    func, output_filename = args
-    func(output_filename)
-
-
 def save_generated_results(results: Iterable[Result], force: bool = False) -> None:
     """
     Write out the comparison tables and plots for every result.
