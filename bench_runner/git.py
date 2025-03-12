@@ -30,14 +30,9 @@ def get_log(
     if extra is None:
         extra = []
 
-    if ref is None:
-        ref_args = []
-    else:
-        ref_args = [ref]
-    if n < 1:
-        n_args = []
-    else:
-        n_args = ["-n", str(n)]
+    ref_args = [] if ref is None else [ref]
+    n_args = [] if n < 1 else ["-n", str(n)]
+
     return subprocess.check_output(
         ["git", "log", f"--pretty=format:{format}", *n_args, *ref_args, *extra],
         encoding="utf-8",
@@ -64,7 +59,9 @@ def get_git_merge_base(dirname: PathLike) -> str | None:
     # We need to make sure we have commits from main that are old enough to be
     # the base of this branch, but not so old that we waste a ton of bandwidth
     commit_date = datetime.datetime.fromisoformat(get_git_commit_date(dirname))
-    commit_date = commit_date - datetime.timedelta(365 * 2)
+    commit_date = commit_date - datetime.timedelta(days=365 * 2)
+
+    # Get current commit hash
     commit_hash = get_log("%H", dirname)
 
     try:
@@ -79,10 +76,7 @@ def get_git_merge_base(dirname: PathLike) -> str | None:
             cwd=dirname,
         )
     except subprocess.CalledProcessError as e:
-        if e.returncode in (3, 128):
-            # Remote may already exist, that's ok
-            pass
-        else:
+        if e.returncode not in (3, 128):
             raise
 
     subprocess.check_call(
@@ -96,6 +90,7 @@ def get_git_merge_base(dirname: PathLike) -> str | None:
         ],
         cwd=dirname,
     )
+
     try:
         merge_base = subprocess.check_output(
             ["git", "merge-base", "upstream/main", "HEAD"],
@@ -107,9 +102,10 @@ def get_git_merge_base(dirname: PathLike) -> str | None:
         return None
 
     if merge_base == commit_hash:
+        # Get the parent commit if the merge base is the same as the current commit
         return get_log("%H", dirname, "HEAD^")
-    else:
-        return merge_base
+
+    return merge_base
 
 
 def get_tags(dirname: PathLike) -> list[str]:
