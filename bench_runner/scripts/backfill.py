@@ -45,7 +45,7 @@ class Commit:
         self.source = source
         self.runners: list[RunnerType] = []
 
-    def _set_hash_and_date(self):
+    def _set_hash_and_date(self) -> None:
         self._hash, self._date = _get_hash_and_date(self.cpython, self.ref)
 
     @property
