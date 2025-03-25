@@ -126,7 +126,7 @@ jobs:
       - name: Running pyperformance
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
-          venv\Scripts\python.exe -m bench_runner run_benchmarks benchmark ${{ (inputs.nogil == true && '(get-item cpython/$env:BUILD_DEST/python3.*.exe).FullName' || 'cpython/$env:BUILD_DEST/python.exe' }} ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.benchmarks || 'all' }} "${{ env.flags }}" --run_id ${{ github.run_id }}
+          venv\Scripts\python.exe -m bench_runner run_benchmarks benchmark ${{ (inputs.nogil == true && '(get-item cpython/$env:BUILD_DEST/python3.*.exe).FullName' || 'cpython/$env:BUILD_DEST/python.exe') }} ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.benchmarks || 'all' }} "${{ env.flags }}" --run_id ${{ github.run_id }}
       # Pull again, since another job may have committed results in the meantime
       - name: Pull benchmarking
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
