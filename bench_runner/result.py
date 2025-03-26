@@ -901,6 +901,8 @@ def load_all_results(
             key=lambda x: (
                 x.parsed_version,
                 x.commit_datetime,
+                tuple(x.flags),
+                x.filename,  # Just to produce a stable ordering
             ),
             reverse=True,
         )
