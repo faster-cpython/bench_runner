@@ -85,3 +85,16 @@ Install [git for Windows](https://git-scm.com/download/win).
 ### Install Python
 
 Install Python 3.9 or later from [python.org](https://python.org), and install for all users.
+
+### Install Clang 19
+
+For support for building with Clang and the tail-call interpreter, install
+the right version of the windows-msvc clang+llvm package from
+https://github.com/llvm/llvm-project/releases ([direct link to clang+llvm 19.1.6
+for x86_64](https://github.com/llvm/llvm-project/releases/download/llvmorg-19.1.6/clang+llvm-19.1.6-x86_64-pc-windows-msvc.tar.xz))
+and install it by copying its contents to `C:\Program Files\LLVM`, such that
+`C:\Program Files\LLVM\bin\clang-cl.exe` and `C:\Program
+Files\LLVM\lib\clang\19\` exist. (The version and installation
+directory are passed to `PCbuild\build.bat` in
+`bench_runner/templates/_benchmark.src.yml`, using `/p:LLVMInstallDir` and
+`/p:LLVMToolsVersion`.)
