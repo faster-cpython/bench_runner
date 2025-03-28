@@ -1,8 +1,9 @@
 import functools
-import hashlib
 import itertools
 import os
 from pathlib import Path
+import shutil
+import subprocess
 from typing import TypeAlias, Union
 
 
@@ -10,13 +11,6 @@ from . import config
 
 
 PathLike: TypeAlias = Union[str, os.PathLike]
-
-
-def get_benchmark_hash() -> str:
-    hash = hashlib.sha256()
-    hash.update(os.environ["PYPERFORMANCE_HASH"].encode("ascii")[:7])
-    hash.update(os.environ["PYSTON_BENCHMARKS_HASH"].encode("ascii")[:7])
-    return hash.hexdigest()[:6]
 
 
 TYPE_TO_ICON = {
@@ -55,3 +49,24 @@ def has_any_element(iterable):
         return True  # If successful, the generator is not empty
     except StopIteration:
         return False  # If StopIteration is raised, the generator is empty
+
+
+def safe_which(cmd: str) -> str:
+    """
+    shutil, but raises a RuntimeError if the command is not found.
+    """
+    path = shutil.which(cmd)
+    if path is None:
+        raise RuntimeError(f"Command {cmd} not found in PATH")
+    return path
+
+
+def get_brew_prefix(command: str) -> str:
+    """
+    Get the prefix of the Homebrew installation.
+    """
+    try:
+        prefix = subprocess.check_output(["brew", "--prefix", command])
+    except subprocess.CalledProcessError:
+        raise RuntimeError(f"Unable to find brew installation prefix for {command}")
+    return prefix.decode("utf-8").strip()
