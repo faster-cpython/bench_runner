@@ -18,6 +18,7 @@ from typing import Iterable
 import rich_argparse
 
 
+from bench_runner import benchmark_definitions
 from bench_runner import flags
 from bench_runner import git
 from bench_runner.result import Result
@@ -278,7 +279,7 @@ def update_metadata(
     merge_base = git.get_git_merge_base(cpython)
     if merge_base is not None:
         metadata["commit_merge_base"] = merge_base
-    metadata["benchmark_hash"] = util.get_benchmark_hash()
+    metadata["benchmark_hash"] = benchmark_definitions.get_benchmark_hash()
     if run_id is not None:
         metadata["github_action_url"] = f"{GITHUB_URL}/actions/runs/{run_id}"
     actor = os.environ.get("GITHUB_ACTOR")

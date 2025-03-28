@@ -6,10 +6,10 @@ import re
 import rich_argparse
 
 
+from bench_runner import benchmark_definitions
 from bench_runner import flags as mflags
 from bench_runner import git
 from bench_runner.result import has_result
-from bench_runner import util
 from bench_runner.util import PathLike
 
 
@@ -55,7 +55,7 @@ def _main(
                     machine,
                     pystats,
                     flags,
-                    util.get_benchmark_hash(),
+                    benchmark_definitions.get_benchmark_hash(),
                     progress=False,
                 )
                 is None
