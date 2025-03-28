@@ -14,12 +14,12 @@ COMMANDS = {
         "Get the merge base of the selected commit, and determine if it should run"
     ),
     "install": "Install the workflow files into a results repository",
+    "notify": "Send a notification about the completion of the workflow",
     "profiling_plot": "Generate the profiling plots from raw data",
     "purge": "Purge old results from a results repository",
     "remove_benchmark": "Remove specific benchmarks from the data set",
     "run_benchmarks": "Run benchmarks (in timing, pyperf or perf modes)",
-    "should_run": "Determine whether we need to rerun results for the current commit",
-    "notify": "Send a notification about the completion of the workflow",
+    "workflow": "Run the full compile/benchmark workflow",
 }
 
 if __name__ == "__main__":
