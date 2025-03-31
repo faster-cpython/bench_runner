@@ -257,6 +257,13 @@ def _main(
     venv = Path("venv")
     cpython = Path("cpython")
 
+    if force_32bit and sys.platform != "win32":
+        raise RuntimeError("32-bit builds are only supported on Windows")
+    if perf and not sys.platform.startswith("linux"):
+        raise RuntimeError("perf profiling is only supported on Linux")
+    if pystats and not sys.platform.startswith("linux"):
+        raise RuntimeError("Pystats is only supported on Linux")
+
     checkout_cpython(fork, ref, cpython)
 
     if not should_run(force, fork, ref, machine, False, flags, cpython=cpython):
