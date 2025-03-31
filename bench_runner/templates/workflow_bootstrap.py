@@ -61,11 +61,9 @@ def main():
     # Now that we've installed the full bench_runner library,
     # continue on in a new process...
 
-    last_arg = sys.argv.find("workflow_bootstrap.py")
+    last_arg = sys.argv.index("workflow_bootstrap.py")
     if last_arg == -1:
-        raise ValueError(
-            "The script should be run from the command line with the workflow_bootstrap.py argument"
-        )
+        raise ValueError("Couldn't parse command line")
 
     run_in_venv(venv, "bench_runner", ["workflow", *sys.argv[last_arg + 1 :]])
 
