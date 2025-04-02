@@ -211,7 +211,7 @@ jobs:
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
           cd cpython
-          ./configure ${{ inputs.pgo == true && '--enable-optimizations --with-lto=full' || '' }} ${{ inputs.tier2 == true && '--enable-experimental-jit=interpreter' || '' }} ${{ inputs.jit == true && '--enable-experimental-jit=yes' || '' }} ${{ inputs.nogil == true && '--disable-gil' || '' }} ${{ inputs.clang == true && '--with-tail-call-interp' || '' }}
+          ./configure --enable-option-checking=fatal ${{ inputs.pgo == true && '--enable-optimizations --with-lto=full' || '' }} ${{ inputs.tier2 == true && '--enable-experimental-jit=interpreter' || '' }} ${{ inputs.jit == true && '--enable-experimental-jit=yes' || '' }} ${{ inputs.nogil == true && '--disable-gil' || '' }} ${{ inputs.clang == true && '--with-tail-call-interp' || '' }}
           make ${{ runner.arch == 'ARM64' && '-j' || '-j4' }}
           ./python -VV
       - name: Install pyperformance
@@ -321,7 +321,7 @@ jobs:
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
           cd cpython
-          ./configure ${{ inputs.pgo == true && '--enable-optimizations --with-lto=full' || '' }} ${{ inputs.tier2 == true && '--enable-experimental-jit=interpreter' || '' }} ${{ inputs.jit == true && '--enable-experimental-jit=yes' || '' }} ${{ inputs.nogil == true && '--disable-gil' || '' }} ${{ inputs.clang == true && '--with-tail-call-interp' || '' }}
+          ./configure --enable-option-checking=fatal ${{ inputs.pgo == true && '--enable-optimizations --with-lto=full' || '' }} ${{ inputs.tier2 == true && '--enable-experimental-jit=interpreter' || '' }} ${{ inputs.jit == true && '--enable-experimental-jit=yes' || '' }} ${{ inputs.nogil == true && '--disable-gil' || '' }} ${{ inputs.clang == true && '--with-tail-call-interp' || '' }}
           make -j4
           ./python.exe -VV
       # On macos ARM64, actions/setup-python isn't available, so we rely on a
