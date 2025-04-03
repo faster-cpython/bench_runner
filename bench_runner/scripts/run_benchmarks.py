@@ -34,6 +34,7 @@ GITHUB_URL = "https://github.com/" + os.environ.get(
 )
 # Environment variables that control the execution of CPython
 ENV_VARS = ["PYTHON_JIT", "PYPERF_PERF_RECORD_EXTRA_OPTS"]
+LOOPS_FILE_ENV_VAR = "PYPERFORMANCE_LOOPS_FILE"
 
 
 class NoBenchmarkError(Exception):
@@ -81,6 +82,10 @@ def run_benchmarks(
 
     if extra_args is None:
         extra_args = []
+
+    if (loops_file := os.environ.get(LOOPS_FILE_ENV_VAR)):
+        extra_args.append("--same-loops")
+        extra_args.append(loops_file)
 
     args = [
         sys.executable,
@@ -130,7 +135,12 @@ def collect_pystats(
 
     all_benchmarks = get_benchmark_names(benchmarks)
 
-    extra_args = ["--same-loops", "loops.json", "--hook", "pystats"]
+    # Default to loops.json if not explicitly set, like before the
+    # environment variable was added.
+    if LOOPS_FILE_ENV_VAR not in os.environ:
+        os.environ[LOOPS_FILE_ENV_VAR] = "loops.json"
+
+    extra_args = ["--hook", "pystats"]
 
     if flags is None:
         flags = []
