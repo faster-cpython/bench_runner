@@ -9,7 +9,7 @@ authors = [
 ]
 description = "Faster CPython's benchmarking runner utilities"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = {text = "BSD-3-Clause"}
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -21,7 +21,7 @@ dependencies = [
     "rich-argparse==1.7.0",
     "ruamel.yaml==0.18.10",
     "scour==0.38.2",
-    "tomli==2.0.1; python_version < '3.11'",
+    "tomli==2.0.1",
     "wheel",
 ]
 dynamic = ["version"]
