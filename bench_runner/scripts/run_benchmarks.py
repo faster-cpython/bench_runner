@@ -82,8 +82,8 @@ def run_benchmarks(
     if extra_args is None:
         extra_args = []
 
-    if (affinity := os.environ.get('CPU_AFFINITY')):
-        extra_args.append(f'--affinity={affinity}')
+    if affinity := os.environ.get("CPU_AFFINITY"):
+        extra_args.append(f"--affinity={affinity}")
 
     args = [
         sys.executable,
