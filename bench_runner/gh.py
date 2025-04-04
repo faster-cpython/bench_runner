@@ -73,7 +73,7 @@ def benchmark(
 def send_notification(body):
     conf = config.get_bench_runner_config()
     notification_issue = conf.get("notify", {}).get("notification_issue", 0)
-    
+
     if notification_issue == 0:
         print("Not sending Github notification.")
         return
