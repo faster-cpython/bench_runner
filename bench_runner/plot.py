@@ -65,7 +65,9 @@ def savefig(output_filename: PathLike, **kwargs):
     plt.close("all")
 
     if output_filename.suffix == ".svg":
-        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(
+            dir=output_filename.parent, delete=False
+        ) as tmp:
             with open(output_filename) as fd:
                 scour.start(Options(), fd, tmp)
             output_filename.unlink()
