@@ -19,6 +19,7 @@ COMMANDS = {
     "remove_benchmark": "Remove specific benchmarks from the data set",
     "run_benchmarks": "Run benchmarks (in timing, pyperf or perf modes)",
     "should_run": "Determine whether we need to rerun results for the current commit",
+    "synthesize_loops_file": "Create a loops file from multiple benchmark results",
     "notify": "Send a notification about the completion of the workflow",
 }
 
