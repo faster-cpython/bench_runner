@@ -83,7 +83,7 @@ def run_benchmarks(
     if extra_args is None:
         extra_args = []
 
-    if (loops_file := os.environ.get(LOOPS_FILE_ENV_VAR)):
+    if loops_file := os.environ.get(LOOPS_FILE_ENV_VAR):
         extra_args.append("--same-loops")
         extra_args.append(loops_file)
 
