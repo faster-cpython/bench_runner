@@ -10,10 +10,10 @@ For example, you can see [the Faster CPython team's benchmarking results](https:
 
 Create a new empty repository on Github and clone it locally.
 
-Add bench_runner to your `requirements.txt`. Since there are no PyPI releases (yet), you can install it from a tag in the git repo:
+Add bench_runner to your `requirements.txt`.
 
 ```text
-git+https://github.com/faster-cpython/bench_runner@{VERSION}#egg=bench_runner
+bench_runner=={VERSION}
 ```
 
 Replace the {VERSION} above with the latest version tag of `bench_runner`.

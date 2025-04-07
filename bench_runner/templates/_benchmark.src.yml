@@ -112,7 +112,7 @@ jobs:
         shell: cmd
         run: |
           cd cpython
-          PCbuild\build.bat %BUILD_FLAGS% ${{ (inputs.pgo == true) && '--pgo' || '' }} ${{ inputs.jit == true && '--experimental-jit' || '' }} ${{ inputs.tier2 == true && '--experimental-jit-interpreter' || '' }} ${{ inputs.nogil == true && '--disable-gil' || '' }} -c Release ${{ inputs.clang == true && '"/p:PlatformToolset=clangcl"' || '' }} ${{ inputs.clang == true && '"/p:LLVMInstallDir=C:\Program Files\LLVM"' || '' }} ${{ inputs.clang == true && '"/p:LLVMToolsVersion=19.1.6"' || '' }} ${{ inputs.clang == true && '--tail-call-interp' || '' }}
+          PCbuild\build.bat %BUILD_FLAGS% ${{ (inputs.pgo == true) && '--pgo' || '' }} ${{ inputs.clang == true && '--tail-call-interp' || '' }} ${{ inputs.jit == true && '--experimental-jit' || '' }} ${{ inputs.tier2 == true && '--experimental-jit-interpreter' || '' }} ${{ inputs.nogil == true && '--disable-gil' || '' }} -c Release ${{ inputs.clang == true && '"/p:PlatformToolset=clangcl"' || '' }} ${{ inputs.clang == true && '"/p:LLVMInstallDir=C:\Program Files\LLVM"' || '' }} ${{ inputs.clang == true && '"/p:LLVMToolsVersion=19.1.6"' || '' }}
       - name: Copy Python to different location
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
@@ -211,7 +211,7 @@ jobs:
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
           cd cpython
-          ./configure ${{ inputs.pgo == true && '--enable-optimizations --with-lto=full' || '' }} ${{ inputs.tier2 == true && '--enable-experimental-jit=interpreter' || '' }} ${{ inputs.jit == true && '--enable-experimental-jit=yes' || '' }} ${{ inputs.nogil == true && '--disable-gil' || '' }} ${{ inputs.clang == true && '--with-tail-call-interp' || '' }}
+          ./configure --enable-option-checking=fatal ${{ inputs.pgo == true && '--enable-optimizations --with-lto=full' || '' }} ${{ inputs.tier2 == true && '--enable-experimental-jit=interpreter' || '' }} ${{ inputs.jit == true && '--enable-experimental-jit=yes' || '' }} ${{ inputs.nogil == true && '--disable-gil' || '' }} ${{ inputs.clang == true && '--with-tail-call-interp' || '' }} ${PYTHON_CONFIGURE_FLAGS:-}
           make ${{ runner.arch == 'ARM64' && '-j' || '-j4' }}
           ./python -VV
       - name: Install pyperformance
@@ -325,7 +325,7 @@ jobs:
         if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
           cd cpython
-          ./configure ${{ inputs.pgo == true && '--enable-optimizations --with-lto=full' || '' }} ${{ inputs.tier2 == true && '--enable-experimental-jit=interpreter' || '' }} ${{ inputs.jit == true && '--enable-experimental-jit=yes' || '' }} ${{ inputs.nogil == true && '--disable-gil' || '' }} ${{ inputs.clang == true && '--with-tail-call-interp' || '' }}
+          ./configure --enable-option-checking=fatal ${{ inputs.pgo == true && '--enable-optimizations --with-lto=full' || '' }} ${{ inputs.tier2 == true && '--enable-experimental-jit=interpreter' || '' }} ${{ inputs.jit == true && '--enable-experimental-jit=yes' || '' }} ${{ inputs.nogil == true && '--disable-gil' || '' }} ${{ inputs.clang == true && '--with-tail-call-interp' || '' }} ${PYTHON_CONFIGURE_FLAGS:-}
           make -j4
           ./python.exe -VV
       # On macos ARM64, actions/setup-python isn't available, so we rely on a

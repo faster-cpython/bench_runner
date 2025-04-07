@@ -236,7 +236,6 @@ def test_should_run_exists_force(benchmarks_checkout, capsys, monkeypatch):
     removed_paths = []
 
     def remove(repo, path):
-        nonlocal removed_paths
         removed_paths.append(path)
         (repo / path).unlink()
 
