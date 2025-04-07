@@ -1,10 +1,3 @@
-import importlib
-import sys
-
-
-import rich
-
-
 COMMANDS = {
     "backfill": "Schedule benchmarking a number of commits",
     "compare": "Compare a matrix of specific results",
@@ -23,15 +16,20 @@ COMMANDS = {
 }
 
 if __name__ == "__main__":
+    import importlib
+    import sys
+
+    from .util import rich_print
+
     command = len(sys.argv) >= 2 and sys.argv[1] or ""
 
     if command not in COMMANDS:
         command_length = max(len(k) for k in COMMANDS.keys())
-        rich.print(f"Unknown command '{command}'.", file=sys.stderr)
-        rich.print(file=sys.stderr)
-        rich.print("Valid commands are:", file=sys.stderr)
+        rich_print(f"Unknown command '{command}'.", file=sys.stderr)
+        rich_print(file=sys.stderr)
+        rich_print("Valid commands are:", file=sys.stderr)
         for k, v in COMMANDS.items():
-            rich.print(f"  [blue]{k:{command_length}}[/blue]: {v}")
+            rich_print(f"  [blue]{k:{command_length}}[/blue]: {v}")
         sys.exit(1)
 
     sys.argv = [sys.argv[0], *sys.argv[2:]]

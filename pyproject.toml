@@ -43,3 +43,6 @@ include-package-data = true
 
 [tool.setuptools.package-data]
 bench_runner = ["templates/*"]
+
+[tool.pyright]
+exclude = ["bench_runner/templates/pages/bench_display.py"]

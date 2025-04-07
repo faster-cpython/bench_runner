@@ -6,6 +6,16 @@ from pathlib import Path
 from typing import TypeAlias, Union
 
 
+try:
+    from rich import print as rich_print
+    from rich.progress import track as rich_track  # pyright: ignore
+except ImportError:
+    rich_print = print  # type: ignore[assignment]
+
+    def rich_track(it, *_args, **_kwargs):  # pyright: ignore
+        return it
+
+
 from . import config
 
 

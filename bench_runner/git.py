@@ -7,10 +7,8 @@ from pathlib import Path
 import subprocess
 
 
-import rich
-
-
 from .util import PathLike
+from .util import rich_print
 
 
 def get_log(
@@ -98,7 +96,7 @@ def get_git_merge_base(dirname: PathLike) -> str | None:
             encoding="utf-8",
         ).strip()
     except subprocess.CalledProcessError:
-        rich.print("[red]Failed to get merge base[/red]")
+        rich_print("[red]Failed to get merge base[/red]")
         return None
 
     if merge_base == commit_hash:

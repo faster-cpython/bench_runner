@@ -17,9 +17,6 @@ from urllib.parse import unquote
 
 
 import numpy as np
-from packaging import version
-import pyperf
-import rich.progress
 
 
 from . import bases as mbases
@@ -30,7 +27,7 @@ from . import hpt
 from . import plot
 from . import runners
 from . import util
-from .util import PathLike
+from .util import PathLike, rich_track
 
 
 CombinedData = list[tuple[str, np.ndarray | None, float]]
@@ -190,6 +187,8 @@ class BenchmarkComparison(Comparison):
     def _get_combined_data(
         self, ref_data: dict[str, np.ndarray], head_data: dict[str, np.ndarray]
     ) -> CombinedData:
+        import pyperf
+
         def remove_outliers(values, m=2):
             return values[
                 abs(values - np.mean(values)) < np.multiply(m, np.std(values))
@@ -197,7 +196,9 @@ class BenchmarkComparison(Comparison):
 
         def calculate_diffs(ref_values, head_values) -> tuple[np.ndarray | None, float]:
             if len(ref_values) > 3 and len(head_values) > 3:
-                sig, t_score = pyperf._utils.is_significant(ref_values, head_values)
+                sig, t_score = pyperf._utils.is_significant(  # pyright: ignore
+                    ref_values, head_values
+                )
                 if not sig:
                     return None, 0.0
                 else:
@@ -461,6 +462,7 @@ class Result:
         self._commit_datetime = commit_datetime
         self._filename = None
         self.bases = {}
+        self._contents: None | dict[str, Any] = None
 
     @classmethod
     def from_filename(cls, filename: PathLike) -> "Result":
@@ -495,6 +497,22 @@ class Result:
         )
         obj._filename = filename
         return obj
+
+    @classmethod
+    def from_online_json(cls, url: str, json_content: str | dict) -> "Result":
+        from urllib.parse import urlparse
+
+        parsed_url = urlparse(url)
+        path = "/".join(parsed_url.path.split("/")[-2:])
+
+        result = cls.from_filename(Path(unquote(path)))
+        result._filename = None
+        if isinstance(json_content, str):
+            result._contents = json.loads(json_content)
+        else:
+            result._contents = json_content
+
+        return result
 
     @classmethod
     def from_arbitrary_filename(cls, filename: PathLike) -> "Result":
@@ -600,10 +618,14 @@ class Result:
             f"Unknown result type (extra={self.extra} suffix={self.suffix})"
         )
 
-    @functools.cached_property
+    @property
     def contents(self) -> dict[str, Any]:
+        if self._contents is not None:
+            return self._contents
         with self.filename.open("rb") as fd:
-            return json.load(fd)
+            self._contents = json.load(fd)
+        assert self._contents is not None
+        return self._contents
 
     @property
     def metadata(self) -> dict[str, Any]:
@@ -705,6 +727,8 @@ class Result:
         return data
 
     def get_memory_data(self) -> dict[str, np.ndarray]:
+        from packaging import version
+
         data = {}
         excluded = util.get_excluded_benchmarks()
 
@@ -800,7 +824,7 @@ def match_to_bases(
         bases = []
 
     if progress:
-        track = rich.progress.track  # type: ignore
+        track = rich_track  # type: ignore
     else:
 
         def track(it, *_args, **_kwargs):

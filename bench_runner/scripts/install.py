@@ -5,11 +5,12 @@ Regenerates some Github Actions workflow files from templates.
 import argparse
 import copy
 import functools
+import importlib.metadata
 import io
 from pathlib import Path
 import shutil
 import sys
-from typing import Any
+from typing import Any, Callable, TextIO
 
 
 import rich
@@ -26,7 +27,8 @@ from bench_runner.util import PathLike
 
 ROOT_PATH = Path()
 TEMPLATE_PATH = Path(__file__).parents[1] / "templates"
-WORKFLOW_PATH = Path() / ".github" / "workflows"
+WORKFLOW_PATH = ROOT_PATH / ".github" / "workflows"
+PAGES_PATH = ROOT_PATH / "pages"
 
 
 def fail_check(dst: PathLike):
@@ -41,9 +43,11 @@ def fail_check(dst: PathLike):
     sys.exit(1)
 
 
-def write_yaml(dst: PathLike, contents: Any, check: bool):
+def write_with_check(
+    dst: PathLike, contents: Any, check: bool, writer: Callable[[Any, TextIO], None]
+) -> None:
     """
-    Write `contents` to `dst` as YAML.
+    Write `contents` to `dst` using the writer function `writer`.
 
     If `check` is True, raise SystemExit if the file would change. This is used
     in CI to confirm that the file was regenerated after changes to the source
@@ -51,25 +55,37 @@ def write_yaml(dst: PathLike, contents: Any, check: bool):
     """
     dst = Path(dst)
 
-    def do_write(contents, fd):
-        fd.write("# Generated file: !!! DO NOT EDIT !!!\n")
-        fd.write("---\n")
-        yaml = YAML()
-        yaml.dump(contents, fd)
-
     if check:
         if not dst.is_file():
             fail_check(dst)
 
         orig_contents = dst.read_text()
         fd = io.StringIO()
-        do_write(contents, fd)
+        writer(contents, fd)
         new_contents = fd.getvalue()
         if orig_contents != new_contents:
             fail_check(dst)
     else:
         with dst.open("w") as fd:
-            do_write(contents, fd)
+            writer(contents, fd)
+
+
+def write_yaml(dst: PathLike, contents: Any, check: bool) -> None:
+    """
+    Write `contents` to `dst` as YAML.
+
+    If `check` is True, raise SystemExit if the file would change. This is used
+    in CI to confirm that the file was regenerated after changes to the source
+    file.
+    """
+
+    def do_write(contents, fd):
+        fd.write("# Generated file: !!! DO NOT EDIT !!!\n")
+        fd.write("---\n")
+        yaml = YAML()
+        yaml.dump(contents, fd)
+
+    return write_with_check(dst, contents, check, do_write)
 
 
 def load_yaml(src: PathLike) -> Any:
@@ -173,6 +189,10 @@ def get_skip_publish_mirror() -> bool:
     return config.get_bench_runner_config().get("publish_mirror", {}).get("skip", False)
 
 
+def get_webui_enabled() -> bool:
+    return config.get_bench_runner_config().get("webui", {}).get("enabled", False)
+
+
 def generate_benchmark(dst: Any) -> Any:
     """
     Generates benchmark.yml from benchmark.src.yml.
@@ -226,6 +246,12 @@ def generate__notify(dst: Any) -> Any:
     return dst
 
 
+def generate_static(dst: Any) -> Any:
+    if get_webui_enabled():
+        return dst
+    return None
+
+
 def generate_generic(dst: Any) -> Any:
     return dst
 
@@ -238,13 +264,51 @@ GENERATORS = {
 }
 
 
+def write_pages(check: bool) -> None:
+    if not get_webui_enabled():
+        return
+
+    def get_writer(suffix: str) -> Callable[[Any, TextIO], None]:
+        comment = {".py": ("#", ""), ".js": ("//", ""), ".html": ("<!--", "-->")}[
+            suffix
+        ]
+
+        def do_write(contents, fd):
+            for key, value in vars.items():
+                contents = contents.replace("{{" + key + "}}", value)
+
+            fd.write(
+                f"{comment[0]} Generated file: !!! DO NOT EDIT !!!{comment[1]}\n\n"
+            )
+            fd.write(contents)
+
+        return do_write
+
+    webui_config = config.get_bench_runner_config().get("webui", {})
+
+    vars = {
+        "bench_runner_version": importlib.metadata.version("bench_runner"),
+        "public_org": webui_config.get("public_org", ""),
+        "public_repo": webui_config.get("public_repo", ""),
+    }
+
+    PAGES_PATH.mkdir(exist_ok=True)
+
+    for path in (TEMPLATE_PATH / "pages").glob("*"):
+        dst_path = PAGES_PATH / path.name
+        if path.suffix == ".png":
+            shutil.copyfile(path, dst_path)
+        else:
+            write_with_check(dst_path, path.read_text(), check, get_writer(path.suffix))
+
+
 def _main(check: bool) -> None:
     WORKFLOW_PATH.mkdir(parents=True, exist_ok=True)
 
     env = load_yaml(TEMPLATE_PATH / "env.yml")
 
     for path in TEMPLATE_PATH.glob("*"):
-        if path.name.endswith(".src.yml") or path.name == "env.yml":
+        if path.is_dir() or path.name.endswith(".src.yml") or path.name == "env.yml":
             continue
 
         if not (ROOT_PATH / path.name).is_file():
@@ -260,6 +324,8 @@ def _main(check: bool) -> None:
         dst = generator(src)
         dst = {"env": env, **dst}
         write_yaml(dst_path, dst, check)
+
+    write_pages(check)
 
 
 def main():

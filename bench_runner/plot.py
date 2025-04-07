@@ -8,14 +8,17 @@ import json
 from pathlib import Path
 import re
 import tempfile
-from typing import Callable, Iterable, Sequence
+from typing import Callable, Iterable, Sequence, TextIO
 
 
 from matplotlib import pyplot as plt
 import matplotlib
 import numpy as np
-import rich_argparse
-from scour import scour
+
+try:
+    from scour import scour
+except ImportError:
+    scour = None
 
 
 matplotlib.use("agg")
@@ -49,7 +52,7 @@ INTERPRETER_HEAVY = {
 }
 
 
-def savefig(output_filename: PathLike, **kwargs):
+def savefig(output: PathLike | TextIO, **kwargs):
     class Options:
         quiet = True
         remove_descriptive_elements = True
@@ -59,19 +62,19 @@ def savefig(output_filename: PathLike, **kwargs):
         shorten_ids = True
         digits = 3
 
-    output_filename = Path(output_filename)
-
-    plt.savefig(output_filename, **kwargs)
+    plt.savefig(output, format="svg", **kwargs)
     plt.close("all")
 
-    if output_filename.suffix == ".svg":
-        with tempfile.NamedTemporaryFile(
-            dir=output_filename.parent, delete=False
-        ) as tmp:
-            with open(output_filename) as fd:
-                scour.start(Options(), fd, tmp)
-            output_filename.unlink()
-            Path(tmp.name).rename(output_filename)
+    if isinstance(output, (str, Path)):
+        output = Path(output)
+        if output.suffix == ".svg" and scour:
+            with tempfile.NamedTemporaryFile(
+                dir=output_filename.parent, delete=False
+            ) as tmp:
+                with open(output) as fd:
+                    scour.start(Options(), fd, tmp)
+                output.unlink()
+                Path(tmp.name).rename(output)
 
 
 @functools.cache
@@ -478,6 +481,8 @@ def flag_effect_plot(
 
 
 if __name__ == "__main__":
+    import rich_argparse
+
     parser = argparse.ArgumentParser(
         "Compare two benchmark .json files",
         formatter_class=rich_argparse.ArgumentDefaultsRichHelpFormatter,

@@ -65,3 +65,9 @@ names = ["linux"]
 colors = ["C0"]
 styles = ["-"]
 markers = ["s"]
+
+[webui]
+# Enable a web UI, published to github pages
+enabled = true
+public_org = "myorg"
+public_repo = "myrepo"

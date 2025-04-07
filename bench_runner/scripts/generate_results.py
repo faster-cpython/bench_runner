@@ -5,6 +5,7 @@ import argparse
 from collections import defaultdict
 import datetime
 import io
+import json
 from pathlib import Path
 import sys
 from typing import Iterable, TextIO, Sequence
@@ -17,6 +18,7 @@ import rich_argparse
 
 
 from bench_runner.bases import get_bases
+from bench_runner import config as mconfig
 from bench_runner import flags as mflags
 from bench_runner import plot
 from bench_runner.result import (
@@ -371,6 +373,51 @@ def filter_broken_memory_results(results):
     return [r for r in results if r.nickname != "darwin"]
 
 
+def generate_webui_index(bases: Iterable[str], results: Iterable[Result]) -> None:
+    """
+    Generate a machine readable index of all the available results.
+    """
+
+    def make_path(result):
+        return "/".join([result.filename.parent.name, result.filename.name])
+
+    row_data = []
+    index = {}
+    base_results = []
+    for i, result in enumerate(results):
+        row_data.append(
+            [
+                result.commit_date,
+                result.cpython_hash,
+                unquote(result.fork),
+                unquote(result.ref),
+                result.version,
+                result.runner,
+                ",".join(result.flags),
+            ]
+        )
+        index[make_path(result)] = i
+
+    for result in results:
+        if "base" in result.bases:
+            base = result.bases["base"].ref
+            base_results.append(index[make_path(base)])
+        else:
+            base_results.append(None)
+
+    content = {
+        "rowData": row_data,
+        "_index": list(index.keys()),
+        "_base_results": base_results,
+        "_bases": bases,
+    }
+
+    with Path("pages/index.json").open("w") as fd:
+        # By using indent=0, git can diff the file much better than if
+        # it were on a single line
+        json.dump(content, fd, indent=0)
+
+
 def _main(repo_dir: PathLike, force: bool = False, bases: Sequence[str] | None = None):
     repo_dir = Path(repo_dir)
     results_dir = repo_dir / "results"
@@ -385,6 +432,8 @@ def _main(repo_dir: PathLike, force: bool = False, bases: Sequence[str] | None =
     benchmarking_results = [r for r in results if r.result_info[0] == "raw results"]
     generate_indices(bases, results, benchmarking_results, repo_dir)
     generate_directory_indices(benchmarking_results)
+    if mconfig.get_bench_runner_config().get("webui", False):
+        generate_webui_index(bases, benchmarking_results)
 
     memory_benchmarking_results = filter_broken_memory_results(benchmarking_results)
 
