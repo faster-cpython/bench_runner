@@ -19,6 +19,8 @@ sudo apt install python3 build-essential ccache gdb lcov pkg-config \
       lzma lzma-dev tk-dev uuid-dev zlib1g-dev linux-perf
 ```
 
+The self-hosted runner needs to have `python` be Python 3.9 or later.
+
 ### Enable ccache
 
 ```bash session

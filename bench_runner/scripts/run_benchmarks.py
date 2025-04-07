@@ -86,6 +86,9 @@ def run_benchmarks(
     if loops_file := os.environ.get(LOOPS_FILE_ENV_VAR):
         extra_args.append("--same-loops")
         extra_args.append(loops_file)
+        
+    if affinity := os.environ.get("CPU_AFFINITY"):
+        extra_args.append(f"--affinity={affinity}")
 
     args = [
         sys.executable,

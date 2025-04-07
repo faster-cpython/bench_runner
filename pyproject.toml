@@ -17,7 +17,7 @@ classifiers = [
 dependencies = [
     "matplotlib==3.10.1",
     "pyperf==2.9.0",
-    "rich==13.9.4",
+    "rich==14.0.0",
     "rich-argparse==1.7.0",
     "ruamel.yaml==0.18.10",
     "scour==0.38.2",
@@ -30,8 +30,8 @@ dynamic = ["version"]
 test = [
     "black==25.1.0",
     "filelock==3.18.0",
-    "flake8==7.1.2",
-    "pyright==1.1.397",
+    "flake8==7.2.0",
+    "pyright==1.1.398",
     "pytest==8.3.5",
     "pytest-xdist==3.6.1",
 ]
