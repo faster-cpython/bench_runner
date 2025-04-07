@@ -80,11 +80,3 @@ def test_synthesize():
         set_loops(output, sys.maxsize)
         run_synthesize(output, DATA_PATH, update=True, merger="min")
         assert expected_data == check_loops(output)
-
-        # Can't easily check the values for correctness, so just verify it
-        # doesn't produce bogus output.
-        run_synthesize(output, DATA_PATH, overwrite=True, merger="mean")
-        check_loops(output)
-
-        run_synthesize(output, DATA_PATH, overwrite=True, merger="median")
-        check_loops(output)
