@@ -66,7 +66,7 @@ def run_benchmarks(
     benchmarks: str,
     /,
     test_mode: bool = False,
-    extra_args: Iterable[str] | None = None,
+    extra_args: list[str] | None = None,
 ) -> None:
     if benchmarks.strip() == "":
         benchmarks = "all"
@@ -81,6 +81,9 @@ def run_benchmarks(
 
     if extra_args is None:
         extra_args = []
+
+    if affinity := os.environ.get("CPU_AFFINITY"):
+        extra_args.append(f"--affinity={affinity}")
 
     args = [
         sys.executable,
