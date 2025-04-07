@@ -223,7 +223,7 @@ def tune_system(venv: PathLike, perf: bool) -> None:
                 "sudo",
                 "bash",
                 "-c",
-                "echo 0 > /proc/sys/kernel/perf_event_max_sample_rate",
+                "echo 100000 > /proc/sys/kernel/perf_event_max_sample_rate",
             ]
         )
 
