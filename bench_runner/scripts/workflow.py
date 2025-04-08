@@ -150,7 +150,7 @@ def compile_unix(cpython: PathLike, flags: list[str], pgo: bool, pystats: bool) 
 
     args = []
     if pystats:
-        args.append("--with-pystats")
+        args.append("--enable-pystats")
     if pgo:
         args.extend(["--enable-optimizations", "--with-lto=full"])
     if "PYTHON_UOPS" in flags:
@@ -290,7 +290,7 @@ def _main(
         if Path(".debug").exists():
             shutil.rmtree(".debug")
 
-        pystats_dir = Path("/tmp") / "pystats"
+        pystats_dir = Path("/tmp") / "py_stats"
         if pystats:
             shutil.rmtree(pystats_dir, ignore_errors=True)
             pystats_dir.mkdir(parents=True)
