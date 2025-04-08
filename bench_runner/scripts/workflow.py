@@ -163,6 +163,7 @@ def compile_unix(cpython: PathLike, flags: list[str], pgo: bool, pystats: bool) 
         args.append("--disable-gil")
     if "CLANG" in flags:
         args.append("--with-tail-call-interp")
+    args.append("--enable-option-checking=fatal")
 
     with contextlib.chdir(cpython):
         subprocess.check_call(["./configure", *args], env=env)
