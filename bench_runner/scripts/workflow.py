@@ -219,7 +219,11 @@ def tune_system(venv: PathLike, perf: bool) -> None:
     if not sys.platform.startswith("linux"):
         return
 
-    run_in_venv(venv, "pyperf", ["system", perf and "reset" or "tune"], sudo=True)
+    args = ["system", perf and "reset" or "tune"]
+    if cpu_affinity := os.environ.get("CPU_AFFINITY"):
+        args.append(f'--affinity="{cpu_affinity}"')
+
+    run_in_venv(venv, "pyperf", args, sudo=True)
 
     if perf:
         subprocess.check_call(
