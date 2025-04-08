@@ -5,6 +5,7 @@ import argparse
 import contextlib
 import os
 from pathlib import Path
+import shlex
 import shutil
 import subprocess
 import sys
@@ -164,6 +165,8 @@ def compile_unix(cpython: PathLike, flags: list[str], pgo: bool, pystats: bool) 
     if "CLANG" in flags:
         args.append("--with-tail-call-interp")
     args.append("--enable-option-checking=fatal")
+    if configure_flags := os.environ.get("PYTHON_CONFIGURE_FLAGS"):
+        args.extend(shlex.split(configure_flags))
 
     with contextlib.chdir(cpython):
         subprocess.check_call(["./configure", *args], env=env)
