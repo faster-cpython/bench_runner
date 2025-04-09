@@ -141,6 +141,7 @@ def compile_unix(cpython: PathLike, flags: list[str], pgo: bool, pystats: bool) 
             env["LLVM_PROFDATA"] = util.safe_which("llvm-profdata-19")
         elif sys.platform == "darwin":
             llvm_prefix = util.get_brew_prefix("llvm")
+            env["PATH"] = f"{llvm_prefix}/bin:{env['PATH']}"
             env["CC"] = f"{llvm_prefix}/bin/clang"
             env["LDFLAGS"] = f"-L{llvm_prefix}/lib"
             env["CFLAGS"] = f"-I{llvm_prefix}/include"
