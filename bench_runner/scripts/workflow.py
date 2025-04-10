@@ -53,12 +53,12 @@ def run_in_venv(
     venv = Path(venv)
 
     if util.get_simple_platform() == "windows":
-        exe = Path("Scripts") / "python.exe"
+        exe = venv / "Scripts" / "python.exe"
     else:
-        exe = Path("bin") / "python"
+        exe = venv / "bin" / "python"
 
     args = [
-        str(venv / exe),
+        str(exe),
         "-m",
         module,
         *cmd,
