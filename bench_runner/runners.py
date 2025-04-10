@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import functools
 import os
+import socket
 
 
 from . import config
@@ -80,13 +81,19 @@ def get_runners_by_nickname() -> dict[str, Runner]:
     return {x.nickname: x for x in get_runners()}
 
 
-def get_nickname_for_hostname(hostname: str) -> str:
+def get_nickname_for_hostname(hostname: str | None = None) -> str:
     # The envvar BENCHMARK_MACHINE_NICKNAME is used to override the machine that
     # results are reported for.
     if "BENCHMARK_MACHINE_NICKNAME" in os.environ:
         return os.environ["BENCHMARK_MACHINE_NICKNAME"]
-    return get_runners_by_hostname().get(hostname, unknown_runner).nickname
+    return get_runner_for_hostname(hostname).nickname
 
 
 def get_runner_by_nickname(nickname: str) -> Runner:
     return get_runners_by_nickname().get(nickname, unknown_runner)
+
+
+def get_runner_for_hostname(hostname: str | None = None) -> Runner:
+    if hostname is None:
+        hostname = socket.gethostname()
+    return get_runners_by_hostname().get(hostname, unknown_runner)

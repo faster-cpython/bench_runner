@@ -15,6 +15,7 @@ import rich_argparse
 
 
 from bench_runner import benchmark_definitions
+from bench_runner import config
 from bench_runner import flags as mflags
 from bench_runner import git
 from bench_runner.result import has_result
@@ -132,6 +133,7 @@ def checkout_benchmarks():
 
 def compile_unix(cpython: PathLike, flags: list[str], pgo: bool, pystats: bool) -> None:
     cpython = Path(cpython)
+    cfg = config.get_config_for_current_runner()
 
     env = os.environ.copy()
     if "CLANG" in flags:
@@ -169,9 +171,15 @@ def compile_unix(cpython: PathLike, flags: list[str], pgo: bool, pystats: bool) 
     if configure_flags := os.environ.get("PYTHON_CONFIGURE_FLAGS"):
         args.extend(shlex.split(configure_flags))
 
+    make_args = []
+    if cores := cfg.get("use_cores", None):
+        make_args.extend(["-j", str(cores)])
+    else:
+        make_args.extend(["-j"])
+
     with contextlib.chdir(cpython):
         subprocess.check_call(["./configure", *args], env=env)
-        subprocess.check_call(["make", "-j"], env=env)
+        subprocess.check_call(["make", *make_args], env=env)
 
 
 def compile_windows(
