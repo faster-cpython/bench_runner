@@ -26,4 +26,7 @@ def get_bench_runner_config(
 def get_config_for_current_runner() -> dict[str, Any]:
     config = get_bench_runner_config()
     runner = runners.get_runner_for_hostname()
-    return config.get("runners", {}).get(runner.nickname, {})
+    all_runners = config.get("runners", [])
+    if len(all_runners) >= 1:
+        return all_runners[0].get(runner.nickname, {})
+    return {}
