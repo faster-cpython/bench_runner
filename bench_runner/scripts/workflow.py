@@ -38,7 +38,7 @@ def get_exe_path(cpython: Path, flags: list[str], force_32bit: bool) -> Path:
     elif sys.platform == "darwin":
         return cpython / "python.exe"
     elif sys.platform.startswith("win32"):
-        build_dir = get_windows_build_dir(force_32bit)
+        build_dir = cpython / get_windows_build_dir(force_32bit)
         if "NOGIL" in flags:
             print(list(build_dir.glob("*.exe")))
             exe = next(build_dir.glob("python3.*.exe"))
