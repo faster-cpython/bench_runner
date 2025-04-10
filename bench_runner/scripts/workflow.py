@@ -33,20 +33,18 @@ def get_windows_build_dir(force_32bit: bool) -> Path:
 
 
 def get_exe_path(cpython: Path, flags: list[str], force_32bit: bool) -> Path:
-    if sys.platform.startswith("linux"):
-        return cpython / "python"
-    elif sys.platform == "darwin":
-        return cpython / "python.exe"
-    elif sys.platform.startswith("win32"):
-        build_dir = cpython / get_windows_build_dir(force_32bit)
-        if "NOGIL" in flags:
-            print(list(build_dir.glob("*.exe")))
-            exe = next(build_dir.glob("python3.*.exe"))
-        else:
-            exe = "python.exe"
-        return cpython / get_windows_build_dir(force_32bit) / exe
-    else:
-        raise RuntimeError(f"Unsupported platform: {sys.platform}")
+    match util.get_simple_platform():
+        case "linux":
+            return cpython / "python"
+        case "macos":
+            return cpython / "python.exe"
+        case "windows":
+            build_dir = cpython / get_windows_build_dir(force_32bit)
+            if "NOGIL" in flags:
+                exe = next(build_dir.glob("python3.*.exe"))
+            else:
+                exe = build_dir / "python.exe"
+            return exe
 
 
 def run_in_venv(
@@ -54,7 +52,7 @@ def run_in_venv(
 ) -> None:
     venv = Path(venv)
 
-    if sys.platform == "win32":
+    if util.get_simple_platform() == "windows":
         exe = Path("Scripts") / "python.exe"
     else:
         exe = Path("bin") / "python"
@@ -138,18 +136,19 @@ def compile_unix(cpython: PathLike, flags: list[str], pgo: bool, pystats: bool) 
 
     env = os.environ.copy()
     if "CLANG" in flags:
-        if sys.platform.startswith("linux"):
-            env["CC"] = util.safe_which("clang-19")
-            env["LLVM_AR"] = util.safe_which("llvm-ar-19")
-            env["LLVM_PROFDATA"] = util.safe_which("llvm-profdata-19")
-        elif sys.platform == "darwin":
-            llvm_prefix = util.get_brew_prefix("llvm")
-            env["PATH"] = f"{llvm_prefix}/bin:{env['PATH']}"
-            env["CC"] = f"{llvm_prefix}/bin/clang"
-            env["LDFLAGS"] = f"-L{llvm_prefix}/lib"
-            env["CFLAGS"] = f"-I{llvm_prefix}/include"
+        match util.get_simple_platform():
+            case "linux":
+                env["CC"] = util.safe_which("clang-19")
+                env["LLVM_AR"] = util.safe_which("llvm-ar-19")
+                env["LLVM_PROFDATA"] = util.safe_which("llvm-profdata-19")
+            case "macos":
+                llvm_prefix = util.get_brew_prefix("llvm")
+                env["PATH"] = f"{llvm_prefix}/bin:{env['PATH']}"
+                env["CC"] = f"{llvm_prefix}/bin/clang"
+                env["LDFLAGS"] = f"-L{llvm_prefix}/lib"
+                env["CFLAGS"] = f"-I{llvm_prefix}/include"
 
-    if sys.platform == "darwin":
+    if util.get_simple_platform() == "macos":
         openssl_prefix = util.get_brew_prefix("openssl@1.1")
         env["PKG_CONFIG_PATH"] = f"{openssl_prefix}/lib/pkgconfig"
 
@@ -226,7 +225,7 @@ def install_pyperformance(venv: PathLike) -> None:
 
 def tune_system(venv: PathLike, perf: bool) -> None:
     # System tuning is Linux only
-    if not sys.platform.startswith("linux"):
+    if util.get_simple_platform() != "linux":
         return
 
     args = ["system", perf and "reset" or "tune"]
@@ -248,7 +247,7 @@ def tune_system(venv: PathLike, perf: bool) -> None:
 
 def reset_system(venv: PathLike) -> None:
     # System tuning is Linux only
-    if not sys.platform.startswith("linux"):
+    if util.get_simple_platform() != "linux":
         return
 
     run_in_venv(
@@ -274,12 +273,13 @@ def _main(
 ):
     venv = Path("venv")
     cpython = Path("cpython")
+    platform = util.get_simple_platform()
 
-    if force_32bit and sys.platform != "win32":
+    if force_32bit and platform != "windows":
         raise RuntimeError("32-bit builds are only supported on Windows")
-    if perf and not sys.platform.startswith("linux"):
+    if perf and platform != "linux":
         raise RuntimeError("perf profiling is only supported on Linux")
-    if pystats and not sys.platform.startswith("linux"):
+    if pystats and platform != "linux":
         raise RuntimeError("Pystats is only supported on Linux")
 
     checkout_cpython(fork, ref, cpython)
@@ -290,12 +290,11 @@ def _main(
 
     checkout_benchmarks()
 
-    if sys.platform.startswith("linux") or sys.platform == "darwin":
-        compile_unix(cpython, flags, pgo, pystats)
-    elif sys.platform == "win32":
-        compile_windows(cpython, flags, pgo, force_32bit)
-    else:
-        raise RuntimeError(f"Unsupported platform: {sys.platform}")
+    match platform:
+        case "linux" | "macos":
+            compile_unix(cpython, flags, pgo, pystats)
+        case "windows":
+            compile_windows(cpython, flags, pgo, force_32bit)
 
     # Print out the version of Python we built just so we can confirm it's the
     # right thing in the logs

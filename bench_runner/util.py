@@ -4,7 +4,8 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
-from typing import TypeAlias, Union
+import sys
+from typing import Literal, TypeAlias, Union
 
 
 from . import config
@@ -70,3 +71,17 @@ def get_brew_prefix(command: str) -> str:
     except subprocess.CalledProcessError:
         raise RuntimeError(f"Unable to find brew installation prefix for {command}")
     return prefix.decode("utf-8").strip()
+
+
+@functools.cache
+def get_simple_platform() -> Literal["linux", "macos", "windows"]:
+    """
+    Return a basic platform name: linux, macos or windows.
+    """
+    if sys.platform.startswith("linux"):
+        return "linux"
+    elif sys.platform == "darwin":
+        return "macos"
+    elif sys.platform.startswith("win"):
+        return "windows"
+    raise RuntimeError(f"Unsupported platform {sys.platform}.")

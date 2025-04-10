@@ -31,7 +31,7 @@ def run_in_venv(
 ) -> None:
     venv = Path(venv)
 
-    if sys.platform == "win32":
+    if sys.platform.startswith("win"):
         exe = Path("Scripts") / "python.exe"
     else:
         exe = Path("bin") / "python"
