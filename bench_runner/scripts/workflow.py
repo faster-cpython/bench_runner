@@ -202,10 +202,10 @@ def compile_windows(
     if "CLANG" in flags:
         args.extend(
             [
+                "--tail-call-interp",
                 '"/p:PlatformToolset=clangcl"',
                 '"/p:LLVMInstallDir=C:\\Program Files\\LLVM"',
                 '"/p:LLVMToolsVersion=19.1.6"',
-                "--tail-call-interp",
             ]
         )
 
