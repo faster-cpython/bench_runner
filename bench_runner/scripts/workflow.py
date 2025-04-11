@@ -187,7 +187,7 @@ def compile_windows(
 ) -> None:
     cpython = Path(cpython)
 
-    args = []
+    args = ["--%"]  # This is the PowerShell "stop parsing" flag
     if force_32bit:
         args.extend(["-p", "win32"])
     args.extend(["-c", "Release"])
@@ -203,8 +203,8 @@ def compile_windows(
         args.extend(
             [
                 '"/p:PlatformToolset=clangcl"',
-                "/p:LLVMInstallDir`=C:\\Program Files\\LLVM",
-                "/p:LLVMToolsVersion`=19.1.6",
+                '"/p:LLVMInstallDir=C:\\Program Files\\LLVM"',
+                '"/p:LLVMToolsVersion=19.1.6"',
                 "--tail-call-interp",
             ]
         )
