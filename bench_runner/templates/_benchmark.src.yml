@@ -72,7 +72,6 @@ jobs:
         run: |
           git gc
       - name: Building Python and running pyperformance
-        shell: cmd
         run: |
           python workflow_bootstrap.py ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.machine }} ${{ inputs.benchmarks || 'all' }} "${{ env.flags }}" ${{ inputs.force && '--force' || '' }} ${{ inputs.pgo && '--pgo' || '' }} --run_id ${{ github.run_id }}
       # Pull again, since another job may have committed results in the meantime
