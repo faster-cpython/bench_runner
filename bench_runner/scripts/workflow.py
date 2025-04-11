@@ -212,6 +212,7 @@ def compile_windows(
     with contextlib.chdir(cpython):
         subprocess.check_call(
             [
+                "powershell.exe",
                 Path("PCbuild") / "build.bat",
                 *args,
             ],
