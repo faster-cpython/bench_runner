@@ -153,7 +153,7 @@ def compile_unix(cpython: PathLike, flags: list[str], pgo: bool, pystats: bool) 
         args.append("--enable-experimental-jit=yes")
     if "NOGIL" in flags:
         args.append("--disable-gil")
-    if "CLANG" in flags:
+    if "TAILCALL" in flags:
         args.append("--with-tail-call-interp")
     args.append("--enable-option-checking=fatal")
     if configure_flags := os.environ.get("PYTHON_CONFIGURE_FLAGS"):
@@ -187,19 +187,20 @@ def compile_windows(
         args.append("--experimental-jit-interpreter")
     if "NOGIL" in flags:
         args.append("--disable-gil")
-    if "CLANG" in flags:
+    if "TAILCALL" in flags:
         args.append("--tail-call-interp")
     if configure_flags := os.environ.get("PYTHON_CONFIGURE_FLAGS"):
         args.extend(shlex.split(configure_flags))
 
-    subprocess.check_call(
-        [
-            "powershell.exe",
-            Path("PCbuild") / "build.bat",
-            *args,
-        ],
-    )
-    shutil.copytree(get_windows_build_dir(force_32bit), "libs", dirs_exist_ok=True)
+    with contextlib.chdir(cpython):
+        subprocess.check_call(
+            [
+                "powershell.exe",
+                Path("PCbuild") / "build.bat",
+                *args,
+            ],
+        )
+        shutil.copytree(get_windows_build_dir(force_32bit), "libs", dirs_exist_ok=True)
 
 
 def install_pyperformance(venv: PathLike) -> None:

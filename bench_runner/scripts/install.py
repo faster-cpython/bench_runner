@@ -7,6 +7,7 @@ import copy
 import functools
 import io
 from pathlib import Path
+import shlex
 import shutil
 import sys
 from typing import Any
@@ -141,7 +142,8 @@ def generate__benchmark(src: Any) -> Any:
             "name": "Setup environment",
             "run": LiteralScalarString(
                 "\n".join(
-                    f'echo "{key}={val}" >> {github_env}' for key, val in vars.items()
+                    f'echo "{key}={shlex.quote(val)}" >> {github_env}'
+                    for key, val in vars.items()
                 )
             ),
         }
