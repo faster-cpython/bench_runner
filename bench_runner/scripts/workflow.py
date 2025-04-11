@@ -202,9 +202,9 @@ def compile_windows(
     if "CLANG" in flags:
         args.extend(
             [
-                r'"/p:PlatformToolset=clangcl"',
-                r'"/p:LLVMInstallDir=C:\Program Files\LLVM"',
-                r'"/p:LLVMToolsVersion=19.1.6"',
+                r"/p:PlatformToolset=clangcl",
+                r"/p:LLVMInstallDir=C:\Program Files\LLVM",
+                r"/p:LLVMToolsVersion=19.1.6",
                 "--tail-call-interp",
             ]
         )
@@ -214,7 +214,8 @@ def compile_windows(
             [
                 Path("PCbuild") / "build.bat",
                 *args,
-            ]
+            ],
+            shell=True,
         )
         shutil.copytree(get_windows_build_dir(force_32bit), "libs", dirs_exist_ok=True)
 
