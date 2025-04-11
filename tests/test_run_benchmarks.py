@@ -9,11 +9,11 @@ import sys
 import pytest
 
 
+from bench_runner import benchmark_definitions
 from bench_runner import git
 from bench_runner.scripts import generate_results
 from bench_runner.scripts import run_benchmarks
-from bench_runner.scripts import should_run
-from bench_runner import util
+from bench_runner.scripts import workflow
 
 
 DATA_PATH = Path(__file__).parent / "data"
@@ -32,8 +32,16 @@ def dont_get_git_merge_base(monkeypatch):
     monkeypatch.setattr(git, "get_git_merge_base", dummy)
 
 
+def hardcode_benchmark_hash(monkeypatch):
+    def dummy(*args, **kwargs):
+        return "215d35"
+
+    monkeypatch.setattr(benchmark_definitions, "get_benchmark_hash", dummy)
+
+
 def test_update_metadata(benchmarks_checkout, monkeypatch):
     dont_get_git_merge_base(monkeypatch)
+    hardcode_benchmark_hash(monkeypatch)
 
     shutil.copy(
         DATA_PATH
@@ -67,7 +75,9 @@ def test_update_metadata(benchmarks_checkout, monkeypatch):
     )
 
 
-def test_run_benchmarks(benchmarks_checkout):
+def test_run_benchmarks(benchmarks_checkout, monkeypatch):
+    hardcode_benchmark_hash(monkeypatch)
+
     shutil.copyfile(
         DATA_PATH / "bench_runner.toml", benchmarks_checkout / "bench_runner.toml"
     )
@@ -148,88 +158,88 @@ def test_run_benchmarks(benchmarks_checkout):
     assert returncode == 1
 
 
-def test_should_run_exists_noforce(benchmarks_checkout, capsys, monkeypatch):
+def test_should_run_exists_noforce(benchmarks_checkout, monkeypatch):
+    hardcode_benchmark_hash(monkeypatch)
     repo = _copy_repo(benchmarks_checkout)
     monkeypatch.chdir(repo)
 
-    should_run._main(
+    result = workflow.should_run(
         False,
         "python",
         "main",
         "linux-x86_64-linux",
         False,
-        ",,",
+        [],
         benchmarks_checkout / "cpython",
         repo / "results",
     )
 
-    captured = capsys.readouterr()
-    assert captured.out.strip() == "should_run=false"
+    assert result is False
     assert (repo / "results" / "bm-20220323-3.10.4-9d38120").is_dir()
 
 
-def test_should_run_diff_machine_noforce(benchmarks_checkout, capsys, monkeypatch):
+def test_should_run_diff_machine_noforce(benchmarks_checkout, monkeypatch):
     repo = _copy_repo(benchmarks_checkout)
     monkeypatch.chdir(repo)
 
-    should_run._main(
+    result = workflow.should_run(
         False,
         "python",
         "main",
         "darwin-x86_64-darwin",
         False,
-        ",,",
+        [],
         benchmarks_checkout / "cpython",
         repo / "results",
     )
 
-    captured = capsys.readouterr()
-    assert captured.out.strip() == "should_run=true"
+    assert result is True
     assert len(list((repo / "results" / "bm-20220323-3.10.4-9d38120").iterdir())) == 1
 
 
-def test_should_run_all_noforce(benchmarks_checkout, capsys, monkeypatch):
+def test_should_run_all_noforce(benchmarks_checkout, monkeypatch):
     repo = _copy_repo(benchmarks_checkout)
     monkeypatch.chdir(repo)
 
-    should_run._main(
+    result = workflow.should_run(
         False,
         "python",
         "main",
         "all",
         False,
-        ",,",
+        [],
         benchmarks_checkout / "cpython",
         repo / "results",
     )
 
-    captured = capsys.readouterr()
-    assert captured.out.strip() == "should_run=true"
+    assert result is True
     assert len(list((repo / "results" / "bm-20220323-3.10.4-9d38120").iterdir())) == 1
 
 
-def test_should_run_noexists_noforce(benchmarks_checkout, capsys, monkeypatch):
+def test_should_run_noexists_noforce(benchmarks_checkout, monkeypatch):
+    hardcode_benchmark_hash(monkeypatch)
     repo = _copy_repo(benchmarks_checkout)
     monkeypatch.chdir(repo)
     shutil.rmtree(repo / "results" / "bm-20220323-3.10.4-9d38120")
 
-    should_run._main(
+    result = workflow.should_run(
         False,
         "python",
         "main",
         "linux-x86_64-linux",
         False,
-        ",,",
+        [],
         benchmarks_checkout / "cpython",
         repo / "results",
     )
 
-    captured = capsys.readouterr()
-    assert captured.out.strip() == "should_run=true"
+    assert result is True
     assert not (repo / "results" / "bm-20220323-3.10.4-9d38120").is_dir()
 
 
-def test_should_run_exists_force(benchmarks_checkout, capsys, monkeypatch):
+def test_should_run_exists_force(benchmarks_checkout, monkeypatch):
+    hardcode_benchmark_hash(monkeypatch)
+
     repo = _copy_repo(benchmarks_checkout)
     monkeypatch.chdir(repo)
 
@@ -242,19 +252,18 @@ def test_should_run_exists_force(benchmarks_checkout, capsys, monkeypatch):
     monkeypatch.setattr(git, "remove", remove)
 
     generate_results._main(repo, force=False, bases=["3.11.0b3"])
-    should_run._main(
+    result = workflow.should_run(
         True,
         "python",
         "main",
         "linux-x86_64-linux",
         False,
-        ",,",
+        [],
         benchmarks_checkout / "cpython",
         repo / "results",
     )
 
-    captured = capsys.readouterr()
-    assert captured.out.splitlines()[-1].strip() == "should_run=true"
+    assert result is True
     assert (repo / "results" / "bm-20220323-3.10.4-9d38120").is_dir()
     assert set(x.name for x in removed_paths) == {
         "bm-20220323-linux-x86_64-python-main-3.10.4-9d38120-vs-3.11.0b3.svg",
@@ -263,24 +272,24 @@ def test_should_run_exists_force(benchmarks_checkout, capsys, monkeypatch):
     }
 
 
-def test_should_run_noexists_force(benchmarks_checkout, capsys, monkeypatch):
+def test_should_run_noexists_force(benchmarks_checkout, monkeypatch):
+    hardcode_benchmark_hash(monkeypatch)
     repo = _copy_repo(benchmarks_checkout)
     monkeypatch.chdir(repo)
     shutil.rmtree(repo / "results" / "bm-20220323-3.10.4-9d38120")
 
-    should_run._main(
+    result = workflow.should_run(
         True,
         "python",
         "main",
         "linux-x86_64-linux",
         False,
-        ",,",
+        [],
         benchmarks_checkout / "cpython",
         repo / "results",
     )
 
-    captured = capsys.readouterr()
-    assert captured.out.strip() == "should_run=true"
+    assert result is True
     assert not (repo / "results" / "bm-20220323-3.10.4-9d38120").is_dir()
 
 
@@ -292,13 +301,13 @@ def test_should_run_checkout_failed(tmp_path, capsys, monkeypatch):
     subprocess.check_call(["git", "init"], cwd=cpython_path)
 
     with pytest.raises(SystemExit):
-        should_run._main(
+        workflow.should_run(
             True,
             "python",
             "main",
             "linux-x86_64-linux",
             False,
-            ",,",
+            [],
             cpython_path,
             repo / "results",
         )
@@ -350,4 +359,4 @@ def test_run_benchmarks_flags(benchmarks_checkout):
 
 
 def test_get_benchmark_hash():
-    assert util.get_benchmark_hash() == "215d35"
+    assert benchmark_definitions.get_benchmark_hash() == "dcfded"

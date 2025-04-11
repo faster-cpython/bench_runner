@@ -93,6 +93,12 @@ If you don't want a machine to be included when the user selects "machine == 'al
 include_in_all = false
 ```
 
+You may limit the number of cores used to build Python with the `use_cores` option. This may be necessary, for example, on cloud VMs.
+
+```
+use_cores = 2
+```
+
 ### Try a benchmarking run
 
 There are instructions for running a benchmarking action already in the `README.md` of your repo. Look there and give it a try!

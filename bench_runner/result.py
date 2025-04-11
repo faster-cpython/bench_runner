@@ -9,7 +9,6 @@ import json
 from operator import itemgetter
 from pathlib import Path
 import re
-import socket
 import subprocess
 import sys
 from typing import Any, Callable, Iterable, Sequence
@@ -524,7 +523,7 @@ class Result:
         flags: Iterable[str] | None = None,
     ) -> "Result":
         result = cls(
-            _clean(runners.get_nickname_for_hostname(socket.gethostname())),
+            _clean(runners.get_nickname_for_hostname()),
             _clean(_get_architecture(python)),
             _clean_for_url(fork),
             _clean(ref[:20]),

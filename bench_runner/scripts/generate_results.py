@@ -126,7 +126,11 @@ def sort_runner_names(runner_names: Iterable[str]) -> list[str]:
     def sorter(val):
         if val is None:
             return ()
-        return order.index(val.split()[0]), val
+        try:
+            idx = order.index(val.split()[0])
+        except ValueError:
+            idx = -1
+        return idx, val
 
     return sorted(runner_names, key=sorter)
 

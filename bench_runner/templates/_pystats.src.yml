@@ -18,9 +18,6 @@ name: _pystats
       force:
         description: "Rerun and replace results if commit already exists"
         type: boolean
-      individual:
-        description: "Collect pystats for each individual benchmark"
-        type: boolean
 
   workflow_call:
     inputs:
@@ -39,9 +36,6 @@ name: _pystats
       force:
         description: "Rerun and replace results if commit already exists"
         type: boolean
-      individual:
-        description: "Collect pystats for each individual benchmark"
-        type: boolean
 
 jobs:
   collect-stats:
@@ -56,63 +50,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Checkout CPython
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-          repository: ${{ inputs.fork }}/cpython
-          ref: ${{ inputs.ref }}
-          path: cpython
-          fetch-depth: 50
-      - name: Install dependencies from PyPI
+      - name: Build CPython and run pyperformance benchmarks
         run: |
-          rm -rf venv
-          python -m venv venv
-          venv/bin/python -m pip install -r requirements.txt
-      - name: Should we run?
-        if: ${{ always() }}
-        id: should_run
-        run: |
-          venv/bin/python -m bench_runner should_run ${{ inputs.force }} ${{ inputs.fork }} ${{ inputs.ref }} all true ${{ env.flags }} >> $GITHUB_OUTPUT
-      - name: Checkout python-macrobenchmarks
-        uses: actions/checkout@v4
-        if: ${{ steps.should_run.outputs.should_run != 'false' }}
-        with:
-          persist-credentials: false
-          repository: pyston/python-macrobenchmarks
-          path: pyston-benchmarks
-          ref: ${{ env.PYSTON_BENCHMARKS_HASH }}
-      - name: Checkout pyperformance
-        uses: actions/checkout@v4
-        if: ${{ steps.should_run.outputs.should_run != 'false' }}
-        with:
-          persist-credentials: false
-          repository: mdboom/pyperformance
-          path: pyperformance
-          ref: ${{ env.PYPERFORMANCE_HASH }}
-      - name: Create pystats directory
-        if: ${{ steps.should_run.outputs.should_run != 'false' }}
-        run: |
-          # If we don't do this, stats are printed to the console
-          rm -rf /tmp/py_stats
-          mkdir /tmp/py_stats
-      - name: Build Python
-        if: ${{ steps.should_run.outputs.should_run != 'false' }}
-        run: |
-          cd cpython
-          ./configure --enable-option-checking=fatal --enable-pystats --prefix=$PWD/install ${{ inputs.tier2 == true && '--enable-experimental-jit=interpreter' || '' }} ${{ inputs.jit == true && '--enable-experimental-jit=yes' || '' }} ${{ inputs.nogil == true && '--disable-gil' || '' }}
-          make -j4
-          make install
-      - name: Install pyperformance into the system python
-        if: ${{ steps.should_run.outputs.should_run != 'false' }}
-        run: |
-          venv/bin/python -m pip install --no-binary :all: ./pyperformance
-      - name: Running pyperformance
-        if: ${{ steps.should_run.outputs.should_run != 'false' }}
-        run: |
-          venv/bin/python -m bench_runner run_benchmarks pystats cpython/python ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.benchmarks || 'all' }} ${{ env.flags }} --run_id ${{ github.run_id }} ${{ inputs.individual == true && '--individual' || '' }}
+          python workflow_bootstrap.py --pystats ${{ inputs.fork }} ${{ inputs.ref }} all ${{ inputs.benchmarks || 'all' }} ${{ env.flags }} --run_id ${{ github.run_id }}
       - name: Pull benchmarking
-        if: ${{ steps.should_run.outputs.should_run != 'false' }}
         run: |
           # Another benchmarking task may have created results for the same
           # commit while the above was running. This "magic" incantation means
@@ -120,7 +61,6 @@ jobs:
           # just pulled in in that case.
           git pull -s recursive -X ours --autostash --rebase
       - name: Add data to repo
-        if: ${{ steps.should_run.outputs.should_run != 'false' }}
         uses: EndBug/add-and-commit@v9
         with:
           add: results

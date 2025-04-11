@@ -241,13 +241,11 @@ GENERATORS = {
 def _main(check: bool) -> None:
     WORKFLOW_PATH.mkdir(parents=True, exist_ok=True)
 
-    env = load_yaml(TEMPLATE_PATH / "env.yml")
-
     for path in TEMPLATE_PATH.glob("*"):
         if path.name.endswith(".src.yml") or path.name == "env.yml":
             continue
 
-        if not (ROOT_PATH / path.name).is_file():
+        if not (ROOT_PATH / path.name).is_file() or path.suffix == ".py":
             if check:
                 fail_check(ROOT_PATH / path.name)
             else:
@@ -258,7 +256,6 @@ def _main(check: bool) -> None:
         generator = GENERATORS.get(src_path.name, generate_generic)
         src = load_yaml(src_path)
         dst = generator(src)
-        dst = {"env": env, **dst}
         write_yaml(dst_path, dst, check)
 
 

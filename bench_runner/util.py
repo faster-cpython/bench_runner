@@ -1,22 +1,17 @@
 import functools
-import hashlib
 import itertools
 import os
 from pathlib import Path
-from typing import TypeAlias, Union
+import shutil
+import subprocess
+import sys
+from typing import Literal, TypeAlias, Union
 
 
 from . import config
 
 
 PathLike: TypeAlias = Union[str, os.PathLike]
-
-
-def get_benchmark_hash() -> str:
-    hash = hashlib.sha256()
-    hash.update(os.environ["PYPERFORMANCE_HASH"].encode("ascii")[:7])
-    hash.update(os.environ["PYSTON_BENCHMARKS_HASH"].encode("ascii")[:7])
-    return hash.hexdigest()[:6]
 
 
 TYPE_TO_ICON = {
@@ -55,3 +50,38 @@ def has_any_element(iterable):
         return True  # If successful, the generator is not empty
     except StopIteration:
         return False  # If StopIteration is raised, the generator is empty
+
+
+def safe_which(cmd: str) -> str:
+    """
+    shutil, but raises a RuntimeError if the command is not found.
+    """
+    path = shutil.which(cmd)
+    if path is None:
+        raise RuntimeError(f"Command {cmd} not found in PATH")
+    return path
+
+
+def get_brew_prefix(command: str) -> str:
+    """
+    Get the prefix of the Homebrew installation.
+    """
+    try:
+        prefix = subprocess.check_output(["brew", "--prefix", command])
+    except subprocess.CalledProcessError:
+        raise RuntimeError(f"Unable to find brew installation prefix for {command}")
+    return prefix.decode("utf-8").strip()
+
+
+@functools.cache
+def get_simple_platform() -> Literal["linux", "macos", "windows"]:
+    """
+    Return a basic platform name: linux, macos or windows.
+    """
+    if sys.platform.startswith("linux"):
+        return "linux"
+    elif sys.platform == "darwin":
+        return "macos"
+    elif sys.platform.startswith("win"):
+        return "windows"
+    raise RuntimeError(f"Unsupported platform {sys.platform}.")
