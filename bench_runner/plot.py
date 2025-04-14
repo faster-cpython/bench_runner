@@ -437,7 +437,16 @@ def flag_effect_plot(
             cfg["runners"], cfg["names"], cfg["colors"], cfg["styles"], cfg["markers"]
         ):
             runner_results = commits.get(runner, {})
-            base_results = runner_results.get("", {})
+            # For tailcall, we want to compare against the default compiler
+            # which is a different "machine"
+            if flag == "TAILCALL":
+                # It's ok if the removesuffix fails -- it's fine to compare with
+                # the same machine if the "default" equivalent isn't available.
+                base_results = commits.get(runner.removesuffix("_clang"), {}).get(
+                    "", {}
+                )
+            else:
+                base_results = runner_results.get("", {})
 
             line = []
             for cpython_hash, r in runner_results.get(flag, {}).items():
