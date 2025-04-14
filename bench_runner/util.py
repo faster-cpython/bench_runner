@@ -1,3 +1,4 @@
+import contextlib
 import functools
 import itertools
 import os
@@ -5,7 +6,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
-from typing import Literal, TypeAlias, Union
+from typing import Iterable, Iterator, Literal, TypeAlias, Union
 
 
 from . import config
@@ -85,3 +86,44 @@ def get_simple_platform() -> Literal["linux", "macos", "windows"]:
     elif sys.platform.startswith("win"):
         return "windows"
     raise RuntimeError(f"Unsupported platform {sys.platform}.")
+
+
+if os.getenv("GITHUB_ACTIONS") == "true":
+
+    @contextlib.contextmanager
+    def log_group(text: str) -> Iterator:
+        print(f"::group::{text}")
+        try:
+            yield
+        finally:
+            print("::endgroup::")
+
+    def track(iterable: Iterable, name: str) -> Iterable:
+        with log_group(name):
+            yield from iterable
+
+else:
+    try:
+        import rich
+    except ImportError:
+
+        @contextlib.contextmanager
+        def log_group(text: str) -> Iterator:
+            print(text)
+            yield
+
+        def track(iterable: Iterable, name: str) -> Iterable:
+            print(name)
+            return iterable
+
+    else:
+
+        @contextlib.contextmanager
+        def log_group(text: str) -> Iterator:
+            rich.print(f"[b]{text}:[/b]")
+            yield
+
+        def track(iterable: Iterable, name: str) -> Iterable:
+            from rich.progress import track
+
+            return track(iterable, description=name)

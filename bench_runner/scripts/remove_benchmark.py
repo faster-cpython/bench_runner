@@ -8,12 +8,12 @@ from typing import Sequence
 
 
 import rich
-import rich.progress
 import rich_argparse
 
 
 from bench_runner import result
 from bench_runner.scripts import generate_results
+from bench_runner import util
 from bench_runner.util import PathLike
 
 
@@ -52,9 +52,7 @@ def _main(benchmarks: Sequence[str], keep_hash: Sequence[str], dry_run: bool = F
         if Path("longitudinal.json").is_file():
             Path("longitudinal.json").unlink()
 
-    for filename in rich.progress.track(
-        list(Path("results").glob("**/*")), description="Deleting results"
-    ):
+    for filename in util.track(list(Path("results").glob("**/*")), "Deleting results"):
         if filename.is_dir():
             continue
         if filename.name != "README.md":

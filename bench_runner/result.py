@@ -18,7 +18,6 @@ from urllib.parse import unquote
 import numpy as np
 from packaging import version
 import pyperf
-import rich.progress
 
 
 from . import bases as mbases
@@ -799,20 +798,20 @@ def match_to_bases(
         bases = []
 
     if progress:
-        track = rich.progress.track  # type: ignore
+        track = util.track  # type: ignore
     else:
 
         def track(it, *_args, **_kwargs):
             return it
 
     groups = defaultdict(lambda: defaultdict(list))
-    for result in track(results, description="Loading results"):
+    for result in track(results, "Loading results"):
         if result.fork == "python":
             groups[(result.nickname, tuple(result.extra))][
                 result.benchmark_hash
             ].append(result)
 
-    for result in track(results, description="Matching results to bases"):
+    for result in track(results, "Matching results to bases"):
         candidates = groups[(result.nickname, tuple(result.extra))]
 
         if (
