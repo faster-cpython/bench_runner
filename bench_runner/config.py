@@ -4,12 +4,8 @@ Handles the loading of the bench_runner.toml configuration file.
 
 import functools
 from pathlib import Path
+import tomllib
 from typing import Any
-
-try:
-    import tomllib
-except ImportError:
-    import tomli as tomllib  # type: ignore
 
 
 from . import runners

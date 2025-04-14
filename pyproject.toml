@@ -21,7 +21,6 @@ dependencies = [
     "rich-argparse==1.7.0",
     "ruamel.yaml==0.18.10",
     "scour==0.38.2",
-    "tomli==2.0.1",
     "wheel",
 ]
 dynamic = ["version"]
