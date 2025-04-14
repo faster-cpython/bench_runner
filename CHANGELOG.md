@@ -63,3 +63,26 @@ PYTHON_CONFIGURE_FLAGS = '`"/p:PlatformToolset=clangcl`" `"/p:LLVMInstallDir=C:\
 Runners have a new configuration `use_cores` to control the number of CPU cores
 used to build CPython. By default, this will use all available cores, but some
 Cloud VMs require using fewer.
+
+### Configurable weekly runs
+
+The set of weekly runs are now configured from the `bench_runner.toml`.
+If you don't add any configuration, the only weekly runs performed will be default builds on every runner.
+
+The `weekly` section in the configuration is made up of sections, each of which
+has a `flags` parameter specifying the flags to use and a `runner` parameter
+specifying the runners to run on.
+
+For example:
+
+```toml
+[[weekly]]
+
+[weekly.default]
+flags = []
+runners = ["linux", "darwin", "windows"]
+
+[weekly.tailcall]
+flags = ["TAILCALL"]
+runners = ["linux_clang", "darwin", "windows_clang"]
+```

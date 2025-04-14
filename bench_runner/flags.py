@@ -37,12 +37,16 @@ def parse_flags(flag_str: str | None) -> list[str]:
 
 
 def flags_to_gha_variables(flags: list[str]) -> dict[str, str]:
+    return {
+        k: "true" if v else "false"
+        for k, v in flags_to_gha_variables_yml(flags).items()
+    }
+
+
+def flags_to_gha_variables_yml(flags: list[str]) -> dict[str, bool]:
     output = {}
     for flag_descr in FLAGS:
-        if flag_descr.name in flags:
-            output[flag_descr.gha_variable] = "true"
-        else:
-            output[flag_descr.gha_variable] = "false"
+        output[flag_descr.gha_variable] = flag_descr.name in flags
     return output
 
 

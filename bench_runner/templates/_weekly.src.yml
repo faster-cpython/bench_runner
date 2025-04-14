@@ -28,60 +28,6 @@ jobs:
           cd cpython
           git log -n 1 --format="commit=%H" >> $GITHUB_OUTPUT
 
-  weekly:
-    uses: ./.github/workflows/_benchmark.yml
-    needs: determine_head
-    with:
-      fork: python
-      ref: ${{ needs.determine_head.outputs.commit }}
-      machine: __really_all
-      benchmarks: all_and_excluded
-      pgo: true
-      tier2: false
-    secrets: inherit
-
-  weekly-jit:
-    uses: ./.github/workflows/_benchmark.yml
-    needs: determine_head
-    with:
-      fork: python
-      ref: ${{ needs.determine_head.outputs.commit }}
-      machine: __really_all
-      benchmarks: all_and_excluded
-      pgo: true
-      tier2: false
-      jit: true
-    secrets: inherit
-
-  weekly-nogil:
-    uses: ./.github/workflows/_benchmark.yml
-    needs: determine_head
-    with:
-      fork: python
-      ref: ${{ needs.determine_head.outputs.commit }}
-      machine: __really_all
-      benchmarks: all_and_excluded
-      pgo: true
-      tier2: false
-      jit: false
-      nogil: true
-    secrets: inherit
-
-  weekly-tailcall:
-    uses: ./.github/workflows/_benchmark.yml
-    needs: determine_head
-    with:
-      fork: python
-      ref: ${{ needs.determine_head.outputs.commit }}
-      machine: __really_all
-      benchmarks: all_and_excluded
-      pgo: true
-      tier2: false
-      jit: false
-      nogil: false
-      tailcall: true
-    secrets: inherit
-
   pystats:
     uses: ./.github/workflows/_pystats.yml
     needs: determine_head
@@ -109,7 +55,7 @@ jobs:
     if: ${{ always() }}
     with:
       force: false
-    needs: [weekly, weekly-jit, weekly-nogil, pystats, pystats-tier2]
+    needs: [pystats, pystats-tier2]
     secrets: inherit
 
   publish:

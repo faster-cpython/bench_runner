@@ -226,6 +226,45 @@ def generate__notify(dst: Any) -> Any:
     return dst
 
 
+def generate__weekly(dst: Any) -> Any:
+    cfg = config.get_bench_runner_config()
+
+    weekly = cfg.get("weekly", {})
+    if not weekly:
+        weekly = [{"default": {"flags": [], "runners": cfg.get("runners", {}).keys()}}]
+    weekly = weekly[0]
+
+    all_jobs = []
+
+    for name, weekly_cfg in weekly.items():
+        for runner_nickname in weekly_cfg.get("runners", []):
+            runner = runners.get_runner_by_nickname(runner_nickname)
+            if runner.nickname == "unknown":
+                raise ValueError(
+                    f"Runner {runner_nickname} not found in bench_runner.toml"
+                )
+            weekly_flags = weekly_cfg.get("flags", [])
+            job = {
+                "uses": "./.github/workflows/_benchmark.yml",
+                "needs": "determine_head",
+                "with": {
+                    "fork": "python",
+                    "ref": "${{ needs.determine_head.outputs.commit }}",
+                    "machine": runner.name,
+                    "benchmarks": "all_and_excluded",
+                    **flags.flags_to_gha_variables_yml(weekly_flags),
+                },
+                "secrets": "inherit",
+            }
+            job_name = f"weekly-{name}-{runner.nickname}"
+            dst["jobs"][job_name] = job
+            all_jobs.append(job_name)
+
+    dst["jobs"]["generate"]["needs"].extend(all_jobs)
+
+    return dst
+
+
 def generate_generic(dst: Any) -> Any:
     return dst
 
@@ -235,6 +274,7 @@ GENERATORS = {
     "_benchmark.src.yml": generate__benchmark,
     "_pystats.src.yml": generate__pystats,
     "_notify.src.yml": generate__notify,
+    "_weekly.src.yml": generate__weekly,
 }
 
 
