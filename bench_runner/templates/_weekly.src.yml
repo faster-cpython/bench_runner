@@ -79,7 +79,7 @@ jobs:
       tier2: false
       jit: false
       nogil: false
-      clang: true
+      tailcall: true
     secrets: inherit
 
   pystats:

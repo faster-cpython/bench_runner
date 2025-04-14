@@ -59,5 +59,5 @@ def test_benchmark_cmdline(monkeypatch):
         "-f",
         "nogil=false",
         "-f",
-        "clang=false",
+        "tailcall=false",
     ]

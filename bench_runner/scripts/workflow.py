@@ -135,18 +135,6 @@ def compile_unix(cpython: PathLike, flags: list[str], pgo: bool, pystats: bool) 
     cfg = config.get_config_for_current_runner()
 
     env = os.environ.copy()
-    if "CLANG" in flags:
-        match util.get_simple_platform():
-            case "linux":
-                env["CC"] = util.safe_which("clang-19")
-                env["LLVM_AR"] = util.safe_which("llvm-ar-19")
-                env["LLVM_PROFDATA"] = util.safe_which("llvm-profdata-19")
-            case "macos":
-                llvm_prefix = util.get_brew_prefix("llvm")
-                env["PATH"] = f"{llvm_prefix}/bin:{env['PATH']}"
-                env["CC"] = f"{llvm_prefix}/bin/clang"
-                env["LDFLAGS"] = f"-L{llvm_prefix}/lib"
-                env["CFLAGS"] = f"-I{llvm_prefix}/include"
 
     if util.get_simple_platform() == "macos":
         openssl_prefix = util.get_brew_prefix("openssl@1.1")
@@ -165,7 +153,7 @@ def compile_unix(cpython: PathLike, flags: list[str], pgo: bool, pystats: bool) 
         args.append("--enable-experimental-jit=yes")
     if "NOGIL" in flags:
         args.append("--disable-gil")
-    if "CLANG" in flags:
+    if "TAILCALL" in flags:
         args.append("--with-tail-call-interp")
     args.append("--enable-option-checking=fatal")
     if configure_flags := os.environ.get("PYTHON_CONFIGURE_FLAGS"):
@@ -199,15 +187,10 @@ def compile_windows(
         args.append("--experimental-jit-interpreter")
     if "NOGIL" in flags:
         args.append("--disable-gil")
-    if "CLANG" in flags:
-        args.extend(
-            [
-                "--tail-call-interp",
-                '"/p:PlatformToolset=clangcl"',
-                '"/p:LLVMInstallDir=C:\\Program Files\\LLVM"',
-                '"/p:LLVMToolsVersion=19.1.6"',
-            ]
-        )
+    if "TAILCALL" in flags:
+        args.append("--tail-call-interp")
+    if configure_flags := os.environ.get("PYTHON_CONFIGURE_FLAGS"):
+        args.extend(shlex.split(configure_flags))
 
     with contextlib.chdir(cpython):
         subprocess.check_call(
