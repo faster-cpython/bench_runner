@@ -20,7 +20,7 @@ from bench_runner import flags as mflags
 from bench_runner import git
 from bench_runner.result import has_result
 from bench_runner import util
-from bench_runner.util import PathLike
+from bench_runner.util import log_group, PathLike
 
 
 from bench_runner.scripts import run_benchmarks as mrun_benchmarks
@@ -266,26 +266,33 @@ def _main(
     if pystats and platform != "linux":
         raise RuntimeError("Pystats is only supported on Linux")
 
-    checkout_cpython(fork, ref, cpython)
+    with log_group("Checking out CPython"):
+        checkout_cpython(fork, ref, cpython)
 
-    if not should_run(force, fork, ref, machine, False, flags, cpython=cpython):
-        print("No need to run benchmarks.  Skipping...")
-        return
+    with log_group("Determining if we need to run benchmarks"):
+        if not should_run(force, fork, ref, machine, False, flags, cpython=cpython):
+            print("No need to run benchmarks.  Skipping...")
+            return
 
-    checkout_benchmarks()
+    with log_group("Checking out benchmarks"):
+        checkout_benchmarks()
 
-    match platform:
-        case "linux" | "macos":
-            compile_unix(cpython, flags, pgo, pystats)
-        case "windows":
-            compile_windows(cpython, flags, pgo, force_32bit)
+    with log_group("Compiling CPython"):
+        match platform:
+            case "linux" | "macos":
+                compile_unix(cpython, flags, pgo, pystats)
+            case "windows":
+                compile_windows(cpython, flags, pgo, force_32bit)
 
-    # Print out the version of Python we built just so we can confirm it's the
-    # right thing in the logs
-    subprocess.check_call([get_exe_path(cpython, flags, force_32bit), "-VV"])
+        # Print out the version of Python we built just so we can confirm it's the
+        # right thing in the logs
+        subprocess.check_call([get_exe_path(cpython, flags, force_32bit), "-VV"])
 
-    install_pyperformance(venv)
-    tune_system(venv, perf)
+    with log_group("Installing pyperformance"):
+        install_pyperformance(venv)
+
+    with log_group("Tuning system"):
+        tune_system(venv, perf)
 
     try:
         if Path(".debug").exists():
@@ -303,17 +310,18 @@ def _main(
         else:
             mode = "benchmark"
 
-        mrun_benchmarks._main(
-            mode,
-            get_exe_path(cpython, flags, force_32bit),
-            fork,
-            ref,
-            benchmarks,
-            flags=flags,
-            run_id=run_id,
-            test_mode=False,
-            individual=pystats,
-        )
+        with log_group("Running benchmarks"):
+            mrun_benchmarks._main(
+                mode,
+                get_exe_path(cpython, flags, force_32bit),
+                fork,
+                ref,
+                benchmarks,
+                flags=flags,
+                run_id=run_id,
+                test_mode=False,
+                individual=pystats,
+            )
     finally:
         reset_system(venv)
 

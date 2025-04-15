@@ -12,7 +12,6 @@ from urllib.parse import unquote
 
 
 import rich
-import rich.progress
 import rich_argparse
 
 
@@ -70,9 +69,9 @@ def save_generated_results(results: Iterable[Result], force: bool = False) -> No
 
     rich.print(f"Generating {len(work)} derived results")
 
-    for func, filename in rich.progress.track(
+    for func, filename in util.track(
         work,
-        description="Generating results",
+        "Generating results",
     ):
         func(filename)
 
@@ -352,9 +351,7 @@ def generate_directory_indices(results: Iterable[Result]) -> None:
     entries = get_directory_indices_entries(results)
     structure = _tuple_to_nested_dicts(entries)
 
-    for dirpath, dirresults in rich.progress.track(
-        structure.items(), description="Generating indices"
-    ):
+    for dirpath, dirresults in util.track(structure.items(), "Generating indices"):
         with (dirpath / "README.md").open("w") as fd:
             fd.write("# Results\n\n")
             table.write_md_list(fd, dirresults[None][None])
@@ -392,7 +389,7 @@ def _main(repo_dir: PathLike, force: bool = False, bases: Sequence[str] | None =
 
     memory_benchmarking_results = filter_broken_memory_results(benchmarking_results)
 
-    for plot_func, args, kwargs in rich.progress.track(
+    for plot_func, args, kwargs in util.track(
         [
             (
                 plot.longitudinal_plot,
@@ -423,7 +420,7 @@ def _main(repo_dir: PathLike, force: bool = False, bases: Sequence[str] | None =
                 ),
             ),
         ],
-        description="Generating plots",
+        "Generating plots",
     ):
         plot_func(*args, **kwargs)  # type: ignore
 
