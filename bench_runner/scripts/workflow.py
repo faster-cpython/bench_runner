@@ -190,7 +190,7 @@ def compile_windows(
     if "TAILCALL" in flags:
         args.append("--tail-call-interp")
     if configure_flags := os.environ.get("PYTHON_CONFIGURE_FLAGS"):
-        args.extend(shlex.split(configure_flags))
+        args.append(configure_flags)
 
     with contextlib.chdir(cpython):
         subprocess.check_call(
