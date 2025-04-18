@@ -42,7 +42,6 @@ notification_issue = 182
 #   --enable-optimizations and --with-lto=full.
 # BUILD_DEST: (windows only) where to make build.bat install. This is
 #   required for the Windows build to succeed.
-[[runners]]
 
 [runners.linux]
 os = "linux"

@@ -47,7 +47,7 @@ unknown_runner = Runner("unknown", "unknown", "unknown", "unknown", False, {}, N
 
 @functools.cache
 def get_runners() -> list[Runner]:
-    conf = config.get_bench_runner_config().get("runners", [{}])[0]
+    conf = config.get_bench_runner_config().get("runners", {})
     runners = []
     for nickname, section in conf.items():
         runners.append(
