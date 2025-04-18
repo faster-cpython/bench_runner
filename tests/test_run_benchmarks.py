@@ -67,7 +67,6 @@ def test_update_metadata(benchmarks_checkout, monkeypatch):
     )
 
 
-@pytest.mark.long_running
 def test_run_benchmarks(benchmarks_checkout, monkeypatch):
     hardcode_benchmark_hash(monkeypatch)
 
@@ -151,7 +150,6 @@ def test_run_benchmarks(benchmarks_checkout, monkeypatch):
     assert returncode == 1
 
 
-@pytest.mark.long_running
 def test_run_benchmarks_flags(benchmarks_checkout):
     shutil.copyfile(
         DATA_PATH / "bench_runner.toml", benchmarks_checkout / "bench_runner.toml"
