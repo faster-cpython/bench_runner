@@ -465,7 +465,7 @@ if __name__ == "__main__":
             from pytest_cov.embed import init
 
             init()
-        except Exception as exc:
+        except Exception:
             sys.stderr.write("pytest-cov: Failed to setup subprocess coverage.")
 
     main()
