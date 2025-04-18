@@ -73,7 +73,7 @@ specifying the runners to run on.
 
 For example:
 
-```toml
+````toml
 [[weekly]]
 
 [weekly.default]
@@ -83,4 +83,15 @@ runners = ["linux", "darwin", "windows"]
 [weekly.tailcall]
 flags = ["TAILCALL"]
 runners = ["linux_clang", "darwin", "windows_clang"]
+
+## v1.8.0
+
+### bench_runner.toml change
+
+The configuration no longer expects a top-level, single element `runners` array.
+
+You should remove the following line from your `bench_runners.toml`:
+
+```toml
+[[runners]]
 ```
