@@ -223,6 +223,16 @@ def test_whole_workflow(tmpdir):
         subprocess.check_call(
             [str(venv_dir / "bin" / "python"), "-m", "bench_runner", "install"]
         )
+        # install --check should never fail immediately after install
+        subprocess.check_call(
+            [
+                str(venv_dir / "bin" / "python"),
+                "-m",
+                "bench_runner",
+                "install",
+                "--check",
+            ]
+        )
         with open("requirements.txt", "w") as fd:
             fd.write(f"{str(bench_runner_checkout)}\n")
         subprocess.check_call(
