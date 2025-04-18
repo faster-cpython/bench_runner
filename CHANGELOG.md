@@ -61,8 +61,8 @@ PYTHON_CONFIGURE_FLAGS = '`"/p:PlatformToolset=clangcl`" `"/p:LLVMInstallDir=C:\
 ### Controlling number of cores used for builds
 
 Runners have a new configuration `use_cores` to control the number of CPU cores
-used to build CPython. By default, this will use all available cores, but some
-Cloud VMs require using fewer.
+used to build CPython. By default, this will place no limit on the number of
+cores used, but machines with limited RAM may require using fewer cores.
 
 ### Configurable weekly runs
 
