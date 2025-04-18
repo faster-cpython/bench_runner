@@ -9,9 +9,6 @@ import sys
 from typing import Iterable, Iterator, Literal, TypeAlias, Union
 
 
-from . import config
-
-
 PathLike: TypeAlias = Union[str, os.PathLike]
 
 
@@ -32,6 +29,8 @@ def apply_suffix(path: PathLike, suffix: str) -> Path:
 
 @functools.cache
 def get_excluded_benchmarks() -> set[str]:
+    from . import config
+
     conf = config.get_bench_runner_config()
     benchmarks_section = conf.get("benchmarks", {})
     for key in ("excluded", "excluded_benchmarks"):

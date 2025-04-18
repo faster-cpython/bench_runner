@@ -47,8 +47,8 @@ unknown_runner = Runner("unknown", "unknown", "unknown", "unknown", False, {}, N
 
 
 @functools.cache
-def get_runners() -> list[Runner]:
-    conf = config.get_bench_runner_config().get("runners", {})
+def get_runners(cfgpath: "PathLike" | None = None) -> list[Runner]:
+    conf = config.get_bench_runner_config(cfgpath).get("runners", {})
     runners = []
     for nickname, section in conf.items():
         runners.append(
@@ -73,27 +73,31 @@ def get_runners() -> list[Runner]:
     return runners
 
 
-def get_runners_by_hostname() -> dict[str, Runner]:
-    return {x.hostname: x for x in get_runners()}
+def get_runners_by_hostname(cfgpath: "PathLike" | None = None) -> dict[str, Runner]:
+    return {x.hostname: x for x in get_runners(cfgpath)}
 
 
-def get_runners_by_nickname() -> dict[str, Runner]:
-    return {x.nickname: x for x in get_runners()}
+def get_runners_by_nickname(cfgpath: "PathLike" | None = None) -> dict[str, Runner]:
+    return {x.nickname: x for x in get_runners(cfgpath)}
 
 
-def get_nickname_for_hostname(hostname: str | None = None) -> str:
+def get_nickname_for_hostname(
+    hostname: str | None = None, cfgpath: "PathLike" | None = None
+) -> str:
     # The envvar BENCHMARK_MACHINE_NICKNAME is used to override the machine that
     # results are reported for.
     if "BENCHMARK_MACHINE_NICKNAME" in os.environ:
         return os.environ["BENCHMARK_MACHINE_NICKNAME"]
-    return get_runner_for_hostname(hostname).nickname
+    return get_runner_for_hostname(hostname, cfgpath).nickname
 
 
-def get_runner_by_nickname(nickname: str) -> Runner:
-    return get_runners_by_nickname().get(nickname, unknown_runner)
+def get_runner_by_nickname(nickname: str, cfgpath: "PathLike" | None = None) -> Runner:
+    return get_runners_by_nickname(cfgpath).get(nickname, unknown_runner)
 
 
-def get_runner_for_hostname(hostname: str | None = None) -> Runner:
+def get_runner_for_hostname(
+    hostname: str | None = None, cfgpath: "PathLike" | None = None
+) -> Runner:
     if hostname is None:
         hostname = socket.gethostname()
-    return get_runners_by_hostname().get(hostname, unknown_runner)
+    return get_runners_by_hostname(cfgpath).get(hostname, unknown_runner)
