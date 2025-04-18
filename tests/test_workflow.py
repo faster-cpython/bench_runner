@@ -206,6 +206,10 @@ def test_whole_workflow(tmpdir):
     repo = tmpdir / "repo"
     venv_dir = repo / "outer_venv"
     bench_runner_checkout = DATA_PATH.parents[1]
+    if sys.platform.startswith("win"):
+        binary = venv_dir / "Scripts" / "python.exe"
+    else:
+        binary = venv_dir / "bin" / "python"
 
     repo.mkdir()
 
@@ -213,20 +217,18 @@ def test_whole_workflow(tmpdir):
         subprocess.check_call([sys.executable, "-m", "venv", str(venv_dir)])
         subprocess.check_call(
             [
-                str(venv_dir / "bin" / "python"),
+                str(binary),
                 "-m",
                 "pip",
                 "install",
                 str(bench_runner_checkout),
             ]
         )
-        subprocess.check_call(
-            [str(venv_dir / "bin" / "python"), "-m", "bench_runner", "install"]
-        )
+        subprocess.check_call([str(binary), "-m", "bench_runner", "install"])
         # install --check should never fail immediately after install
         subprocess.check_call(
             [
-                str(venv_dir / "bin" / "python"),
+                str(binary),
                 "-m",
                 "bench_runner",
                 "install",
@@ -237,7 +239,7 @@ def test_whole_workflow(tmpdir):
             fd.write(f"{str(bench_runner_checkout)}\n")
         subprocess.check_call(
             [
-                str(venv_dir / "bin" / "python"),
+                str(binary),
                 "workflow_bootstrap.py",
                 "python",
                 "main",
