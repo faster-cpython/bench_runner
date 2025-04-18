@@ -52,6 +52,10 @@ def install_requirements(venv: Path) -> None:
     run_in_venv(venv, "pip", ["install", "--upgrade", "pip"])
     run_in_venv(venv, "pip", ["install", "-r", "requirements.txt"])
 
+    # To facilitate coverage testing
+    if "--_fast" in sys.argv:
+        run_in_venv(venv, "pip", ["install", "pytest-cov"])
+
 
 def main():
     venv = Path("venv")

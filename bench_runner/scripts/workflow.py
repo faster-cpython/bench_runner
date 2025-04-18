@@ -391,4 +391,13 @@ def main():
 
 
 if __name__ == "__main__":
+    # This lets pytest-cov collect coverage data in a subprocess
+    if "COV_CORE_SOURCE" in os.environ:
+        try:
+            from pytest_cov.embed import init
+
+            init()
+        except Exception:
+            sys.stderr.write("pytest-cov: Failed to setup subprocess coverage.")
+
     main()

@@ -52,7 +52,7 @@ jobs:
           python -m pip install .[test]
       - name: run tests
         run: |
-          python -m pytest tests -n auto -m long_running
+          python -m pytest tests -m long_running
 
   long_test_windows:
     runs-on: windows-latest
@@ -67,5 +67,5 @@ jobs:
           python -m pip install .[test]
       - name: run tests
         run: |
-          python -m pytest tests -n auto -m long_running
+          python -m pytest tests -m long_running
 
