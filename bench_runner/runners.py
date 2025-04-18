@@ -7,6 +7,7 @@ import socket
 
 
 from . import config
+from .util import PathLike
 
 
 class Runner:
@@ -47,7 +48,7 @@ unknown_runner = Runner("unknown", "unknown", "unknown", "unknown", False, {}, N
 
 
 @functools.cache
-def get_runners(cfgpath: "PathLike" | None = None) -> list[Runner]:
+def get_runners(cfgpath: PathLike | None = None) -> list[Runner]:
     conf = config.get_bench_runner_config(cfgpath).get("runners", {})
     runners = []
     for nickname, section in conf.items():
@@ -73,16 +74,16 @@ def get_runners(cfgpath: "PathLike" | None = None) -> list[Runner]:
     return runners
 
 
-def get_runners_by_hostname(cfgpath: "PathLike" | None = None) -> dict[str, Runner]:
+def get_runners_by_hostname(cfgpath: PathLike | None = None) -> dict[str, Runner]:
     return {x.hostname: x for x in get_runners(cfgpath)}
 
 
-def get_runners_by_nickname(cfgpath: "PathLike" | None = None) -> dict[str, Runner]:
+def get_runners_by_nickname(cfgpath: PathLike | None = None) -> dict[str, Runner]:
     return {x.nickname: x for x in get_runners(cfgpath)}
 
 
 def get_nickname_for_hostname(
-    hostname: str | None = None, cfgpath: "PathLike" | None = None
+    hostname: str | None = None, cfgpath: PathLike | None = None
 ) -> str:
     # The envvar BENCHMARK_MACHINE_NICKNAME is used to override the machine that
     # results are reported for.
@@ -91,12 +92,12 @@ def get_nickname_for_hostname(
     return get_runner_for_hostname(hostname, cfgpath).nickname
 
 
-def get_runner_by_nickname(nickname: str, cfgpath: "PathLike" | None = None) -> Runner:
+def get_runner_by_nickname(nickname: str, cfgpath: PathLike | None = None) -> Runner:
     return get_runners_by_nickname(cfgpath).get(nickname, unknown_runner)
 
 
 def get_runner_for_hostname(
-    hostname: str | None = None, cfgpath: "PathLike" | None = None
+    hostname: str | None = None, cfgpath: PathLike | None = None
 ) -> Runner:
     if hostname is None:
         hostname = socket.gethostname()

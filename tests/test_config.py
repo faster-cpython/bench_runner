@@ -3,7 +3,6 @@ import socket
 
 
 from bench_runner import config
-from bench_runner import runners
 
 
 DATA_PATH = Path(__file__).parent / "data"
