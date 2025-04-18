@@ -308,9 +308,20 @@ GENERATORS = {
 def _main(check: bool) -> None:
     WORKFLOW_PATH.mkdir(parents=True, exist_ok=True)
 
+    # Copy the bench_runner.toml file first, because it might be needed by the
+    # other steps
+
+    if not (ROOT_PATH / "bench_runner.toml").is_file():
+        shutil.copyfile(
+            TEMPLATE_PATH / "bench_runner.toml",
+            ROOT_PATH / "bench_runner.toml",
+        )
+
     for src_path in TEMPLATE_PATH.glob("*"):
         if not src_path.is_file():
             continue
+
+        print(f"Processing {src_path}...")
 
         if src_path.name.endswith(".src.yml"):
             dst_path = WORKFLOW_PATH / (src_path.name[:-8] + ".yml")
@@ -319,7 +330,7 @@ def _main(check: bool) -> None:
             dst = generator(src)
             write_yaml(dst_path, dst, check)
         elif src_path.name.endswith(".src.py"):
-            dst_path = WORKFLOW_PATH / (src_path.name[:-7] + ".py")
+            dst_path = ROOT_PATH / (src_path.name[:-7] + ".py")
             write_python(dst_path, src_path.read_text(), check)
         else:
             dst_path = ROOT_PATH / src_path.name

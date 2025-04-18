@@ -254,6 +254,7 @@ def _main(
     pystats: bool,
     force_32bit: bool,
     run_id: str | None = None,
+    fast: bool = False,
 ):
     venv = Path("venv")
     cpython = Path("cpython")
@@ -270,7 +271,9 @@ def _main(
         checkout_cpython(fork, ref, cpython)
 
     with log_group("Determining if we need to run benchmarks"):
-        if not should_run(force, fork, ref, machine, False, flags, cpython=cpython):
+        if not fast and not should_run(
+            force, fork, ref, machine, False, flags, cpython=cpython
+        ):
             print("No need to run benchmarks.  Skipping...")
             return
 
@@ -291,8 +294,9 @@ def _main(
     with log_group("Installing pyperformance"):
         install_pyperformance(venv)
 
-    with log_group("Tuning system"):
-        tune_system(venv, perf)
+    if not fast:
+        with log_group("Tuning system"):
+            tune_system(venv, perf)
 
     try:
         if Path(".debug").exists():
@@ -319,11 +323,12 @@ def _main(
                 benchmarks,
                 flags=flags,
                 run_id=run_id,
-                test_mode=False,
+                test_mode=fast,
                 individual=pystats,
             )
     finally:
-        reset_system(venv)
+        if not fast:
+            reset_system(venv)
 
 
 def main():
@@ -364,6 +369,9 @@ def main():
         help="Do a 32-bit build (Windows only)",
     )
     parser.add_argument("--run_id", default=None, type=str, help="The github run id")
+    parser.add_argument(
+        "--_fast", action="store_true", help="Use fast mode, for testing"
+    )
     args = parser.parse_args()
 
     _main(
@@ -378,6 +386,7 @@ def main():
         args.pystats,
         args.force_32bit,
         args.run_id,
+        args._fast,
     )
 
 

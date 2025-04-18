@@ -25,3 +25,11 @@ markers = ["s", "s", "s", "^", ".", "."]
 
 [publish_mirror]
 skip = false
+
+[weekly.default]
+runners = ["linux"]
+flags = []
+
+[weekly.jit]
+runners = ["linux"]
+flags = ["JIT"]

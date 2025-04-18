@@ -42,3 +42,8 @@ include-package-data = true
 
 [tool.setuptools.package-data]
 bench_runner = ["templates/*"]
+
+[tool.pytest.ini_options]
+markers = [
+    "long_running: marks tests as long_running (deselect with '-m \"not running\"')",
+]
