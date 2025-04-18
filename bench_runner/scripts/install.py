@@ -321,6 +321,8 @@ def _main(check: bool) -> None:
         if not src_path.is_file():
             continue
 
+        print(f"Processing {src_path}...")
+
         if src_path.name.endswith(".src.yml"):
             dst_path = WORKFLOW_PATH / (src_path.name[:-8] + ".yml")
             generator = GENERATORS.get(src_path.name, generate_generic)
