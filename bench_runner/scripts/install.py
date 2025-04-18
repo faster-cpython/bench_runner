@@ -331,6 +331,7 @@ def _main(check: bool) -> None:
             write_yaml(dst_path, dst, check)
         elif src_path.name.endswith(".src.py"):
             dst_path = WORKFLOW_PATH / (src_path.name[:-7] + ".py")
+            print(f"Writing python {dst_path}")
             write_python(dst_path, src_path.read_text(), check)
         else:
             dst_path = ROOT_PATH / src_path.name
