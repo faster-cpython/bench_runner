@@ -226,13 +226,7 @@ def test_whole_workflow(tmpdir):
             ]
         )
         subprocess.check_call(
-            [
-                str(binary),
-                "-m",
-                "pip",
-                "install",
-                str(bench_runner_checkout),
-            ]
+            [str(binary), "-m", "pip", "install", f"{bench_runner_checkout}[test]"]
         )
         subprocess.check_call([str(binary), "-m", "bench_runner", "install"])
         # install --check should never fail immediately after install

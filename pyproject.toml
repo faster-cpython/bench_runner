@@ -32,6 +32,7 @@ test = [
     "flake8==7.2.0",
     "pyright==1.1.399",
     "pytest==8.3.5",
+    "pytest-cov==6.1.1",
     "pytest-xdist==3.6.1",
 ]
 
@@ -46,4 +47,11 @@ bench_runner = ["templates/*"]
 [tool.pytest.ini_options]
 markers = [
     "long_running: marks tests as long_running (deselect with '-m \"not running\"')",
+]
+
+[tool.coverage.paths]
+source = [
+    "bench_runner",
+    "/tmp/pytest-of-*/pytest-*/test_whole_workflow*/repo/outer_venv/lib/python*/site-packages/bench_runner",
+    "/tmp/pytest-of-*/pytest-*/test_whole_workflow*/repo/venv/lib/python*/site-packages/bench_runner",
 ]
