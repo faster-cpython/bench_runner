@@ -282,6 +282,9 @@ def _main(check: bool) -> None:
     WORKFLOW_PATH.mkdir(parents=True, exist_ok=True)
 
     for path in TEMPLATE_PATH.glob("*"):
+        if not path.is_file():
+            continue
+
         if path.name.endswith(".src.yml") or path.name == "env.yml":
             continue
 
