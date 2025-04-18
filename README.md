@@ -64,10 +64,9 @@ Each runner must have the following labels:
 
 Once the runner is set up, [enable it as a service](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/configuring-the-self-hosted-runner-application-as-a-service) so it will start automatically on boot.
 
-In addition, the metadata about the runner must be added to `runners` section in `bench_runner.toml`, for example:
+In addition, the metadata about the runner(s) must be added to `runners` section in `bench_runner.toml`, for example:
 
 ```toml
-[[runners]]
 [runners.linux]
 os = "linux"
 arch = "x86_64"
@@ -93,7 +92,7 @@ If you don't want a machine to be included when the user selects "machine == 'al
 include_in_all = false
 ```
 
-You may limit the number of cores used to build Python with the `use_cores` option. This may be necessary, for example, on cloud VMs.
+You may limit the number of cores used to build Python with the `use_cores` option. This may be necessary, for example, on cloud VMs with limited RAM.
 
 ```
 use_cores = 2
