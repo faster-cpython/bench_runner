@@ -9,7 +9,7 @@ import io
 from pathlib import Path
 import shutil
 import sys
-from typing import Any
+from typing import Any, Callable, TextIO
 
 
 import rich
@@ -41,6 +41,31 @@ def fail_check(dst: PathLike):
     sys.exit(1)
 
 
+def write_and_check(dst: PathLike, writer: Callable[[TextIO], None], check: bool):
+    """
+    Call `writer` with a file descriptor to write the contents to `dst`.
+
+    If `check` is True, raise SystemExit if the file would change. This is used
+    in CI to confirm that the file was regenerated after changes to the source
+    file.
+    """
+    dst = Path(dst)
+
+    if check:
+        if not dst.is_file():
+            fail_check(dst)
+
+        fd = io.StringIO()
+        orig_contents = dst.read_text()
+        writer(fd)
+        new_contents = fd.getvalue()
+        if orig_contents != new_contents:
+            fail_check(dst)
+    else:
+        with dst.open("w") as fd:
+            writer(fd)
+
+
 def write_yaml(dst: PathLike, contents: Any, check: bool):
     """
     Write `contents` to `dst` as YAML.
@@ -49,27 +74,14 @@ def write_yaml(dst: PathLike, contents: Any, check: bool):
     in CI to confirm that the file was regenerated after changes to the source
     file.
     """
-    dst = Path(dst)
 
-    def do_write(contents, fd):
+    def do_write(fd):
         fd.write("# Generated file: !!! DO NOT EDIT !!!\n")
         fd.write("---\n")
         yaml = YAML()
         yaml.dump(contents, fd)
 
-    if check:
-        if not dst.is_file():
-            fail_check(dst)
-
-        orig_contents = dst.read_text()
-        fd = io.StringIO()
-        do_write(contents, fd)
-        new_contents = fd.getvalue()
-        if orig_contents != new_contents:
-            fail_check(dst)
-    else:
-        with dst.open("w") as fd:
-            do_write(contents, fd)
+    return write_and_check(dst, do_write, check)
 
 
 def load_yaml(src: PathLike) -> Any:
@@ -79,6 +91,22 @@ def load_yaml(src: PathLike) -> Any:
     with Path(src).open() as fd:
         yaml = YAML()
         return yaml.load(fd)
+
+
+def write_python(dst: PathLike, contents: str, check: bool):
+    """
+    Write a string of Python code to a file, adding a header about it being generated.
+
+    If `check` is True, raise SystemExit if the file would change. This is used
+    in CI to confirm that the file was regenerated after changes to the source
+    file.
+    """
+
+    def do_write(fd):
+        fd.write("# Generated file: !!! DO NOT EDIT !!!\n\n")
+        fd.write(contents)
+
+    return write_and_check(dst, do_write, check)
 
 
 def add_flag_variables(dst: dict[str, Any]) -> None:
@@ -280,22 +308,26 @@ GENERATORS = {
 def _main(check: bool) -> None:
     WORKFLOW_PATH.mkdir(parents=True, exist_ok=True)
 
-    for path in TEMPLATE_PATH.glob("*"):
-        if path.name.endswith(".src.yml") or path.name == "env.yml":
+    for src_path in TEMPLATE_PATH.glob("*"):
+        if not src_path.is_file():
             continue
 
-        if not (ROOT_PATH / path.name).is_file() or path.suffix == ".py":
-            if check:
-                fail_check(ROOT_PATH / path.name)
-            else:
-                shutil.copyfile(path, ROOT_PATH / path.name)
-
-    for src_path in TEMPLATE_PATH.glob("*.src.yml"):
-        dst_path = WORKFLOW_PATH / (src_path.name[:-8] + ".yml")
-        generator = GENERATORS.get(src_path.name, generate_generic)
-        src = load_yaml(src_path)
-        dst = generator(src)
-        write_yaml(dst_path, dst, check)
+        if src_path.name.endswith(".src.yml"):
+            dst_path = WORKFLOW_PATH / (src_path.name[:-8] + ".yml")
+            generator = GENERATORS.get(src_path.name, generate_generic)
+            src = load_yaml(src_path)
+            dst = generator(src)
+            write_yaml(dst_path, dst, check)
+        elif src_path.name.endswith(".src.py"):
+            dst_path = WORKFLOW_PATH / (src_path.name[:-7] + ".py")
+            write_python(dst_path, src_path.read_text(), check)
+        else:
+            dst_path = ROOT_PATH / src_path.name
+            if not dst_path.is_file():
+                if check:
+                    fail_check(dst_path)
+                else:
+                    shutil.copyfile(src_path, dst_path)
 
 
 def main():
