@@ -6,9 +6,6 @@ import subprocess
 import sys
 
 
-import pytest
-
-
 from bench_runner import benchmark_definitions
 from bench_runner import git
 from bench_runner.scripts import run_benchmarks
