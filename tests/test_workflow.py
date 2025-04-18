@@ -221,6 +221,16 @@ def test_whole_workflow(tmpdir):
                 "-m",
                 "pip",
                 "install",
+                "--upgrade",
+                "pip",
+            ]
+        )
+        subprocess.check_call(
+            [
+                str(binary),
+                "-m",
+                "pip",
+                "install",
                 str(bench_runner_checkout),
             ]
         )
@@ -238,6 +248,7 @@ def test_whole_workflow(tmpdir):
         with open("requirements.txt", "w") as fd:
             fd.write(f"{str(bench_runner_checkout)}\n")
         print(list(Path().iterdir()))
+        print(list((bench_runner_checkout / "bench_runner" / "templates").iterdir()))
         subprocess.check_call(
             [
                 str(binary),
