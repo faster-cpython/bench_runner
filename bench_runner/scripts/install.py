@@ -229,10 +229,9 @@ def generate__notify(dst: Any) -> Any:
 def generate__weekly(dst: Any) -> Any:
     cfg = config.get_bench_runner_config()
 
-    weekly = cfg.get("weekly", {})
+    weekly = cfg.get("weekly", None)
     if not weekly:
-        weekly = [{"default": {"flags": [], "runners": cfg.get("runners", {}).keys()}}]
-    weekly = weekly[0]
+        weekly = {"default": {"flags": [], "runners": cfg.get("runners", {}).keys()}}
 
     all_jobs = []
 
