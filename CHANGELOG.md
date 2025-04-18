@@ -73,9 +73,7 @@ specifying the runners to run on.
 
 For example:
 
-````toml
-[[weekly]]
-
+```toml
 [weekly.default]
 flags = []
 runners = ["linux", "darwin", "windows"]
@@ -83,6 +81,7 @@ runners = ["linux", "darwin", "windows"]
 [weekly.tailcall]
 flags = ["TAILCALL"]
 runners = ["linux_clang", "darwin", "windows_clang"]
+```
 
 ## v1.8.0
 
