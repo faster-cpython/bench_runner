@@ -237,6 +237,7 @@ def test_whole_workflow(tmpdir):
         )
         with open("requirements.txt", "w") as fd:
             fd.write(f"{str(bench_runner_checkout)}\n")
+        print(list(Path().iterdir()))
         subprocess.check_call(
             [
                 str(binary),
