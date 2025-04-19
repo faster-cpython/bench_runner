@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 
+import collections
 import functools
 import os
 import socket
@@ -34,6 +35,7 @@ class Runner:
         github_runner_name: str | None,
         include_in_all: bool = True,
         plot: dict[str, str] | None = None,
+        groups: list[str] | None = None,
     ):
         self.nickname = nickname
         self.os = os
@@ -48,6 +50,7 @@ class Runner:
         if plot is None:
             plot = {"name": nickname}
         self.plot = PlotConfig(**plot)
+        self.groups = groups
 
     @property
     def name(self) -> str:
@@ -77,6 +80,7 @@ def get_runners(cfgpath: PathLike | None = None) -> list[Runner]:
                 section.get("github_runner_name"),
                 section.get("include_in_all", True),
                 section.get("plot", None),
+                section.get("groups"),
             )
         )
 
@@ -117,3 +121,12 @@ def get_runner_for_hostname(
     if hostname is None:
         hostname = socket.gethostname()
     return get_runners_by_hostname(cfgpath).get(hostname, unknown_runner)
+
+
+def get_groups(cfgpath: PathLike | None = None) -> dict[str, list[Runner]]:
+    d = collections.defaultdict(list)
+    for runner in get_runners(cfgpath):
+        if runner.groups:
+            for group in runner.groups:
+                d[group].append(runner)
+    return dict(d)

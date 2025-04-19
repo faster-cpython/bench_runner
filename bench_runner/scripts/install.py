@@ -165,6 +165,7 @@ def generate__benchmark(src: Any) -> Any:
             github_env = "$GITHUB_ENV"
         vars = copy.copy(runner.env)
         vars["BENCHMARK_MACHINE_NICKNAME"] = runner.nickname
+        vars["BENCHMARK_RUNNER_NAME"] = runner.name
         setup_environment = {
             "name": "Setup environment",
             "run": LiteralScalarString(
@@ -183,6 +184,11 @@ def generate__benchmark(src: Any) -> Any:
         ]
         if runner.include_in_all:
             machine_clauses.append("inputs.machine == 'all'")
+        if runner.groups:
+            for group in runner.groups:
+                if "'" in group:
+                    raise ValueError(f"group cannot contain `'` (runner {runner.name})")
+                machine_clauses.append(f"inputs.machine == 'group {group}'")
         runner_template["if"] = f"${{{{ ({' || '.join(machine_clauses)}) }}}}"
 
         dst["jobs"][f"benchmark-{runner.name}"] = runner_template
@@ -205,11 +211,19 @@ def generate_benchmark(dst: Any) -> Any:
     """
     Generates benchmark.yml from benchmark.src.yml.
 
-    Inserts the list of available machines to the drop-down presented to the
-    user.
+    Inserts the list of groups and available machines to the drop-down
+    presented to the user.
     """
     available_runners = [r for r in runners.get_runners() if r.available]
-    runner_choices = [*[x.name for x in available_runners], "all", "__really_all"]
+    groups = sorted(
+        set(f"group {g}" for r in available_runners if r.groups for g in r.groups)
+    )
+    runner_choices = [
+        *groups,
+        *[x.name for x in available_runners],
+        "all",
+        "__really_all",
+    ]
 
     dst["on"]["workflow_dispatch"]["inputs"]["machine"]["options"] = runner_choices
 

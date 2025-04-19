@@ -9,6 +9,7 @@ import rich_argparse
 from bench_runner import benchmark_definitions
 from bench_runner import flags as mflags
 from bench_runner import git
+from bench_runner import runners as mrunners
 from bench_runner.result import has_result
 from bench_runner.util import PathLike
 
@@ -40,29 +41,41 @@ def _main(
     if not need_to_run:
         print("ref=xxxxxxx")
         print("need_to_run=false")
-    else:
-        merge_base = git.get_git_merge_base(cpython)
+        return
+    merge_base = git.get_git_merge_base(cpython)
 
-        if merge_base is None:
-            print("ref=xxxxxxx")
-            print("need_to_run=false")
+    if merge_base is None:
+        print("ref=xxxxxxx")
+        print("need_to_run=false")
+        return
+
+    if machine in ("__really_all", "all"):
+        need_to_run = True
+    else:
+        if machine.startswith("group "):
+            group = machine.removeprefix("group ")
+            groups = mrunners.get_groups()
+            machines = [r.nickname for r in groups[group]]
         else:
-            need_to_run = (
-                machine in ("__really_all", "all")
-                or has_result(
+            machines = [machine]
+        for m in machines:
+            if (
+                has_result(
                     Path("results"),
                     merge_base,
-                    machine,
+                    m,
                     pystats,
                     flags,
                     benchmark_definitions.get_benchmark_hash(),
                     progress=False,
                 )
                 is None
-            )
+            ):
+                need_to_run = True
+                break
 
-            print(f"ref={merge_base}")
-            print(f"need_to_run={str(need_to_run).lower()}")
+    print(f"ref={merge_base}")
+    print(f"need_to_run={str(need_to_run).lower()}")
 
 
 def main():

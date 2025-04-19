@@ -100,6 +100,39 @@ See `README.md` for more information.
 python -m pytest -m "not long_running"
 ```
 
+### Configurable groups
+
+Runners can configure which groups they belong to, and benchmark runs can be
+started on whole groups. Unlike when using 'all' or individual runners, runs
+for which the result already exists are skipped. For example, a
+configuration like:
+
+```toml
+[runners.linux_clang]
+os = "linux"
+arch = "x86_64"
+hostname = "pyperf1"
+env.CC = "clang"
+groups = ["linux", "pyperf1", "clang"]
+
+[runners.linux_gcc]
+os = "linux"
+arch = "x86_64"
+hostname = "pyperf1"
+groups = ["linux", "pyperf1", "gcc"]
+
+[runners.linux2_gcc]
+os = "linux"
+arch = "x86_64"
+hostname = "pyperf2"
+groups = ["linux", "pyperf2", "gcc"]
+```
+
+... will add `group linux`, `group pyperf1`, `group pyperf2`, `group gcc`
+and `group clang` to the list of possible machines for benchmark runs.
+Selecting `group linux` will queue a run for all three runners, and `group
+pyperf1` only for the first two.
+
 ## v1.8.0
 
 ### bench_runner.toml change
