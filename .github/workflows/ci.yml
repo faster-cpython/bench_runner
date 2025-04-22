@@ -42,6 +42,10 @@ jobs:
   long_test_linux:
     runs-on: ubuntu-latest
     steps:
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y linux-tools-common linux-tools-generic
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:

@@ -52,6 +52,6 @@ markers = [
 [tool.coverage.paths]
 source = [
     "bench_runner",
-    "/tmp/pytest-of-*/pytest-*/test_whole_workflow*/repo/outer_venv/lib/python*/site-packages/bench_runner",
-    "/tmp/pytest-of-*/pytest-*/test_whole_workflow*/repo/venv/lib/python*/site-packages/bench_runner",
+    "/tmp/pytest-of-*/pytest-*/*/repo/outer_venv/lib/python*/site-packages/bench_runner",
+    "/tmp/pytest-of-*/pytest-*/*/repo/venv/lib/python*/site-packages/bench_runner",
 ]

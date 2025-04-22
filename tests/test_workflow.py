@@ -298,3 +298,65 @@ def test_check_install_fail(tmpdir):
                     "--check",
                 ]
             )
+
+
+@pytest.mark.long_running
+@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="Linux only")
+def test_linux_perf(tmpdir):
+    """
+    Tests the whole workflow from a clean benchmarking repo.
+    """
+    repo = tmpdir / "repo"
+    venv_dir = repo / "outer_venv"
+    bench_runner_checkout = DATA_PATH.parents[1]
+    if sys.platform.startswith("win"):
+        binary = venv_dir / "Scripts" / "python.exe"
+    else:
+        binary = venv_dir / "bin" / "python"
+    profiling_dir = Path(repo / "profiling" / "results")
+
+    repo.mkdir()
+    Path(profiling_dir).mkdir(parents=True)
+
+    with contextlib.chdir(repo):
+        subprocess.check_call([sys.executable, "-m", "venv", str(venv_dir)])
+        subprocess.check_call(
+            [
+                str(binary),
+                "-m",
+                "pip",
+                "install",
+                "--upgrade",
+                "pip",
+            ]
+        )
+        subprocess.check_call(
+            [str(binary), "-m", "pip", "install", f"{bench_runner_checkout}[test]"]
+        )
+        subprocess.check_call([str(binary), "-m", "bench_runner", "install"])
+        with open("requirements.txt", "w") as fd:
+            fd.write(f"{str(bench_runner_checkout)}\n")
+        subprocess.check_call(
+            [
+                str(binary),
+                "workflow_bootstrap.py",
+                "python",
+                "main",
+                "linux-x86_64-linux",
+                "deltablue",
+                ",,,",
+                "--_fast",
+                "--perf",
+            ]
+        )
+
+        csv_file = profiling_dir / "deltablue.perf.csv"
+        assert csv_file.is_file()
+
+        with open(csv_file, "r") as fd:
+            lines = iter(fd.readlines())
+            first_line = next(lines)
+            assert first_line.strip() == "self,pid,command,shared_obj,symbol"
+            for line in fd.readlines():
+                assert line.strip().endswith("_PyEval_EvalFrameDefault")
+                break
