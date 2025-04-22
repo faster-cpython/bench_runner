@@ -268,3 +268,62 @@ def test_whole_workflow(tmpdir):
                 "--_fast",
             ]
         )
+
+
+@pytest.mark.long_running
+@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="Linux only")
+def test_pystats(tmpdir):
+    """
+    Tests the whole workflow from a clean benchmarking repo.
+    """
+    tmpdir = Path(tmpdir)
+    repo = tmpdir / "repo"
+    venv_dir = repo / "outer_venv"
+    bench_runner_checkout = DATA_PATH.parents[1]
+    if sys.platform.startswith("win"):
+        binary = venv_dir / "Scripts" / "python.exe"
+    else:
+        binary = venv_dir / "bin" / "python"
+    profiling_dir = Path(repo / "profiling" / "results")
+
+    repo.mkdir()
+    profiling_dir.mkdir(parents=True)
+
+    shutil.copyfile(DATA_PATH / "loops.json", repo / "loops.json")
+
+    with contextlib.chdir(repo):
+        subprocess.check_call([sys.executable, "-m", "venv", str(venv_dir)])
+        subprocess.check_call(
+            [
+                str(binary),
+                "-m",
+                "pip",
+                "install",
+                "--upgrade",
+                "pip",
+            ]
+        )
+        subprocess.check_call(
+            [str(binary), "-m", "pip", "install", f"{bench_runner_checkout}[test]"]
+        )
+        subprocess.check_call([str(binary), "-m", "bench_runner", "install"])
+        with open("requirements.txt", "w") as fd:
+            fd.write(f"{str(bench_runner_checkout)}\n")
+        subprocess.check_call(
+            [
+                str(binary),
+                "workflow_bootstrap.py",
+                "python",
+                "main",
+                "linux-x86_64-linux",
+                "deltablue",
+                ",,,",
+                "--_fast",
+                "--pystats",
+            ]
+        )
+
+        deltablue_output = list((repo / "results").glob("**/*-pystats-deltablue.*"))
+        assert len(deltablue_output) == 2
+        all_output = list((repo / "results").glob("**/*-pystats.*"))
+        assert len(all_output) == 2
