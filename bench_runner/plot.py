@@ -260,12 +260,17 @@ def longitudinal_plot(
 
     axs: Sequence[matplotlib.Axes]  # pyright: ignore
 
+    numvers = len(cfg["versions"])
+
     fig, axs = plt.subplots(
-        len(cfg["versions"]),
+        numvers,
         1,
-        figsize=(10, 5 * len(cfg["versions"])),
+        figsize=(10, 5 * numvers),
         layout="constrained",
     )  # type: ignore
+    
+    if numvers == 1:
+        axs = [axs]
 
     results = [r for r in results if r.fork == "python"]
 
