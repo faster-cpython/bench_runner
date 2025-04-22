@@ -253,3 +253,48 @@ def test_whole_workflow(tmpdir):
                 "--_fast",
             ]
         )
+
+
+@pytest.mark.long_running
+def test_check_install_fail(tmpdir):
+    repo = tmpdir / "repo"
+    venv_dir = repo / "outer_venv"
+    bench_runner_checkout = DATA_PATH.parents[1]
+    if sys.platform.startswith("win"):
+        binary = venv_dir / "Scripts" / "python.exe"
+    else:
+        binary = venv_dir / "bin" / "python"
+
+    repo.mkdir()
+
+    with contextlib.chdir(repo):
+        subprocess.check_call([sys.executable, "-m", "venv", str(venv_dir)])
+        subprocess.check_call(
+            [
+                str(binary),
+                "-m",
+                "pip",
+                "install",
+                "--upgrade",
+                "pip",
+            ]
+        )
+        subprocess.check_call(
+            [str(binary), "-m", "pip", "install", f"{bench_runner_checkout}[test]"]
+        )
+        subprocess.check_call([str(binary), "-m", "bench_runner", "install"])
+
+        # Now edit one of the generated files to make the check fail
+        with open("workflow_bootstrap.py", "a") as fd:
+            fd.write("# EXTRA CONTENT\n\n")
+
+        with pytest.raises(subprocess.CalledProcessError):
+            subprocess.check_call(
+                [
+                    str(binary),
+                    "-m",
+                    "bench_runner",
+                    "install",
+                    "--check",
+                ]
+            )
