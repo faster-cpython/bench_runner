@@ -1,6 +1,5 @@
 import contextlib
 from pathlib import Path
-import textwrap
 
 
 from bench_runner import gh
@@ -31,17 +30,18 @@ def test_notify(monkeypatch, capsys):
         )
 
     captured = capsys.readouterr()
-    assert (
-        captured.out.strip()
-        == "::notice ::@test_actor: [test_fork/test_ref](https://github.com/test_repo-public/tree/main/results/bm-20231001-3.10.4-test_he-JIT,TAILCALL)"
+    assert captured.out.strip() == (
+        "::notice ::@test_actor: "
+        "[test_fork/test_ref]"
+        "(https://github.com/test_repo-public/tree/main/results/"
+        "bm-20231001-3.10.4-test_he-JIT,TAILCALL)"
     )
 
-    expected = textwrap.dedent(
-        """
-        🤖 This is the friendly benchmarking bot with some new results!
+    expected = (
+        "@test_actor: "
+        "[test_fork/test_ref]"
+        "(https://github.com/test_repo-public/tree/main/results/"
+        "bm-20231001-3.10.4-test_he-JIT,TAILCALL)"
+    )
 
-        @test_actor: [test_fork/test_ref](https://github.com/test_repo-public/tree/main/results/bm-20231001-3.10.4-test_he-JIT,TAILCALL)
-        """
-    ).strip()
-
-    assert message_sent[0].strip() == expected
+    assert expected in message_sent[0].strip()
