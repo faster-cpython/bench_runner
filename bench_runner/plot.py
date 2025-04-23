@@ -268,7 +268,7 @@ def longitudinal_plot(
         figsize=(10, 5 * numvers),
         layout="constrained",
     )  # type: ignore
-    
+
     if numvers == 1:
         axs = [axs]
 
