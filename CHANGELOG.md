@@ -83,6 +83,21 @@ flags = ["TAILCALL"]
 runners = ["linux_clang", "darwin", "windows_clang"]
 ```
 
+### Configurable flags in longitudinal plots
+
+The flags to use for each of the longitudinal plots is now configurable. (Previously, the fourth one was always for JIT).
+
+The plot configuration, for example, will create two plots. The first will
+compare default builds on the 3.14 branch against 3.13.0. The second will
+compare JIT builds on the 3.14 branch against 3.13.0.
+
+```
+[plot]
+bases = ["3.13.0", "3.13.0"]
+versions = [[3, 14], [3, 14]]
+flags = [[], ["JIT"]]
+```
+
 ### Long-running tests
 
 `bench-runner` has some new long-running end-to-end integration tests. To avoid running them, use:

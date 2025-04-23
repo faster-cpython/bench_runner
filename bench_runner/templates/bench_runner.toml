@@ -59,6 +59,8 @@ env.BUILD_DEST = "PCbuild/amd64"
 [plot]
 bases = ["3.11.0"]
 versions = [[3, 12]]
+# The flags to use for each of the versions. The base is always "default" (without flags)
+flags = [[]]
 runners = ["linux"]
 names = ["linux"]
 colors = ["C0"]

@@ -89,6 +89,9 @@ def get_plot_config():
         == len(content["markers"])
     )
 
+    if "flags" not in content:
+        content["flags"] = [[]] * len(content["bases"])
+
     return content
 
 
@@ -276,8 +279,8 @@ def longitudinal_plot(
         ]
 
         subtitle = f"Python {version_str}.x vs. {base}"
-        if i == 3:
-            subtitle += " (with JIT)"
+        if len(cfg["flags"][i]):
+            subtitle += f" ({','.join(cfg['flags'][i])})"
         ax.set_title(subtitle)
 
         for runner_i, (runner, name, color, style, marker) in enumerate(
@@ -289,13 +292,11 @@ def longitudinal_plot(
                 cfg["markers"],
             )
         ):
-            runner_results = [r for r in ver_results if r.nickname == runner]
-
-            # The last plot is JIT-only
-            if i == 3:
-                runner_results = [r for r in runner_results if r.flags == ["JIT"]]
-            else:
-                runner_results = [r for r in runner_results if r.flags == []]
+            runner_results = [
+                r
+                for r in ver_results
+                if r.nickname == runner and set(r.flags) == set(cfg["flags"][i])
+            ]
 
             for r in results:
                 if r.nickname == runner and r.version == base and r.flags == []:
