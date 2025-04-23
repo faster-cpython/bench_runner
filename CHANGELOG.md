@@ -83,6 +83,14 @@ flags = ["TAILCALL"]
 runners = ["linux_clang", "darwin", "windows_clang"]
 ```
 
+### Long-running tests
+
+`bench-runner` has some new long-running end-to-end integration tests. To avoid running them, use:
+
+```
+python -m pytest -m "not long_running"
+```
+
 ## v1.8.0
 
 ### bench_runner.toml change
