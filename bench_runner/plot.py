@@ -298,7 +298,7 @@ def longitudinal_plot(
                 runner_results = [r for r in runner_results if r.flags == []]
 
             for r in results:
-                if r.nickname == runner and r.version == base:
+                if r.nickname == runner and r.version == base and r.flags == []:
                     ref = r
                     break
             else:
