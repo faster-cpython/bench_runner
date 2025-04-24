@@ -138,7 +138,7 @@ For each runner in your `bench_runner.toml`, you can specify a `plot` table with
 - `name`: A human-friendly name to display in the plot legend
 - `style`: A [matplotlib line style](https://matplotlib.org/stable/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D.set_linestyle)
 - `marker`: A [matplotlib marker](https://matplotlib.org/stable/api/markers_api.html#module-matplotlib.markers)
-- `color: A [matplotlib color](https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def)
+- `color`: A [matplotlib color](https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def)
 
 #### Longitudinal plot configuration
 
