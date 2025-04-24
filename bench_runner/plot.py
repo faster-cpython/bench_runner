@@ -463,15 +463,10 @@ def flag_effect_plot(
             r.cpython_hash
         ] = r
 
-    runner_groups = defaultdict(list)
-    runners = mrunners.get_runners()
-    for runner in runners:
-        runner_groups[runner.hostname].append(runner)
-
     for subplot, ax in zip(subplots, axs):
         ax.set_title(f"Effect of {subplot['name']}")
 
-        for runner in runners:
+        for runner in mrunners.get_runners():
             head_results = commits.get(runner.nickname, {}).get(
                 tuple(subplot["head_flags"]), {}
             )
