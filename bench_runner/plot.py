@@ -81,7 +81,8 @@ def get_longitudinal_plot_config():
     if "plot" in cfg:
         raise ValueError(
             "It looks like you have an old plot config in bench_runner.toml. "
-            "See 'new plot config' in CHANGELOG.md for migration info."
+            "Please refer to the section 'New Plot Configuration' in docs/CHANGELOG.md "
+            "for detailed migration instructions."
         )
 
     plots = cfg.get("longitudinal_plot", {})
