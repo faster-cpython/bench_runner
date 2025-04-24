@@ -2,6 +2,7 @@ from __future__ import annotations
 
 
 import argparse
+from collections import defaultdict
 import datetime
 import functools
 import json
@@ -22,8 +23,8 @@ matplotlib.use("agg")
 
 
 from . import config as mconfig
-from . import flags as mflags
 from . import result
+from . import runners as mrunners
 from .util import PathLike
 
 
@@ -75,24 +76,45 @@ def savefig(output_filename: PathLike, **kwargs):
 
 
 @functools.cache
-def get_plot_config():
-    content = mconfig.get_bench_runner_config().get("plot", {})
+def get_longitudinal_plot_config():
+    cfg = mconfig.get_bench_runner_config()
+    if "plot" in cfg:
+        raise ValueError(
+            "It looks like you have an old plot config in bench_runner.toml. "
+            "See 'new plot config' in CHANGELOG.md for migration info."
+        )
 
-    for key in ["bases", "runners", "names", "colors", "styles", "versions", "markers"]:
-        assert key in content
-    assert len(content["bases"]) == len(content["versions"])
-    assert (
-        len(content["runners"])
-        == len(content["names"])
-        == len(content["colors"])
-        == len(content["styles"])
-        == len(content["markers"])
-    )
+    plots = cfg.get("longitudinal_plot", {})
+    subplots = plots.get("subplots", [])
 
-    if "flags" not in content:
-        content["flags"] = [[]] * len(content["bases"])
+    for subplot in subplots:
+        assert "base" in subplot
+        assert "version" in subplot
+        if "flags" not in subplot:
+            subplot["flags"] = []
 
-    return content
+    return plots
+
+
+@functools.cache
+def get_flag_effect_plot_config():
+    cfg = mconfig.get_bench_runner_config()
+
+    plots = cfg.get("flag_effect_plot", {})
+    subplots = plots.get("subplots", [])
+
+    for subplot in subplots:
+        assert "name" in subplot
+        assert "head_flags" in subplot
+        subplot["head_flags"] = sorted(set(subplot["head_flags"]))
+        if "base_flags" not in subplot:
+            subplot["base_flags"] = []
+        else:
+            subplot["base_flags"] = sorted(set(subplot["base_flags"]))
+        if "runner_map" not in subplot:
+            subplot["runner_map"] = {}
+
+    return plots
 
 
 def plot_diff_pair(ax, data):
@@ -252,7 +274,10 @@ def longitudinal_plot(
             return value
 
     output_filename = Path(output_filename)
-    cfg = get_plot_config()
+    all_cfg = get_longitudinal_plot_config().get("subplots", [])
+    if len(all_cfg) == 0:
+        print("No longitudinal plot config found. Skipping.")
+        return
 
     data_cache = output_filename.with_suffix(".json")
     if data_cache.is_file():
@@ -263,43 +288,47 @@ def longitudinal_plot(
 
     axs: Sequence[matplotlib.Axes]  # pyright: ignore
 
-    fig, axs = plt.subplots(
-        len(cfg["versions"]),
+    fig, _axs = plt.subplots(
+        len(all_cfg),
         1,
-        figsize=(10, 5 * len(cfg["versions"])),
+        figsize=(10, 5 * len(all_cfg)),
         layout="constrained",
     )  # type: ignore
+    if len(all_cfg) == 1:
+        axs = [_axs]
+    else:
+        axs = _axs
 
     results = [r for r in results if r.fork == "python"]
+    runners = mrunners.get_runners()
 
-    for i, (version, base, ax) in enumerate(zip(cfg["versions"], cfg["bases"], axs)):
-        version_str = ".".join(str(x) for x in version)
+    for cfg, ax in zip(all_cfg, axs):
+        version = [int(x) for x in cfg["version"].split(".")]
+        assert len(version) == 2, "Version config should only be major.minor"
         ver_results = [
             r for r in results if list(r.parsed_version.release[0:2]) == version
         ]
 
-        subtitle = f"Python {version_str}.x vs. {base}"
-        if len(cfg["flags"][i]):
-            subtitle += f" ({','.join(cfg['flags'][i])})"
+        subtitle = f"Python {cfg['version']}.x vs. {cfg['base']}"
+        if len(cfg["flags"]):
+            subtitle += f" ({','.join(cfg['flags'])})"
         ax.set_title(subtitle)
 
-        for runner_i, (runner, name, color, style, marker) in enumerate(
-            zip(
-                cfg["runners"],
-                cfg["names"],
-                cfg["colors"],
-                cfg["styles"],
-                cfg["markers"],
-            )
-        ):
+        first_runner = True
+
+        for runner in runners:
             runner_results = [
                 r
                 for r in ver_results
-                if r.nickname == runner and set(r.flags) == set(cfg["flags"][i])
+                if r.nickname == runner.nickname and set(r.flags) == set(cfg["flags"])
             ]
 
             for r in results:
-                if r.nickname == runner and r.version == base and r.flags == []:
+                if (
+                    r.nickname == runner.nickname
+                    and r.version == cfg["base"]
+                    and r.flags == []
+                ):
                     ref = r
                     break
             else:
@@ -312,40 +341,41 @@ def longitudinal_plot(
                 datetime.datetime.fromisoformat(x.commit_datetime)
                 for x in runner_results
             ]
-            changes = [get_comparison_value(ref, r, base) for r in runner_results]
+            changes = [
+                get_comparison_value(ref, r, cfg["base"]) for r in runner_results
+            ]
 
             if any(x is not None for x in changes):
                 ax.plot(
                     dates,
                     changes,
-                    color=color,
-                    linestyle=style,
-                    marker=marker,
+                    color=runner.plot.color,
+                    linestyle=runner.plot.style,
+                    marker=runner.plot.marker,
                     markersize=5,
-                    label=name,
+                    label=runner.plot.name,
                     alpha=0.9,
                 )
 
-            if runner_i > 0:
-                continue
-
-            annotations = set()
-            for r, date, change in zip(runner_results, dates, changes):
-                micro = get_micro_version(r.version)
-                if micro not in annotations and not r.version.endswith("+"):
-                    annotations.add(micro)
-                    text = ax.annotate(
-                        micro,
-                        xy=(date, change),
-                        xycoords="data",
-                        xytext=(-3, 15),
-                        textcoords="offset points",
-                        rotation=90,
-                        arrowprops=dict(arrowstyle="-", connectionstyle="arc"),
-                    )
-                    text.set_color("#888")
-                    text.set_size(8)
-                    text.arrow_patch.set_color("#888")
+            if first_runner:
+                annotations = set()
+                for r, date, change in zip(runner_results, dates, changes):
+                    micro = get_micro_version(r.version)
+                    if micro not in annotations and not r.version.endswith("+"):
+                        annotations.add(micro)
+                        text = ax.annotate(
+                            micro,
+                            xy=(date, change),
+                            xycoords="data",
+                            xytext=(-3, 15),
+                            textcoords="offset points",
+                            rotation=90,
+                            arrowprops=dict(arrowstyle="-", connectionstyle="arc"),
+                        )
+                        text.set_color("#888")
+                        text.set_size(8)
+                        text.arrow_patch.set_color("#888")
+                first_runner = False
 
         annotate_y_axis(ax, differences)
 
@@ -392,9 +422,11 @@ def flag_effect_plot(
     output_filename = Path(output_filename)
 
     # We don't need to track the performance of the Tier 2 configuration
-    all_flags = [flag for flag in mflags.FLAGS if flag.name != "PYTHON_UOPS"]
-    flags = [flag.name for flag in reversed(all_flags)]
-    configs = [flag.description for flag in reversed(all_flags)]
+
+    subplots = get_flag_effect_plot_config().get("subplots", [])
+    if len(subplots) == 0:
+        print("No flag effect plot config found. Skipping.")
+        return
 
     def get_comparison_value(ref, r):
         key = ",".join((str(ref.filename)[8:], str(r.filename)[8:]))
@@ -405,8 +437,6 @@ def flag_effect_plot(
             data[key] = value
             return value
 
-    cfg = get_plot_config()
-
     data_cache = output_filename.with_suffix(".json")
     if data_cache.is_file():
         with data_cache.open() as fd:
@@ -416,41 +446,40 @@ def flag_effect_plot(
 
     axs: Sequence[matplotlib.Axes]  # pyright: ignore
 
-    fig, axs = plt.subplots(
-        len(flags), 1, figsize=(10, 5 * len(flags)), layout="constrained"
+    fig, _axs = plt.subplots(
+        len(subplots), 1, figsize=(10, 5 * len(subplots)), layout="constrained"
     )  # type: ignore
+    if len(subplots) == 1:
+        axs = [_axs]
+    else:
+        axs = _axs
 
     results = [r for r in results if r.fork == "python"]
 
-    commits: dict[str, dict[str, dict[str, result.Result]]] = {}
+    commits: dict[str, dict[tuple[str, ...], dict[str, result.Result]]] = {}
     for r in results:
-        for flag in flags:
-            if flag in r.flags:
-                break
-        else:
-            flag = ""
-        commits.setdefault(r.nickname, {}).setdefault(flag, {})[r.cpython_hash] = r
+        commits.setdefault(r.nickname, {}).setdefault(tuple(r.flags), {})[
+            r.cpython_hash
+        ] = r
 
-    for config, flag, ax in zip(configs, flags, axs):
-        ax.set_title(f"Effect of {config} vs. Tier 1 (same commit)")
+    runner_groups = defaultdict(list)
+    runners = mrunners.get_runners()
+    for runner in runners:
+        runner_groups[runner.hostname].append(runner)
 
-        for runner, name, color, style, marker in zip(
-            cfg["runners"], cfg["names"], cfg["colors"], cfg["styles"], cfg["markers"]
-        ):
-            runner_results = commits.get(runner, {})
-            # For tailcall, we want to compare against the default compiler
-            # which is a different "machine"
-            if flag == "TAILCALL":
-                # It's ok if the removesuffix fails -- it's fine to compare with
-                # the same machine if the "default" equivalent isn't available.
-                base_results = commits.get(runner.removesuffix("_clang"), {}).get(
-                    "", {}
-                )
-            else:
-                base_results = runner_results.get("", {})
+    for subplot, ax in zip(subplots, axs):
+        ax.set_title(f"Effect of {subplot['name']}")
+
+        for runner in runners:
+            head_results = commits.get(runner.nickname, {}).get(
+                tuple(subplot["head_flags"]), {}
+            )
+            base_results = commits.get(
+                subplot["runner_map"].get(runner.nickname, runner.nickname), {}
+            ).get(tuple(subplot["base_flags"]), {})
 
             line = []
-            for cpython_hash, r in runner_results.get(flag, {}).items():
+            for cpython_hash, r in head_results.items():
                 if cpython_hash in base_results:
                     line.append(
                         (
@@ -467,11 +496,11 @@ def flag_effect_plot(
                 ax.plot(
                     dates,
                     changes,
-                    color=color,
-                    linestyle=style,
-                    marker=marker,
+                    color=runner.plot.color,
+                    linestyle=runner.plot.style,
+                    marker=runner.plot.marker,
                     markersize=5,
-                    label=name,
+                    label=runner.plot.name,
                     alpha=0.9,
                 )
 

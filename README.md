@@ -127,11 +127,64 @@ To do so, add a symlink called `loops.json` to the root of your repository that 
 ln -s results/bm-20231002-3.12.0-0fb18b0/bm-20231002-linux-x86_64-python-v3.12.0-3.12.0-0fb18b0.json loops.json
 ```
 
-#### Longitudinal plots
+#### Plot configuration
 
-The longitudinal plots are configured in the `plot` section of `bench_runner.toml`.
+`bench_runner` will produce longitudinal plots comparing versions in a series to a specific base version, as well as showing the effect of various flags on the same commits over time.
 
-**TODO: Describe this in more detail**
+##### Runner plot styles
+
+For each runner in your `bench_runner.toml`, you can specify a `plot` table with the following keys to control how that runner is rendered in the longitudinal plots:
+
+- `name`: A human-friendly name to display in the plot legend
+- `style`: A [matplotlib line style](https://matplotlib.org/stable/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D.set_linestyle)
+- `marker` A [matplotlib marker](https://matplotlib.org/stable/api/markers_api.html#module-matplotlib.markers)
+- `color: A [matplotlib color](https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def)
+
+#### Longitudinal plot configuration
+
+The longitudinal plot shows the change of a version branch over time against a specified base version. It is made up of multiple subplots, each with its own head and base, and optionally configuration flags.
+
+In `bench_runner.toml`, the `longitudinal_plot` table has a `subplots` key which is an array of tables with the following keys:
+
+- `base`: The base version to compare to. Should be a fully-specified version, e.g. "3.13.0".
+- `version`: The version series to use as a head. Should be a 2-part version, e.g. "3.14"
+- `flags`: (optional) A list of flags to match to for the head versions
+
+For example:
+
+```toml
+[longitudinal_plot]
+subplots = [
+    { base = "3.10.4", version = "3.11" },
+    { base = "3.12.0", version = "3.13" },
+    { base = "3.13.0", version = "3.14" },
+    { base = "3.13.0", version = "3.14", flags = ["JIT"] }
+]
+```
+
+#### Flag effect plot configuration
+
+The flag effect plot shows the effect of specified configuration flags against a base with the same commit hash, but different configuration flags.
+
+In `bench_runner.toml`, the `flag_effect_plot` table has a `subplots` key which is an array of tables with the following keys:
+
+- `name`: The description of the flags to use in the title.
+- `head_flags`: A list of flags to use as the head.
+- `base_flags`: (optional) A list of flags to use as the base. By default, this is a default build, i.e. no flags.
+- `runner_map`: (optional) If you need to map a runner to a base in a different runner, you can provide that mapping here. For example, with tail-calling, you want to compare runners configured to use clang against runners configured with the "default compiler" for a given platform. The mapping is from the "head" runner nickname to the "base" runner nickname.
+
+For example:
+
+```toml
+[[flag_effect_plot.subplots]]
+name = "JIT"
+head_flags = ["JIT"]
+
+[[flag_effect_plot.subplots]]
+name = "Tail calling interpreter"
+head_flags = ["TAILCALL"]
+runner_map = { linux_clang = "linux" }
+```
 
 #### Purging old data
 

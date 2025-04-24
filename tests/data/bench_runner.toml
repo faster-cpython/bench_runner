@@ -6,22 +6,20 @@ compare_to_default = ["NOGIL"]
 os = "linux"
 arch = "x86_64"
 hostname = "pyperf"
+plot = { name = "Linux", color = "C0" }
 
-[plot]
-bases = ["3.10.4", "3.12.0", "3.13.0b2", "3.13.0b2"]
-versions = [[3, 11], [3, 13], [3, 14], [3, 14]]
-runners = [
-    "linux",
-    "pythonperf2",
-    "arminc",
-    "darwin",
-    "pythonperf1",
-    "pythonperf1_win32",
+[longitudinal_plot]
+subplots = [
+    { base = "3.10.4", version = "3.11" },
+    { base = "3.12.0", version = "3.13" },
+    { base = "3.13.0b2", version = "3.14" },
+    { base = "3.13.0b2", version = "3.14", flags = ["JIT"] }
 ]
-names = ["linux", "linux2", "linux-aarch64", "macos", "win64", "win32"]
-colors = ["C0", "C0", "C4", "C2", "C3", "C3"]
-styles = ["-", ":", "--", "-", "-", ":"]
-markers = ["s", "s", "s", "^", ".", "."]
+
+[flag_effect_plot]
+subplots = [
+    { name = "JIT", head_flags = ["JIT"] },
+]
 
 [publish_mirror]
 skip = false
