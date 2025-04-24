@@ -10,6 +10,16 @@ from . import config
 from .util import PathLike
 
 
+class PlotConfig:
+    def __init__(
+        self, name: str, color: str = "C0", style: str = "-", marker: str = "s"
+    ):
+        self.name = name
+        self.color = color
+        self.style = style
+        self.marker = marker
+
+
 class Runner:
     def __init__(
         self,
@@ -23,6 +33,7 @@ class Runner:
         # os-arch-nickname
         github_runner_name: str | None,
         include_in_all: bool = True,
+        plot: dict[str, str] | None = None,
     ):
         self.nickname = nickname
         self.os = os
@@ -34,6 +45,9 @@ class Runner:
             github_runner_name = self.name
         self.github_runner_name = github_runner_name
         self.include_in_all = include_in_all
+        if plot is None:
+            plot = {"name": nickname}
+        self.plot = PlotConfig(**plot)
 
     @property
     def name(self) -> str:
@@ -62,6 +76,7 @@ def get_runners(cfgpath: PathLike | None = None) -> list[Runner]:
                 section.get("env", {}),
                 section.get("github_runner_name"),
                 section.get("include_in_all", True),
+                section.get("plot", None),
             )
         )
 

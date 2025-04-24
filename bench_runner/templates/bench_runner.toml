@@ -55,12 +55,4 @@ arch = "x86_64"
 hostname = "winperf"
 available = true
 env.BUILD_DEST = "PCbuild/amd64"
-
-[plot]
-bases = ["3.11.0"]
-versions = [[3, 12]]
-runners = ["linux"]
-names = ["linux"]
-colors = ["C0"]
-styles = ["-"]
-markers = ["s"]
+plot = { name = "win64", color = "C3", marker = "^" }

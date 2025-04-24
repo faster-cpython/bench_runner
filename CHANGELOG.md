@@ -83,6 +83,15 @@ flags = ["TAILCALL"]
 runners = ["linux_clang", "darwin", "windows_clang"]
 ```
 
+### New plot configuration
+
+The plot configuration has been completely overhauled.
+
+If you have a `[plot]` section in `bench_runner.toml` it should be removed.
+Runner-specific plot configuration is now in the `plot` key in each runner table.
+Configuration of the longitudinal and flag effect plots are in the new `[longitudinal_plot]` and `[flag_effect_plot]` sections.
+See `README.md` for more information.
+
 ### Long-running tests
 
 `bench-runner` has some new long-running end-to-end integration tests. To avoid running them, use:
