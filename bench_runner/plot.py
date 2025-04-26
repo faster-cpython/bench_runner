@@ -105,6 +105,7 @@ def get_flag_effect_plot_config():
 
     for subplot in subplots:
         assert "name" in subplot
+        assert "version" in subplot
         assert "head_flags" in subplot
         subplot["head_flags"] = sorted(set(subplot["head_flags"]))
         if "base_flags" not in subplot:
@@ -428,12 +429,14 @@ def flag_effect_plot(
         print("No flag effect plot config found. Skipping.")
         return
 
-    def get_comparison_value(ref, r):
+    def get_comparison_value(ref, r, force_valid):
         key = ",".join((str(ref.filename)[8:], str(r.filename)[8:]))
         if key in data:
             return data[key]
         else:
-            value = getter(result.BenchmarkComparison(ref, r, "default"))
+            value = getter(
+                result.BenchmarkComparison(ref, r, "default", force_valid=force_valid)
+            )
             data[key] = value
             return value
 
@@ -464,8 +467,15 @@ def flag_effect_plot(
 
     for subplot, ax in zip(subplots, axs):
         ax.set_title(f"Effect of {subplot['name']}")
+        version = tuple(int(x) for x in subplot["version"].split("."))
+        assert len(version) == 2, (
+            "Version config in {subplot['name']}" " should only be major.minor"
+        )
 
         for runner in mrunners.get_runners():
+            runner_is_mapped = runner.nickname in subplot["runner_map"]
+            if subplot["runner_map"] and not runner_is_mapped:
+                continue
             head_results = commits.get(runner.nickname, {}).get(
                 tuple(subplot["head_flags"]), {}
             )
@@ -476,10 +486,14 @@ def flag_effect_plot(
             line = []
             for cpython_hash, r in head_results.items():
                 if cpython_hash in base_results:
+                    if r.parsed_version.release[0:2] != version:
+                        continue
                     line.append(
                         (
                             r.commit_datetime,
-                            get_comparison_value(base_results[cpython_hash], r),
+                            get_comparison_value(
+                                base_results[cpython_hash], r, runner_is_mapped
+                            ),
                         )
                     )
             line.sort(key=lambda x: datetime.datetime.fromisoformat(x[0]))
