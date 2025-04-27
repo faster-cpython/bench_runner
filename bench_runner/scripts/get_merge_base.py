@@ -52,10 +52,10 @@ def _main(
     if machine in ("__really_all", "all"):
         need_to_run = True
     else:
-        if machine.startswith("group "):
-            group = machine.removeprefix("group ")
-            groups = mrunners.get_groups()
-            machines = [r.nickname for r in groups[group]]
+        if machine.startswith("tag "):
+            tag = machine.removeprefix("tag ")
+            tags = mrunners.get_tags()
+            machines = [r.nickname for r in tags[tag]]
         else:
             machines = [machine]
         for m in machines:

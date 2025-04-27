@@ -184,11 +184,11 @@ def generate__benchmark(src: Any) -> Any:
         ]
         if runner.include_in_all:
             machine_clauses.append("inputs.machine == 'all'")
-        if runner.groups:
-            for group in runner.groups:
-                if "'" in group:
-                    raise ValueError(f"group cannot contain `'` (runner {runner.name})")
-                machine_clauses.append(f"inputs.machine == 'group {group}'")
+        if runner.tags:
+            for tag in runner.tags:
+                if "'" in tag:
+                    raise ValueError(f"tag cannot contain `'` (runner {runner.name})")
+                machine_clauses.append(f"inputs.machine == 'tag {tag}'")
         runner_template["if"] = f"${{{{ ({' || '.join(machine_clauses)}) }}}}"
 
         dst["jobs"][f"benchmark-{runner.name}"] = runner_template
@@ -211,15 +211,15 @@ def generate_benchmark(dst: Any) -> Any:
     """
     Generates benchmark.yml from benchmark.src.yml.
 
-    Inserts the list of groups and available machines to the drop-down
+    Inserts the list of tags and available machines to the drop-down
     presented to the user.
     """
     available_runners = [r for r in runners.get_runners() if r.available]
-    groups = sorted(
-        set(f"group {g}" for r in available_runners if r.groups for g in r.groups)
+    tags = sorted(
+        set(f"tag {g}" for r in available_runners if r.tags for g in r.tags)
     )
     runner_choices = [
-        *groups,
+        *tags,
         *[x.name for x in available_runners],
         "all",
         "__really_all",

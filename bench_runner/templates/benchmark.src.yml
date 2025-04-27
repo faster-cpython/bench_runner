@@ -80,7 +80,7 @@ jobs:
       benchmarks: ${{ inputs.benchmarks }}
       pgo: true
       perf: false
-      force: ${{ ! startsWith(inputs.machine, 'group ') }}
+      force: false
     secrets: inherit
 
   base:
