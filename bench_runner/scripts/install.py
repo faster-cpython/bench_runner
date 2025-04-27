@@ -279,7 +279,7 @@ def generate__weekly(dst: Any) -> Any:
         cfg_runners = runners.get_runners_from_nicknames_and_tags(
             weekly_cfg.get("runners", [])
         )
-        for runner_nickname in cfg_runners:
+        for runner in cfg_runners:
             weekly_flags = weekly_cfg.get("flags", [])
             job = {
                 "uses": "./.github/workflows/_benchmark.yml",
