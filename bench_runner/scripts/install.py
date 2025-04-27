@@ -215,9 +215,7 @@ def generate_benchmark(dst: Any) -> Any:
     presented to the user.
     """
     available_runners = [r for r in runners.get_runners() if r.available]
-    tags = sorted(
-        set(f"tag {g}" for r in available_runners if r.tags for g in r.tags)
-    )
+    tags = sorted(set(f"tag {g}" for r in available_runners if r.tags for g in r.tags))
     runner_choices = [
         *tags,
         *[x.name for x in available_runners],
@@ -278,12 +276,10 @@ def generate__weekly(dst: Any) -> Any:
     all_jobs = []
 
     for name, weekly_cfg in weekly.items():
-        for runner_nickname in weekly_cfg.get("runners", []):
-            runner = runners.get_runner_by_nickname(runner_nickname)
-            if runner.nickname == "unknown":
-                raise ValueError(
-                    f"Runner {runner_nickname} not found in bench_runner.toml"
-                )
+        cfg_runners = runners.get_runners_from_nicknames_and_tags(
+            weekly_cfg.get("runners", [])
+        )
+        for runner_nickname in cfg_runners:
             weekly_flags = weekly_cfg.get("flags", [])
             job = {
                 "uses": "./.github/workflows/_benchmark.yml",

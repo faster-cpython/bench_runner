@@ -130,3 +130,22 @@ def get_tags(cfgpath: PathLike | None = None) -> dict[str, list[Runner]]:
             for tag in runner.tags:
                 d[tag].append(runner)
     return dict(d)
+
+
+def get_runners_from_nicknames_and_tags(
+    nicknames: list[str], cfgpath: PathLike | None = None
+) -> list[Runner]:
+    result = []
+    tags = get_tags(cfgpath)
+    runners = get_runners_by_nickname(cfgpath)
+    for nickname in nicknames:
+        if nickname.startswith("tag "):
+            tag = nickname.removeprefix("tag ")
+            if tag not in tags:
+                raise ValueError(f"Tag {tag} not found in bench_runner.toml")
+            result.extend(tags[nickname.removeprefix("tag ")])
+        else:
+            if nickname not in runners:
+                raise ValueError(f"Runner {nickname} not found in bench_runner.toml")
+            result.append(runners[nickname])
+    return result

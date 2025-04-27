@@ -52,12 +52,9 @@ def _main(
     if machine in ("__really_all", "all"):
         need_to_run = True
     else:
-        if machine.startswith("tag "):
-            tag = machine.removeprefix("tag ")
-            tags = mrunners.get_tags()
-            machines = [r.nickname for r in tags[tag]]
-        else:
-            machines = [machine]
+        machines = [
+            r.nickname for r in mrunners.get_runners_from_nicknames_and_tags([machine])
+        ]
         for m in machines:
             if (
                 has_result(
