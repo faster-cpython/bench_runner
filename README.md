@@ -177,7 +177,7 @@ In `bench_runner.toml`, the `flag_effect_plot` table has a `subplots` key which 
   tail-calling, you may want to compare runners configured to use clang
   against runners configured with the "default compiler" for a given
   platform. The mapping is from the "head" runner nickname to the "base"
-  runner nickname. If runner_map is not empty, only the "head" runners in
+  runner nickname. If `runner_map` is not empty, only the "head" runners in
   the map are plotted.
 
 For example:
