@@ -172,7 +172,13 @@ In `bench_runner.toml`, the `flag_effect_plot` table has a `subplots` key which 
 - `version`: The version series to compare. Should be a 2-part version, e.g. "3.14"
 - `head_flags`: A list of flags to use as the head.
 - `base_flags`: (optional) A list of flags to use as the base. By default, this is a default build, i.e. no flags.
-- `runner_map`: (optional) If you need to map a runner to a base in a different runner, you can provide that mapping here. For example, with tail-calling, you may want to compare runners configured to use clang against runners configured with the "default compiler" for a given platform. The mapping is from the "head" runner nickname to the "base" runner nickname.
+- `runner_map`: (optional) If you need to map a runner to a base in a
+  different runner, you can provide that mapping here. For example, with
+  tail-calling, you may want to compare runners configured to use clang
+  against runners configured with the "default compiler" for a given
+  platform. The mapping is from the "head" runner nickname to the "base"
+  runner nickname. If runner_map is not empty, only the "head" runners in
+  the map are plotted.
 
 For example:
 
