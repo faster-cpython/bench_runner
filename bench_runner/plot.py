@@ -534,6 +534,9 @@ def flag_effect_plot(
 def benchmark_longitudinal_plot(
     results: Iterable[result.Result], output_filename: PathLike
 ):
+    if "benchmark_longitudinal_plot" not in mconfig.get_bench_runner_config():
+        return
+
     output_filename = Path(output_filename)
 
     cache_filename = output_filename.with_suffix(".json")
