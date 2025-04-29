@@ -419,6 +419,11 @@ def _main(repo_dir: PathLike, force: bool = False, bases: Sequence[str] | None =
                     title="Memory usage change by configuration",
                 ),
             ),
+            (
+                plot.benchmark_longitudinal_plot,
+                (benchmarking_results, repo_dir / "benchmarks.svg"),
+                {},
+            ),
         ],
         "Generating plots",
     ):

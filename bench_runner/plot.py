@@ -2,6 +2,7 @@ from __future__ import annotations
 
 
 import argparse
+from collections import defaultdict
 import datetime
 import functools
 import json
@@ -115,6 +116,25 @@ def get_flag_effect_plot_config():
             subplot["runner_map"] = {}
 
     return plots
+
+
+@functools.cache
+def get_benchmark_longitudinal_plot_config():
+    cfg = mconfig.get_bench_runner_config()
+
+    plot = cfg.get("benchmark_longitudinal_plot", {})
+    assert "base" in plot
+    assert "version" in plot
+    assert "runner" in plot
+    if "head_flags" not in plot:
+        plot["head_flags"] = []
+    else:
+        plot["head_flags"] = sorted(set(plot["head_flags"]))
+    if "base_flags" not in plot:
+        plot["base_flags"] = []
+    else:
+        plot["base_flags"] = sorted(set(plot["base_flags"]))
+    return plot
 
 
 def plot_diff_pair(ax, data):
@@ -467,11 +487,11 @@ def flag_effect_plot(
 
         for runner in mrunners.get_runners():
             head_results = commits.get(runner.nickname, {}).get(
-                tuple(subplot["head_flags"]), {}
+                tuple(sorted(subplot["head_flags"])), {}
             )
             base_results = commits.get(
                 subplot["runner_map"].get(runner.nickname, runner.nickname), {}
-            ).get(tuple(subplot["base_flags"]), {})
+            ).get(tuple(sorted(subplot["base_flags"])), {})
 
             line = []
             for cpython_hash, r in head_results.items():
@@ -509,6 +529,86 @@ def flag_effect_plot(
 
     with data_cache.open("w") as fd:
         json.dump(data, fd, indent=2)
+
+
+def benchmark_longitudinal_plot(
+    results: Iterable[result.Result], output_filename: PathLike
+):
+    output_filename = Path(output_filename)
+
+    cache_filename = output_filename.with_suffix(".json")
+    if cache_filename.is_file():
+        with cache_filename.open() as fd:
+            cache = json.load(fd)
+    else:
+        cache = {}
+
+    cfg = get_benchmark_longitudinal_plot_config()
+
+    results = [r for r in results if r.fork == "python" and r.nickname == cfg["runner"]]
+
+    base = None
+    for r in results:
+        if r.version == cfg["base"] and r.flags == cfg["base_flags"]:
+            base = r
+            break
+    else:
+        raise ValueError(f"Base version {cfg['base']} not found")
+
+    results = [
+        r
+        for r in results
+        if r.version.startswith(cfg["version"]) and r.flags == cfg["head_flags"]
+    ]
+
+    by_benchmark = defaultdict(list)
+    for r in results:
+        if r.filename.name not in cache:
+            comparison = result.BenchmarkComparison(base, r, "")
+            timing = comparison.get_timing_diff()
+
+            for name, _diff, mean in timing:
+                if mean > 0.01:
+                    value = [r.commit_date, mean, r.cpython_hash]
+                    if r.filename.name not in cache:
+                        cache[r.filename.name] = {}
+                    cache[r.filename.name][name] = value
+
+        for name, value in cache[r.filename.name].items():
+            by_benchmark[name].append(value)
+
+    with cache_filename.open("w") as fd:
+        json.dump(cache, fd, indent=2)
+
+    by_benchmark = {k: v for k, v in by_benchmark.items() if len(v) > 2}
+
+    fig, axs = plt.subplots(
+        len(by_benchmark),
+        1,
+        figsize=(10, len(by_benchmark)),
+        layout="constrained",
+    )
+    if len(by_benchmark) == 1:
+        axs = [axs]
+
+    plt.suptitle(
+        f"Performance change by benchmark on {cfg['version']} vs. {cfg['base']}"
+    )
+
+    for (benchmark, timings), ax in zip(sorted(by_benchmark.items()), axs):
+        timings.sort(key=lambda x: datetime.datetime.fromisoformat(x[0]))
+        dates = [datetime.datetime.fromisoformat(x[0]) for x in timings]
+        ax.plot(dates, [x[1] for x in timings])
+        ax.set_xticks([])
+        ax.set_ylabel(benchmark, rotation=0, horizontalalignment="right")
+        ax.yaxis.set_major_formatter(formatter)
+        for spine in ax.spines.values():
+            spine.set_visible(False)
+        ax.grid(True, axis="y")
+        ax.axhline(1.0, color="#666", linestyle="-")
+        ax.set_facecolor("#f0f0f0")
+
+    savefig(output_filename, dpi=150)
 
 
 if __name__ == "__main__":

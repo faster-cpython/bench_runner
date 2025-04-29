@@ -140,7 +140,7 @@ For each runner in your `bench_runner.toml`, you can specify a `plot` table with
 - `marker`: A [matplotlib marker](https://matplotlib.org/stable/api/markers_api.html#module-matplotlib.markers)
 - `color`: A [matplotlib color](https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def)
 
-#### Longitudinal plot configuration
+##### Longitudinal plot configuration
 
 The longitudinal plot shows the change of a version branch over time against a specified base version. It is made up of multiple subplots, each with its own head and base, and optionally configuration flags.
 
@@ -162,7 +162,7 @@ subplots = [
 ]
 ```
 
-#### Flag effect plot configuration
+##### Flag effect plot configuration
 
 The flag effect plot shows the effect of specified configuration flags against a base with the same commit hash, but different configuration flags.
 
@@ -185,6 +185,16 @@ name = "Tail calling interpreter"
 head_flags = ["TAILCALL"]
 runner_map = { linux_clang = "linux" }
 ```
+
+##### Benchmark longitudinal plot configuration
+
+The benchmark longitudinal plot shows the change over time, per benchmark. The configuration consists of the following keys:
+
+- `base`: The base version
+- `version`: The version to track
+- `runner`: The runner to use
+- `head_flags`: (optional) The flags to use for the head commits
+- `base_flags`: (optional) The flags to use for the base commits
 
 #### Purging old data
 

@@ -9,6 +9,7 @@ Here are some recent and important revisions. 👉 [Complete list of results](RE
 [Currently failing benchmarks](failures.md).
 
 **Key:** 📄: table, 📈: time plot, 🧠: memory plot
+
 <!-- START table -->
 
 <!-- END table -->
@@ -26,6 +27,8 @@ Improvement of the geometric mean of key merged benchmarks, computed with `pyper
 The results have a resolution of 0.01 (1%).
 
 ![Configuration speed improvement](/configs.svg)
+
+There is also a [longitudinal plot by benchmark](/benchmarks.svg).
 
 ## Documentation
 
