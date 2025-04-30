@@ -138,7 +138,7 @@ def clone(
     url: str,
     *,
     branch: str | None = None,
-    depth: int = 1,
+    depth: int | None = 1,
 ) -> None:
     is_hash = re.match(r"^[0-9a-f]{40}$", branch) if branch else False
 

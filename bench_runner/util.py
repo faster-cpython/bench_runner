@@ -89,7 +89,8 @@ def get_simple_platform() -> Literal["linux", "macos", "windows"]:
 
 def format_seconds(value: float) -> str:
     """
-    Given a float value in seconds, formats it into a human-readable string with the appropriate precision.
+    Given a float value in seconds, formats it into a human-readable string with
+    the appropriate precision.
     """
     _TIMEDELTA_UNITS = ("sec", "ms", "us", "ns")
 

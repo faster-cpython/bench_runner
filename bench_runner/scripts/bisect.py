@@ -83,8 +83,6 @@ def delete_log() -> None:
 
 
 def show_log() -> None:
-    bisect_log = get_log_file()
-
     print()
     print("Bisect log:")
 
