@@ -571,7 +571,8 @@ def benchmark_longitudinal_plot(
             timing = comparison.get_timing_diff()
 
             for name, _diff, mean in timing:
-                if mean > 0.01:
+                # Don't include insignificant results
+                if mean > 0.0:
                     value = [r.commit_date, mean, r.cpython_hash]
                     if r.filename.name not in cache:
                         cache[r.filename.name] = {}
