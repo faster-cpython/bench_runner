@@ -125,7 +125,7 @@ def get_benchmark_longitudinal_plot_config():
     plot = cfg.get("benchmark_longitudinal_plot", {})
     assert "base" in plot
     assert "version" in plot
-    assert "runner" in plot
+    assert "runners" in plot
     if "head_flags" not in plot:
         plot["head_flags"] = []
     else:
@@ -548,7 +548,9 @@ def benchmark_longitudinal_plot(
 
     cfg = get_benchmark_longitudinal_plot_config()
 
-    results = [r for r in results if r.fork == "python" and r.nickname == cfg["runner"]]
+    results = [
+        r for r in results if r.fork == "python" and r.nickname in cfg["runners"]
+    ]
 
     base = None
     for r in results:
@@ -564,7 +566,7 @@ def benchmark_longitudinal_plot(
         if r.version.startswith(cfg["version"]) and r.flags == cfg["head_flags"]
     ]
 
-    by_benchmark = defaultdict(list)
+    by_benchmark = defaultdict(lambda: defaultdict(list))
     for r in results:
         if r.filename.name not in cache:
             comparison = result.BenchmarkComparison(base, r, "")
@@ -579,12 +581,16 @@ def benchmark_longitudinal_plot(
                     cache[r.filename.name][name] = value
 
         for name, value in cache[r.filename.name].items():
-            by_benchmark[name].append(value)
+            by_benchmark[name][r.nickname].append(value)
 
     with cache_filename.open("w") as fd:
         json.dump(cache, fd, indent=2)
 
-    by_benchmark = {k: v for k, v in by_benchmark.items() if len(v) > 2}
+    # Exclude any benchmarks where we don't have enough data to make a
+    # meaningful plot
+    by_benchmark = {
+        k: v for k, v in by_benchmark.items() if any(len(x) > 2 for x in v.values())
+    }
 
     fig, axs = plt.subplots(
         len(by_benchmark),
@@ -599,10 +605,21 @@ def benchmark_longitudinal_plot(
         f"Performance change by benchmark on {cfg['version']} vs. {cfg['base']}"
     )
 
-    for (benchmark, timings), ax in zip(sorted(by_benchmark.items()), axs):
-        timings.sort(key=lambda x: datetime.datetime.fromisoformat(x[0]))
-        dates = [datetime.datetime.fromisoformat(x[0]) for x in timings]
-        ax.plot(dates, [x[1] for x in timings])
+    first = True
+    for (benchmark, runners), ax in zip(sorted(by_benchmark.items()), axs):
+        for runner_name, timings in runners.items():
+            runner = mrunners.get_runner_by_nickname(runner_name)
+            timings.sort(key=lambda x: datetime.datetime.fromisoformat(x[0]))
+            dates = [datetime.datetime.fromisoformat(x[0]) for x in timings]
+            ax.plot(
+                dates,
+                [x[1] for x in timings],
+                label=runner.plot.name,
+                color=runner.plot.color,
+                linestyle=runner.plot.style,
+                marker=runner.plot.marker,
+                markersize=2,
+            )
         ax.set_xticks([])
         ax.set_ylabel(benchmark, rotation=0, horizontalalignment="right")
         ax.yaxis.set_major_formatter(formatter)
@@ -611,6 +628,9 @@ def benchmark_longitudinal_plot(
         ax.grid(True, axis="y")
         ax.axhline(1.0, color="#666", linestyle="-")
         ax.set_facecolor("#f0f0f0")
+        if first:
+            ax.legend(loc="upper left")
+            first = False
 
     savefig(output_filename, dpi=150)
 

@@ -192,7 +192,7 @@ The benchmark longitudinal plot shows the change over time, per benchmark. The c
 
 - `base`: The base version
 - `version`: The version to track
-- `runner`: The runner to use
+- `runners`: The runners to show
 - `head_flags`: (optional) The flags to use for the head commits
 - `base_flags`: (optional) The flags to use for the base commits
 
