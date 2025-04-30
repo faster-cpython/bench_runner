@@ -83,7 +83,9 @@ def test_run_benchmarks(benchmarks_checkout, monkeypatch):
     subprocess.check_call(
         [
             venv_python,
-            run_benchmarks.__file__,
+            "-m",
+            "bench_runner",
+            "run_benchmarks",
             "benchmark",
             sys.executable,
             "python",
@@ -132,7 +134,9 @@ def test_run_benchmarks(benchmarks_checkout, monkeypatch):
     returncode = subprocess.call(
         [
             venv_python,
-            run_benchmarks.__file__,
+            "-m",
+            "bench_runner",
+            "run_benchmarks",
             "benchmark",
             sys.executable,
             "python",
@@ -164,7 +168,9 @@ def test_run_benchmarks_flags(benchmarks_checkout):
     subprocess.check_call(
         [
             venv_python,
-            run_benchmarks.__file__,
+            "-m",
+            "bench_runner",
+            "run_benchmarks",
             "benchmark",
             sys.executable,
             "python",
