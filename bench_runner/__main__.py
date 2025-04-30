@@ -7,6 +7,7 @@ import rich
 
 COMMANDS = {
     "backfill": "Schedule benchmarking a number of commits",
+    "bisect": "Run a bisect to find the commit that caused a regression",
     "compare": "Compare a matrix of specific results",
     "find_failures": "Find the benchmarks that failed in the last weekly run",
     "generate_results": "Create all of the derived artifacts from raw data",

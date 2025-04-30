@@ -168,3 +168,12 @@ def clone(
         if depth is not None:
             args += ["--depth", str(depth)]
         subprocess.check_call(args)
+
+
+def checkout(dirname: PathLike, ref: str) -> None:
+    dirname = Path(dirname)
+
+    subprocess.check_call(
+        ["git", "checkout", ref],
+        cwd=dirname,
+    )
