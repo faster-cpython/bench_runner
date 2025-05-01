@@ -21,6 +21,11 @@ subplots = [
     { name = "JIT", version = "3.14", head_flags = ["JIT"] },
 ]
 
+[benchmark_longitudinal_plot]
+base = "3.10.4"
+version = "3.11"
+runners = ["linux"]
+
 [publish_mirror]
 skip = false
 
