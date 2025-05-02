@@ -93,6 +93,7 @@ def get_longitudinal_plot_config():
         assert "version" in subplot
         if "flags" not in subplot:
             subplot["flags"] = []
+        subplot["runners"] = set(subplot.get("runners", ()))
 
     return plots
 
@@ -113,6 +114,7 @@ def get_flag_effect_plot_config():
             subplot["base_flags"] = []
         else:
             subplot["base_flags"] = sorted(set(subplot["base_flags"]))
+        subplot["runners"] = set(subplot.get("runners", ()))
         if "runner_map" not in subplot:
             subplot["runner_map"] = {}
 
@@ -329,6 +331,10 @@ def longitudinal_plot(
         ver_results = [
             r for r in results if list(r.parsed_version.release[0:2]) == version
         ]
+        if cfg["runners"]:
+            cfg_runners = [r for r in runners if r.nickname in cfg["runners"]]
+        else:
+            cfg_runners = runners
 
         subtitle = f"Python {cfg['version']}.x vs. {cfg['base']}"
         if len(cfg["flags"]):
@@ -337,7 +343,7 @@ def longitudinal_plot(
 
         first_runner = True
 
-        for runner in runners:
+        for runner in cfg_runners:
             runner_results = [
                 r
                 for r in ver_results
@@ -493,6 +499,8 @@ def flag_effect_plot(
         )
 
         for runner in mrunners.get_runners():
+            if subplot["runners"] and runner.nickname not in subplot["runners"]:
+                continue
             runner_is_mapped = runner.nickname in subplot["runner_map"]
             if subplot["runner_map"] and not runner_is_mapped:
                 continue
