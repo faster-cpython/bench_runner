@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 
+import collections
 import functools
 import os
 import socket
@@ -34,6 +35,7 @@ class Runner:
         github_runner_name: str | None,
         include_in_all: bool = True,
         plot: dict[str, str] | None = None,
+        tags: list[str] | None = None,
     ):
         self.nickname = nickname
         self.os = os
@@ -48,6 +50,7 @@ class Runner:
         if plot is None:
             plot = {"name": nickname}
         self.plot = PlotConfig(**plot)
+        self.tags = tags
 
     @property
     def name(self) -> str:
@@ -77,6 +80,7 @@ def get_runners(cfgpath: PathLike | None = None) -> list[Runner]:
                 section.get("github_runner_name"),
                 section.get("include_in_all", True),
                 section.get("plot", None),
+                section.get("tags"),
             )
         )
 
@@ -117,3 +121,31 @@ def get_runner_for_hostname(
     if hostname is None:
         hostname = socket.gethostname()
     return get_runners_by_hostname(cfgpath).get(hostname, unknown_runner)
+
+
+def get_tags(cfgpath: PathLike | None = None) -> dict[str, list[Runner]]:
+    d = collections.defaultdict(list)
+    for runner in get_runners(cfgpath):
+        if runner.tags:
+            for tag in runner.tags:
+                d[tag].append(runner)
+    return dict(d)
+
+
+def get_runners_from_nicknames_and_tags(
+    nicknames: list[str], cfgpath: PathLike | None = None
+) -> list[Runner]:
+    result = []
+    tags = get_tags(cfgpath)
+    runners = get_runners_by_nickname(cfgpath)
+    for nickname in nicknames:
+        if nickname.startswith("tag "):
+            tag = nickname.removeprefix("tag ")
+            if tag not in tags:
+                raise ValueError(f"Tag {tag} not found in bench_runner.toml")
+            result.extend(tags[nickname.removeprefix("tag ")])
+        else:
+            if nickname not in runners:
+                raise ValueError(f"Runner {nickname} not found in bench_runner.toml")
+            result.append(runners[nickname])
+    return result

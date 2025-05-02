@@ -165,6 +165,7 @@ def generate__benchmark(src: Any) -> Any:
             github_env = "$GITHUB_ENV"
         vars = copy.copy(runner.env)
         vars["BENCHMARK_MACHINE_NICKNAME"] = runner.nickname
+        vars["BENCHMARK_RUNNER_NAME"] = runner.name
         setup_environment = {
             "name": "Setup environment",
             "run": LiteralScalarString(
@@ -183,6 +184,11 @@ def generate__benchmark(src: Any) -> Any:
         ]
         if runner.include_in_all:
             machine_clauses.append("inputs.machine == 'all'")
+        if runner.tags:
+            for tag in runner.tags:
+                if "'" in tag:
+                    raise ValueError(f"tag cannot contain `'` (runner {runner.name})")
+                machine_clauses.append(f"inputs.machine == 'tag {tag}'")
         runner_template["if"] = f"${{{{ ({' || '.join(machine_clauses)}) }}}}"
 
         dst["jobs"][f"benchmark-{runner.name}"] = runner_template
@@ -205,11 +211,17 @@ def generate_benchmark(dst: Any) -> Any:
     """
     Generates benchmark.yml from benchmark.src.yml.
 
-    Inserts the list of available machines to the drop-down presented to the
-    user.
+    Inserts the list of tags and available machines to the drop-down
+    presented to the user.
     """
     available_runners = [r for r in runners.get_runners() if r.available]
-    runner_choices = [*[x.name for x in available_runners], "all", "__really_all"]
+    tags = sorted(set(f"tag {g}" for r in available_runners if r.tags for g in r.tags))
+    runner_choices = [
+        *tags,
+        *[x.name for x in available_runners],
+        "all",
+        "__really_all",
+    ]
 
     dst["on"]["workflow_dispatch"]["inputs"]["machine"]["options"] = runner_choices
 
@@ -264,12 +276,10 @@ def generate__weekly(dst: Any) -> Any:
     all_jobs = []
 
     for name, weekly_cfg in weekly.items():
-        for runner_nickname in weekly_cfg.get("runners", []):
-            runner = runners.get_runner_by_nickname(runner_nickname)
-            if runner.nickname == "unknown":
-                raise ValueError(
-                    f"Runner {runner_nickname} not found in bench_runner.toml"
-                )
+        cfg_runners = runners.get_runners_from_nicknames_and_tags(
+            weekly_cfg.get("runners", [])
+        )
+        for runner in cfg_runners:
             weekly_flags = weekly_cfg.get("flags", [])
             job = {
                 "uses": "./.github/workflows/_benchmark.yml",

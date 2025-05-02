@@ -100,6 +100,37 @@ See `README.md` for more information.
 python -m pytest -m "not long_running"
 ```
 
+### Configurable tags
+
+Runners can have tags attached, and benchmark runs can be started on
+everything with a specific tag. For example, a configuration like:
+
+```toml
+[runners.linux_clang]
+os = "linux"
+arch = "x86_64"
+hostname = "pyperf1"
+env.CC = "clang"
+tags = ["linux", "pyperf1", "clang"]
+
+[runners.linux_gcc]
+os = "linux"
+arch = "x86_64"
+hostname = "pyperf1"
+tags = ["linux", "pyperf1", "gcc"]
+
+[runners.linux2_gcc]
+os = "linux"
+arch = "x86_64"
+hostname = "pyperf2"
+tags = ["linux", "pyperf2", "gcc"]
+```
+
+... will add `tag linux`, `tag pyperf1`, `tag pyperf2`, `tag gcc`
+and `tag clang` to the list of possible machines for benchmark runs.
+Selecting `tag linux` will queue a run for all three runners, and `tag
+pyperf1` only for the first two.
+
 ## v1.8.0
 
 ### bench_runner.toml change

@@ -68,7 +68,7 @@ jobs:
       - name: Determine base
         id: base
         run: |
-          python -m bench_runner get_merge_base ${{ inputs.benchmark_base }} ${{ inputs.machine }} ${{ inputs.pystats }} ${{ env.flags }} >> $GITHUB_OUTPUT
+          python -m bench_runner get_merge_base ${{ inputs.benchmark_base }} '${{ inputs.machine }}' ${{ inputs.pystats }} ${{ env.flags }} >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
 
   head:
@@ -80,7 +80,7 @@ jobs:
       benchmarks: ${{ inputs.benchmarks }}
       pgo: true
       perf: false
-      force: true
+      force: false
     secrets: inherit
 
   base:
