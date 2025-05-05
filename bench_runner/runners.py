@@ -73,12 +73,6 @@ def get_runners_by_hostname(cfgpath: PathLike | None = None) -> dict[str, Runner
     return {x.hostname: x for x in config.get_config(cfgpath).runners.values()}
 
 
-def get_runners_by_nickname(cfgpath: PathLike | None = None) -> dict[str, Runner]:
-    from . import config
-
-    return config.get_config(cfgpath).runners
-
-
 def get_nickname_for_hostname(
     hostname: str | None = None, cfgpath: PathLike | None = None
 ) -> str:
@@ -90,7 +84,9 @@ def get_nickname_for_hostname(
 
 
 def get_runner_by_nickname(nickname: str, cfgpath: PathLike | None = None) -> Runner:
-    return get_runners_by_nickname(cfgpath).get(nickname, unknown_runner)
+    from . import config
+
+    return config.get_config(cfgpath).runners.get(nickname, unknown_runner)
 
 
 def get_runner_for_hostname(

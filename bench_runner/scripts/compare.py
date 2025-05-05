@@ -16,9 +16,9 @@ import rich
 import rich_argparse
 
 
+from bench_runner import config
 from bench_runner import flags as mflags
 from bench_runner import result as mod_result
-from bench_runner import runners as mod_runners
 from bench_runner import util
 from bench_runner.util import PathLike
 
@@ -146,6 +146,8 @@ def do_many_to_many(
 def _main_with_hashes(
     commits: Sequence[str], output_dir: Path, comparison_type: Literal["1:n", "n:n"]
 ):
+    cfg = config.get_config()
+
     results = mod_result.load_all_results(
         None, Path("results"), sorted=False, match=False
     )
@@ -188,12 +190,10 @@ def _main_with_hashes(
         case _:
             raise ValueError(f"Unknown comparison type {comparison_type}")
 
-    runners = mod_runners.get_runners_by_nickname()
-
     counter = [0, total]
     with (output_dir / "README.md").open("w", encoding="utf-8") as fd:
         for machine in machines:
-            fd.write(f"# {runners[machine].display_name}\n\n")
+            fd.write(f"# {cfg.runners[machine].display_name}\n\n")
             func(fd, parsed_commits, machine, output_dir, counter)
             fd.write("\n")
     rich.print()
