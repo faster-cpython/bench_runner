@@ -89,33 +89,23 @@ class Config:
             self.benchmarks = Benchmarks(**self.benchmarks)
         if isinstance(self.notify, dict):
             self.notify = Notify(**self.notify)
-        self.longitudinal_plot = (
-            mplot.LongitudinalPlotConfig(
-                **self.longitudinal_plot  # pyright: ignore[reportCallIssue]
+        if isinstance(self.longitudinal_plot, dict):
+            self.longitudinal_plot = mplot.LongitudinalPlotConfig(
+                **self.longitudinal_plot
             )
-            if self.longitudinal_plot
-            else None
-        )
-        self.flag_effect_plot = (
-            mplot.FlagEffectPlotConfig(
-                **self.flag_effect_plot  # pyright: ignore[reportCallIssue]
+        if isinstance(self.flag_effect_plot, dict):
+            self.flag_effect_plot = mplot.FlagEffectPlotConfig(**self.flag_effect_plot)
+        if isinstance(self.benchmark_longitudinal_plot, dict):
+            self.benchmark_longitudinal_plot = mplot.BenchmarkLongitudinalPlotConfig(
+                **self.benchmark_longitudinal_plot
             )
-            if self.flag_effect_plot
-            else None
-        )
-        self.benchmark_longitudinal_plot = (
-            mplot.BenchmarkLongitudinalPlotConfig(
-                **self.benchmark_longitudinal_plot  # pyright: ignore[reportCallIssue]
-            )
-            if self.benchmark_longitudinal_plot
-            else None
-        )
-        self.weekly = {
-            name: Weekly(**weekly)  # pyright: ignore[reportCallIssue]
-            for name, weekly in self.weekly.items()
-        }
         if len(self.weekly) == 0:
             self.weekly = {"default": Weekly(runners=list(self.runners.keys()))}
+        else:
+            self.weekly = {
+                name: Weekly(**weekly)  # pyright: ignore[reportCallIssue]
+                for name, weekly in self.weekly.items()
+            }
 
 
 @functools.cache
