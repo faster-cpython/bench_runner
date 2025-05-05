@@ -12,7 +12,7 @@ from .util import PathLike
 
 @dataclasses.dataclass
 class PlotConfig:
-    # The name of the runner in the plot legeng
+    # The name of the runner in the plot legend
     name: str
     # A matplotlib color to use for this runner in plots
     color: str = "C0"
