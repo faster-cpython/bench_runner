@@ -166,7 +166,7 @@ def compile_unix(
         args.extend(shlex.split(configure_flags))
 
     make_args = []
-    if cores := runner.use_cores is not None:
+    if (cores := runner.use_cores) is not None:
         make_args.extend(["-j", str(cores)])
     else:
         make_args.extend(["-j"])
