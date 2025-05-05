@@ -31,9 +31,8 @@ def _main(
 
     lines = ["🤖 This is the friendly benchmarking bot with some new results!", ""]
     line = f"@{actor}: [{fork}/{ref}]"
-    skip_publish = (
-        config.get_bench_runner_config().get("publish_mirror", {}).get("skip", False)
-    )
+    skip_publish = config.get_config().publish_mirror.skip
+
     if skip_publish:
         line += f"(https://github.com/{github_repo}/tree/main/results/{dirname})"
     else:

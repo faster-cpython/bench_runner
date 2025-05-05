@@ -15,10 +15,10 @@ import rich_argparse
 
 
 from bench_runner import benchmark_definitions
-from bench_runner import config
 from bench_runner import flags as mflags
 from bench_runner import git
 from bench_runner.result import has_result
+from bench_runner import runners
 from bench_runner import util
 from bench_runner.util import log_group, PathLike
 
@@ -138,7 +138,7 @@ def compile_unix(
     reconfigure: bool = True,
 ) -> None:
     cpython = Path(cpython)
-    cfg = config.get_config_for_current_runner()
+    runner = runners.get_runner_for_hostname()
 
     env = os.environ.copy()
 
@@ -166,7 +166,7 @@ def compile_unix(
         args.extend(shlex.split(configure_flags))
 
     make_args = []
-    if cores := cfg.get("use_cores", None):
+    if cores := runner.use_cores is not None:
         make_args.extend(["-j", str(cores)])
     else:
         make_args.extend(["-j"])

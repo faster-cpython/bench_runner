@@ -844,13 +844,7 @@ def match_to_bases(
                 ),
             )
 
-            compare_to_default = (
-                config.get_bench_runner_config()
-                .get("bases", {})
-                .get("compare_to_default", [])
-            )
-
-            for flag in compare_to_default:
+            for flag in config.get_config().bases.compare_to_default:
                 if result.flags == [flag]:
                     found_default_base = find_match(
                         result,
