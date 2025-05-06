@@ -130,7 +130,13 @@ def checkout_benchmarks():
         )
 
 
-def compile_unix(cpython: PathLike, flags: list[str], pgo: bool, pystats: bool) -> None:
+def compile_unix(
+    cpython: PathLike,
+    flags: list[str],
+    pgo: bool,
+    pystats: bool,
+    reconfigure: bool = True,
+) -> None:
     cpython = Path(cpython)
     cfg = config.get_config_for_current_runner()
 
@@ -166,7 +172,8 @@ def compile_unix(cpython: PathLike, flags: list[str], pgo: bool, pystats: bool) 
         make_args.extend(["-j"])
 
     with contextlib.chdir(cpython):
-        subprocess.check_call(["./configure", *args], env=env)
+        if reconfigure:
+            subprocess.check_call(["./configure", *args], env=env)
         subprocess.check_call(["make", *make_args], env=env)
 
 
@@ -391,13 +398,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # This lets pytest-cov collect coverage data in a subprocess
-    if "COV_CORE_SOURCE" in os.environ:
-        try:
-            from pytest_cov.embed import init
-
-            init()
-        except Exception:
-            sys.stderr.write("pytest-cov: Failed to setup subprocess coverage.")
-
     main()

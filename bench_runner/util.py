@@ -87,6 +87,26 @@ def get_simple_platform() -> Literal["linux", "macos", "windows"]:
     raise RuntimeError(f"Unsupported platform {sys.platform}.")
 
 
+def format_seconds(value: float) -> str:
+    """
+    Given a float value in seconds, formats it into a human-readable string with
+    the appropriate precision.
+    """
+    _TIMEDELTA_UNITS = ("sec", "ms", "us", "ns")
+
+    for i in range(2, -9, -1):
+        if value >= 10.0**i:
+            break
+    else:
+        i = -9
+
+    precision = 2 - i % 3
+    k = -(i // 3) if i < 0 else 0
+    factor = 10 ** (k * 3)
+    unit = _TIMEDELTA_UNITS[k]
+    return f"{value * factor:.{precision}f} {unit}"
+
+
 if os.getenv("GITHUB_ACTIONS") == "true":
 
     @contextlib.contextmanager
