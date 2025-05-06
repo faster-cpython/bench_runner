@@ -138,7 +138,7 @@ def clone(
     url: str,
     *,
     branch: str | None = None,
-    depth: int = 1,
+    depth: int | None = 1,
 ) -> None:
     is_hash = re.match(r"^[0-9a-f]{40}$", branch) if branch else False
 
@@ -168,3 +168,12 @@ def clone(
         if depth is not None:
             args += ["--depth", str(depth)]
         subprocess.check_call(args)
+
+
+def checkout(dirname: PathLike, ref: str) -> None:
+    dirname = Path(dirname)
+
+    subprocess.check_call(
+        ["git", "checkout", ref],
+        cwd=dirname,
+    )
