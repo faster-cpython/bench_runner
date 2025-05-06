@@ -59,12 +59,12 @@ def install_requirements(venv: Path) -> None:
 
 def main():
     venv = Path("venv")
-    print("::group::Creating venv")
+    print("::group::Creating venv", file=sys.stderr)
     create_venv(venv)
-    print("::endgroup::")
-    print("::group::Installing requirements")
+    print("::endgroup::", file=sys.stderr)
+    print("::group::Installing requirements", file=sys.stderr)
     install_requirements(venv)
-    print("::endgroup::")
+    print("::endgroup::", file=sys.stderr)
 
     # Now that we've installed the full bench_runner library,
     # continue on in a new process...

@@ -111,11 +111,11 @@ if os.getenv("GITHUB_ACTIONS") == "true":
 
     @contextlib.contextmanager
     def log_group(text: str) -> Iterator:
-        print(f"::group::{text}")
+        print(f"::group::{text}", file=sys.stderr)
         try:
             yield
         finally:
-            print("::endgroup::")
+            print("::endgroup::", file=sys.stderr)
 
     def track(iterable: Iterable, name: str) -> Iterable:
         with log_group(name):
