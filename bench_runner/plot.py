@@ -336,9 +336,11 @@ def longitudinal_plot(
         else:
             cfg_runners = runners
 
-        subtitle = f"Python {cfg['version']}.x vs. {cfg['base']}"
         if len(cfg["flags"]):
-            subtitle += f" ({','.join(cfg['flags'])})"
+            titleflags = f" ({','.join(cfg['flags'])})"
+        else:
+            titleflags = ""
+        subtitle = f"Python {cfg['version']}.x{titleflags} vs. {cfg['base']}"
         ax.set_title(subtitle)
 
         first_runner = True
