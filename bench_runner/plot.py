@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import argparse
 from collections import defaultdict
+import dataclasses
 import datetime
-import functools
 import json
 from pathlib import Path
 import re
@@ -23,8 +23,10 @@ matplotlib.use("agg")
 
 
 from . import config as mconfig
+from . import flags as mflags
 from . import result
 from . import runners as mrunners
+from . import util
 from .util import PathLike
 
 
@@ -73,71 +75,6 @@ def savefig(output_filename: PathLike, **kwargs):
                 scour.start(Options(), fd, tmp)
             output_filename.unlink()
             Path(tmp.name).rename(output_filename)
-
-
-@functools.cache
-def get_longitudinal_plot_config():
-    cfg = mconfig.get_bench_runner_config()
-    if "plot" in cfg:
-        raise ValueError(
-            "It looks like you have an old plot config in bench_runner.toml. "
-            "Please refer to the section 'New Plot Configuration' in docs/CHANGELOG.md "
-            "for detailed migration instructions."
-        )
-
-    plots = cfg.get("longitudinal_plot", {})
-    subplots = plots.get("subplots", [])
-
-    for subplot in subplots:
-        assert "base" in subplot
-        assert "version" in subplot
-        if "flags" not in subplot:
-            subplot["flags"] = []
-        subplot["runners"] = set(subplot.get("runners", ()))
-
-    return plots
-
-
-@functools.cache
-def get_flag_effect_plot_config():
-    cfg = mconfig.get_bench_runner_config()
-
-    plots = cfg.get("flag_effect_plot", {})
-    subplots = plots.get("subplots", [])
-
-    for subplot in subplots:
-        assert "name" in subplot
-        assert "version" in subplot
-        assert "head_flags" in subplot
-        subplot["head_flags"] = sorted(set(subplot["head_flags"]))
-        if "base_flags" not in subplot:
-            subplot["base_flags"] = []
-        else:
-            subplot["base_flags"] = sorted(set(subplot["base_flags"]))
-        subplot["runners"] = set(subplot.get("runners", ()))
-        if "runner_map" not in subplot:
-            subplot["runner_map"] = {}
-
-    return plots
-
-
-@functools.cache
-def get_benchmark_longitudinal_plot_config():
-    cfg = mconfig.get_bench_runner_config()
-
-    plot = cfg.get("benchmark_longitudinal_plot", {})
-    assert "base" in plot
-    assert "version" in plot
-    assert "runners" in plot
-    if "head_flags" not in plot:
-        plot["head_flags"] = []
-    else:
-        plot["head_flags"] = sorted(set(plot["head_flags"]))
-    if "base_flags" not in plot:
-        plot["base_flags"] = []
-    else:
-        plot["base_flags"] = sorted(set(plot["base_flags"]))
-    return plot
 
 
 def plot_diff_pair(ax, data):
@@ -278,6 +215,36 @@ def add_axvline(ax, dt: datetime.datetime, name: str):
     )
 
 
+@dataclasses.dataclass
+class LongitudinalPlotConfig:
+    @dataclasses.dataclass
+    class Subplot:
+        base: str
+        version: str
+        flags: list[str] = dataclasses.field(default_factory=list)
+        runners: list[str] = dataclasses.field(default_factory=list)
+
+        def __post_init__(self):
+            if not util.valid_version(self.base):
+                raise RuntimeError(f"Invalid base '{self.base}' in `longitudinal_plot`")
+            if (
+                not util.valid_version(self.version)
+                or len(self.version.split(".")) != 2
+            ):
+                raise RuntimeError(
+                    f"Invalid version '{self.version}' in `longitudinal_plot`"
+                )
+            self.flags = mflags.normalize_flags(self.flags)
+
+    subplots: list[Subplot] = dataclasses.field(default_factory=list)
+
+    def __post_init__(self):
+        self.subplots = [
+            self.Subplot(**subplot)  # pyright: ignore[reportCallIssue]
+            for subplot in self.subplots
+        ]
+
+
 def longitudinal_plot(
     results: Iterable[result.Result],
     output_filename: PathLike,
@@ -287,6 +254,12 @@ def longitudinal_plot(
     differences: tuple[str, str] = ("slower", "faster"),
     title="Performance improvement by configuration",
 ):
+    cfg = mconfig.get_config()
+    if cfg.longitudinal_plot is None or not cfg.longitudinal_plot.subplots:
+        print("No longitudinal plot config found. Skipping.")
+        return
+    all_cfg = cfg.longitudinal_plot.subplots
+
     def get_comparison_value(ref, r, base):
         key = ",".join((str(ref.filename)[8:], str(r.filename)[8:], base))
         if key in data:
@@ -297,10 +270,6 @@ def longitudinal_plot(
             return value
 
     output_filename = Path(output_filename)
-    all_cfg = get_longitudinal_plot_config().get("subplots", [])
-    if len(all_cfg) == 0:
-        print("No longitudinal plot config found. Skipping.")
-        return
 
     data_cache = output_filename.with_suffix(".json")
     if data_cache.is_file():
@@ -323,39 +292,39 @@ def longitudinal_plot(
         axs = _axs
 
     results = [r for r in results if r.fork == "python"]
-    runners = mrunners.get_runners()
+    runners = cfg.runners.values()
 
-    for cfg, ax in zip(all_cfg, axs):
-        version = [int(x) for x in cfg["version"].split(".")]
-        assert len(version) == 2, "Version config should only be major.minor"
+    for subcfg, ax in zip(all_cfg, axs):
+        version = [int(x) for x in subcfg.version.split(".")]
         ver_results = [
             r for r in results if list(r.parsed_version.release[0:2]) == version
         ]
-        if cfg["runners"]:
-            cfg_runners = [r for r in runners if r.nickname in cfg["runners"]]
+        if subcfg.runners:
+            cfg_runners = [r for r in runners if r.nickname in subcfg.runners]
         else:
             cfg_runners = runners
 
-        if len(cfg["flags"]):
-            titleflags = f" ({','.join(cfg['flags'])})"
+        if len(subcfg.flags):
+            titleflags = f" ({','.join(subcfg.flags)})"
         else:
             titleflags = ""
-        subtitle = f"Python {cfg['version']}.x{titleflags} vs. {cfg['base']}"
+        subtitle = f"Python {subcfg.version}.x{titleflags} vs. {subcfg.base}"
         ax.set_title(subtitle)
 
         first_runner = True
 
         for runner in cfg_runners:
+            assert runner.plot is not None  # typing
             runner_results = [
                 r
                 for r in ver_results
-                if r.nickname == runner.nickname and set(r.flags) == set(cfg["flags"])
+                if r.nickname == runner.nickname and r.flags == subcfg.flags
             ]
 
             for r in results:
                 if (
                     r.nickname == runner.nickname
-                    and r.version == cfg["base"]
+                    and r.version == subcfg.base
                     and r.flags == []
                 ):
                     ref = r
@@ -371,7 +340,7 @@ def longitudinal_plot(
                 for x in runner_results
             ]
             changes = [
-                get_comparison_value(ref, r, cfg["base"]) for r in runner_results
+                get_comparison_value(ref, r, subcfg.base) for r in runner_results
             ]
 
             if any(x is not None for x in changes):
@@ -439,6 +408,37 @@ def _standardize_xlims(axs: Sequence[matplotlib.Axes]) -> None:  # pyright: igno
             ax.set_xlim((minx, maxx))
 
 
+@dataclasses.dataclass
+class FlagEffectPlotConfig:
+    @dataclasses.dataclass
+    class Subplot:
+        name: str
+        version: str
+        head_flags: list[str] = dataclasses.field(default_factory=list)
+        base_flags: list[str] = dataclasses.field(default_factory=list)
+        runner_map: dict[str, str] = dataclasses.field(default_factory=dict)
+        runners: list[str] = dataclasses.field(default_factory=list)
+
+        def __post_init__(self):
+            if (
+                not util.valid_version(self.version)
+                or len(self.version.split(".")) != 2
+            ):
+                raise RuntimeError(
+                    f"Invalid version '{self.version}' in `flag_effect_plot`"
+                )
+            self.head_flags = mflags.normalize_flags(self.head_flags)
+            self.base_flags = mflags.normalize_flags(self.base_flags)
+
+    subplots: list[Subplot] = dataclasses.field(default_factory=list)
+
+    def __post_init__(self):
+        self.subplots = [
+            self.Subplot(**subplot)  # pyright: ignore[reportCallIssue]
+            for subplot in self.subplots
+        ]
+
+
 def flag_effect_plot(
     results: Iterable[result.Result],
     output_filename: PathLike,
@@ -452,10 +452,12 @@ def flag_effect_plot(
 
     # We don't need to track the performance of the Tier 2 configuration
 
-    subplots = get_flag_effect_plot_config().get("subplots", [])
-    if len(subplots) == 0:
+    cfg = mconfig.get_config()
+
+    if cfg.flag_effect_plot is None or not cfg.flag_effect_plot.subplots:
         print("No flag effect plot config found. Skipping.")
         return
+    subplots = cfg.flag_effect_plot.subplots
 
     def get_comparison_value(ref, r, force_valid):
         key = ",".join((str(ref.filename)[8:], str(r.filename)[8:]))
@@ -494,24 +496,27 @@ def flag_effect_plot(
         ] = r
 
     for subplot, ax in zip(subplots, axs):
-        ax.set_title(f"Effect of {subplot['name']}")
-        version = tuple(int(x) for x in subplot["version"].split("."))
+
+        ax.set_title(f"Effect of {subplot.name}")
+        version = tuple(int(x) for x in subplot.version.split("."))
         assert len(version) == 2, (
-            "Version config in {subplot['name']}" " should only be major.minor"
+            "Version config in {subplot.name}" " should only be major.minor"
         )
 
-        for runner in mrunners.get_runners():
-            if subplot["runners"] and runner.nickname not in subplot["runners"]:
+        for runner in cfg.runners.values():
+            assert runner.plot is not None
+
+            if subplot.runners and runner.nickname not in subplot.runners:
                 continue
-            runner_is_mapped = runner.nickname in subplot["runner_map"]
-            if subplot["runner_map"] and not runner_is_mapped:
+            runner_is_mapped = runner.nickname in subplot.runner_map
+            if subplot.runner_map and not runner_is_mapped:
                 continue
             head_results = commits.get(runner.nickname, {}).get(
-                tuple(sorted(subplot["head_flags"])), {}
+                tuple(subplot.head_flags), {}
             )
             base_results = commits.get(
-                subplot["runner_map"].get(runner.nickname, runner.nickname), {}
-            ).get(tuple(sorted(subplot["base_flags"])), {})
+                subplot.runner_map.get(runner.nickname, runner.nickname), {}
+            ).get(tuple(subplot.base_flags), {})
 
             line = []
             for cpython_hash, r in head_results.items():
@@ -555,11 +560,35 @@ def flag_effect_plot(
         json.dump(data, fd, indent=2)
 
 
+@dataclasses.dataclass
+class BenchmarkLongitudinalPlotConfig:
+    base: str
+    version: str
+    runners: list[str] = dataclasses.field(default_factory=list)
+    head_flags: list[str] = dataclasses.field(default_factory=list)
+    base_flags: list[str] = dataclasses.field(default_factory=list)
+
+    def __post_init__(self):
+        if not util.valid_version(self.base):
+            raise RuntimeError(
+                f"Invalid base '{self.base}' in `benchmark_longitudinal_plot`"
+            )
+        if not util.valid_version(self.version) or len(self.version.split(".")) != 2:
+            raise RuntimeError(
+                f"Invalid version '{self.version}' in `benchmark_longitudinal_plot`"
+            )
+        self.head_flags = mflags.normalize_flags(self.head_flags)
+        self.base_flags = mflags.normalize_flags(self.base_flags)
+
+
 def benchmark_longitudinal_plot(
     results: Iterable[result.Result], output_filename: PathLike
 ):
-    if "benchmark_longitudinal_plot" not in mconfig.get_bench_runner_config():
+    cfg = mconfig.get_config()
+    if cfg.benchmark_longitudinal_plot is None:
+        print("No benchmark longitudinal plot config found. Skipping.")
         return
+    cfg = cfg.benchmark_longitudinal_plot
 
     output_filename = Path(output_filename)
 
@@ -570,24 +599,20 @@ def benchmark_longitudinal_plot(
     else:
         cache = {}
 
-    cfg = get_benchmark_longitudinal_plot_config()
-
-    results = [
-        r for r in results if r.fork == "python" and r.nickname in cfg["runners"]
-    ]
+    results = [r for r in results if r.fork == "python" and r.nickname in cfg.runners]
 
     base = None
     for r in results:
-        if r.version == cfg["base"] and r.flags == cfg["base_flags"]:
+        if r.version == cfg.base and r.flags == cfg.base_flags:
             base = r
             break
     else:
-        raise ValueError(f"Base version {cfg['base']} not found")
+        raise ValueError(f"Base version {cfg.base} not found")
 
     results = [
         r
         for r in results
-        if r.version.startswith(cfg["version"]) and r.flags == cfg["head_flags"]
+        if r.version.startswith(cfg.version) and r.flags == cfg.head_flags
     ]
 
     by_benchmark = defaultdict(lambda: defaultdict(list))
@@ -625,14 +650,13 @@ def benchmark_longitudinal_plot(
     if len(by_benchmark) == 1:
         axs = [axs]
 
-    plt.suptitle(
-        f"Performance change by benchmark on {cfg['version']} vs. {cfg['base']}"
-    )
+    plt.suptitle(f"Performance change by benchmark on {cfg.version} vs. {cfg.base}")
 
     first = True
     for (benchmark, runners), ax in zip(sorted(by_benchmark.items()), axs):
         for runner_name, timings in runners.items():
             runner = mrunners.get_runner_by_nickname(runner_name)
+            assert runner.plot is not None  # typing
             timings.sort(key=lambda x: datetime.datetime.fromisoformat(x[0]))
             dates = [datetime.datetime.fromisoformat(x[0]) for x in timings]
             ax.plot(

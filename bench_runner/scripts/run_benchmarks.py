@@ -19,6 +19,7 @@ import rich_argparse
 
 
 from bench_runner import benchmark_definitions
+from bench_runner import config
 from bench_runner import flags
 from bench_runner import git
 from bench_runner.result import Result
@@ -366,9 +367,10 @@ def run_summarize_stats(
 
 
 def select_benchmarks(benchmarks: str):
+    cfg = config.get_config()
     if benchmarks == "all":
         return ",".join(
-            ["all", *[f"-{x}" for x in util.get_excluded_benchmarks() if x]]
+            ["all", *[f"-{x}" for x in cfg.benchmarks.excluded_benchmarks if x]]
         )
     elif benchmarks == "all_and_excluded":
         return "all"

@@ -11,11 +11,11 @@ from typing import Any, Mapping
 
 from . import config
 from . import flags as mflags
-from . import runners
 
 
 def get_machines():
-    return [x.name for x in runners.get_runners() if x.available] + ["all"]
+    cfg = config.get_config()
+    return [x.name for x in cfg.runners.values() if x.available] + ["all"]
 
 
 def _get_flags(d: Mapping[str, Any]) -> list[str]:
@@ -71,8 +71,8 @@ def benchmark(
 
 
 def send_notification(body):
-    conf = config.get_bench_runner_config()
-    notification_issue = conf.get("notify", {}).get("notification_issue", 0)
+    cfg = config.get_config()
+    notification_issue = cfg.notify.notification_issue
 
     if notification_issue == 0:
         print("Not sending Github notification.")

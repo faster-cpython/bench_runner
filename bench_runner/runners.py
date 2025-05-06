@@ -1,53 +1,59 @@
 from __future__ import annotations
 
 
-import functools
+import dataclasses
 import os
 import socket
+from typing import Literal
 
 
-from . import config
 from .util import PathLike
 
 
+@dataclasses.dataclass
 class PlotConfig:
-    def __init__(
-        self, name: str, color: str = "C0", style: str = "-", marker: str = "s"
-    ):
-        self.name = name
-        self.color = color
-        self.style = style
-        self.marker = marker
+    # The name of the runner in the plot legend
+    name: str
+    # A matplotlib color to use for this runner in plots
+    color: str = "C0"
+    # A matplotlib line style to use for this runner in plots
+    style: str = "-"
+    # A matplotlib marker to use for this runner in plots
+    marker: str = "s"
 
 
+@dataclasses.dataclass
 class Runner:
-    def __init__(
-        self,
-        nickname: str,
-        os: str,
-        arch: str,
-        hostname: str,
-        available: bool,
-        env: dict[str, str],
-        # Override the Github self-hosted runner name if different from
-        # os-arch-nickname
-        github_runner_name: str | None,
-        include_in_all: bool = True,
-        plot: dict[str, str] | None = None,
-    ):
-        self.nickname = nickname
-        self.os = os
-        self.arch = arch
-        self.hostname = hostname
-        self.available = available
-        self.env = env
-        if github_runner_name is None:
-            github_runner_name = self.name
-        self.github_runner_name = github_runner_name
-        self.include_in_all = include_in_all
-        if plot is None:
-            plot = {"name": nickname}
-        self.plot = PlotConfig(**plot)
+    # The short "nickname" of the runner
+    nickname: str
+    # The OS of the runner
+    os: Literal["linux", "darwin", "windows", "unknown"]
+    # The architecture of the runner, e.g. "x86_64", "arm64"
+    arch: str
+    # The hostname of the runner, used to identify which runner we are running on
+    hostname: str
+    # Whether the runner is available for benchmarking (e.g. not a VM)
+    available: bool = True
+    # Environment variables to set for the benchmark
+    env: dict[str, str] = dataclasses.field(default_factory=dict)
+    # The name of the Github runner to use for this machine, only required when
+    # this runner needs to map to another physical machine.
+    github_runner_name: str | None = None
+    # Whether to include this runner in the "all" choice
+    include_in_all: bool = True
+    # The plot configuration for this runner
+    plot: PlotConfig | None = None
+    # The number of cores to use to compile CPython. If not provided, `make -j`
+    # will be used.
+    use_cores: int | None = None
+
+    def __post_init__(self):
+        if self.github_runner_name is None:
+            self.github_runner_name = self.name
+        if self.plot is None:
+            self.plot = PlotConfig(name=self.nickname)
+        else:
+            self.plot = PlotConfig(**self.plot)  # pyright: ignore[reportCallIssue]
 
     @property
     def name(self) -> str:
@@ -61,40 +67,10 @@ class Runner:
 unknown_runner = Runner("unknown", "unknown", "unknown", "unknown", False, {}, None)
 
 
-@functools.cache
-def get_runners(cfgpath: PathLike | None = None) -> list[Runner]:
-    conf = config.get_bench_runner_config(cfgpath).get("runners", {})
-    runners = []
-    for nickname, section in conf.items():
-        runners.append(
-            Runner(
-                nickname,
-                section["os"],
-                section["arch"],
-                section["hostname"],
-                section.get("available", True),
-                section.get("env", {}),
-                section.get("github_runner_name"),
-                section.get("include_in_all", True),
-                section.get("plot", None),
-            )
-        )
-
-    if len(runners) == 0:
-        raise RuntimeError(
-            "No runners are defined in `bench_runner.toml`. "
-            "Please set up some runners first."
-        )
-
-    return runners
-
-
 def get_runners_by_hostname(cfgpath: PathLike | None = None) -> dict[str, Runner]:
-    return {x.hostname: x for x in get_runners(cfgpath)}
+    from . import config
 
-
-def get_runners_by_nickname(cfgpath: PathLike | None = None) -> dict[str, Runner]:
-    return {x.nickname: x for x in get_runners(cfgpath)}
+    return {x.hostname: x for x in config.get_config(cfgpath).runners.values()}
 
 
 def get_nickname_for_hostname(
@@ -108,7 +84,9 @@ def get_nickname_for_hostname(
 
 
 def get_runner_by_nickname(nickname: str, cfgpath: PathLike | None = None) -> Runner:
-    return get_runners_by_nickname(cfgpath).get(nickname, unknown_runner)
+    from . import config
+
+    return config.get_config(cfgpath).runners.get(nickname, unknown_runner)
 
 
 def get_runner_for_hostname(

@@ -211,7 +211,8 @@ class BenchmarkComparison(Comparison):
             values.sort()
             return values, float(values.mean())
 
-        excluded = util.get_excluded_benchmarks()
+        cfg = config.get_config()
+        excluded = cfg.benchmarks.excluded_benchmarks
         combined_data = []
         for name, ref in ref_data.items():
             if len(ref) != 0 and name in head_data and name not in excluded:
@@ -694,8 +695,9 @@ class Result:
         return pkg_version.parse(self.version.replace("+", "0"))
 
     def get_timing_data(self) -> dict[str, np.ndarray]:
+        cfg = config.get_config()
         data = {}
-        excluded = util.get_excluded_benchmarks()
+        excluded = cfg.benchmarks.excluded_benchmarks
 
         for benchmark in self.contents["benchmarks"]:
             name = benchmark.get("metadata", self.contents["metadata"])["name"]
@@ -708,8 +710,9 @@ class Result:
         return data
 
     def get_memory_data(self) -> dict[str, np.ndarray]:
+        cfg = config.get_config()
         data = {}
-        excluded = util.get_excluded_benchmarks()
+        excluded = cfg.benchmarks.excluded_benchmarks
 
         # On MacOS, there was a bug in pyperf where the `mem_max_rss` value was
         # erroneously multiplied by 1024.  (BSD defines maxrss in bytes, Linux
@@ -849,13 +852,7 @@ def match_to_bases(
                 ),
             )
 
-            compare_to_default = (
-                config.get_bench_runner_config()
-                .get("bases", {})
-                .get("compare_to_default", [])
-            )
-
-            for flag in compare_to_default:
+            for flag in config.get_config().bases.compare_to_default:
                 if result.flags == [flag]:
                     found_default_base = find_match(
                         result,

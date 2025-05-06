@@ -17,6 +17,7 @@ import rich.table
 import rich_argparse
 
 
+from bench_runner import config
 from bench_runner import flags as mflags
 from bench_runner import gh
 from bench_runner import git
@@ -297,7 +298,8 @@ def _main(
 
 
 def main():
-    all_runners = [x for x in runners.get_runners() if x.available]
+    cfg = config.get_config()
+    all_runners = [x for x in cfg.runners.values() if x.available]
     runners_by_names = {x.nickname: x for x in all_runners}
 
     parser = argparse.ArgumentParser(

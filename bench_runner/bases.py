@@ -12,7 +12,7 @@ from . import config
 
 
 def get_bases() -> list[str]:
-    return config.get_bench_runner_config().get("bases", {}).get("versions", [])
+    return config.get_config().bases.versions
 
 
 @functools.cache

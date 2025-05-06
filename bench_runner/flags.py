@@ -56,3 +56,11 @@ def flags_to_human(flags: list[str]) -> Iterable[str]:
             if flag_descr.name == flag:
                 yield flag_descr.short_name
                 break
+
+
+def normalize_flags(flags: list[str]) -> list[str]:
+    result = sorted(set(flags))
+    for flag in result:
+        if flag not in FLAG_MAPPING.values():
+            raise ValueError(f"Invalid flag {flag}")
+    return result

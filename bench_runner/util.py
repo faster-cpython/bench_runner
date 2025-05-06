@@ -27,18 +27,6 @@ def apply_suffix(path: PathLike, suffix: str) -> Path:
     return path_.parent / (path_.stem + suffix)
 
 
-@functools.cache
-def get_excluded_benchmarks() -> set[str]:
-    from . import config
-
-    conf = config.get_bench_runner_config()
-    benchmarks_section = conf.get("benchmarks", {})
-    for key in ("excluded", "excluded_benchmarks"):
-        if key in benchmarks_section:
-            return set(benchmarks_section[key])
-    return set()
-
-
 def has_any_element(iterable):
     """
     Checks if an iterable (like a generator) has at least one element
@@ -105,6 +93,16 @@ def format_seconds(value: float) -> str:
     factor = 10 ** (k * 3)
     unit = _TIMEDELTA_UNITS[k]
     return f"{value * factor:.{precision}f} {unit}"
+
+
+def valid_version(version: str) -> bool:
+    from packaging import version as pkg_version
+
+    try:
+        pkg_version.parse(version)
+        return True
+    except pkg_version.InvalidVersion:
+        return False
 
 
 if os.getenv("GITHUB_ACTIONS") == "true":

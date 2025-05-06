@@ -147,7 +147,8 @@ def generate__benchmark(src: Any) -> Any:
     Inserts the list of available machines to the drop-down presented to the
     user.
     """
-    available_runners = [r for r in runners.get_runners() if r.available]
+    cfg = config.get_config()
+    available_runners = [r for r in cfg.runners.values() if r.available]
     runner_choices = [*[x.name for x in available_runners], "all"]
 
     dst = copy.deepcopy(src)
@@ -197,10 +198,6 @@ def generate__benchmark(src: Any) -> Any:
     return dst
 
 
-def get_skip_publish_mirror() -> bool:
-    return config.get_bench_runner_config().get("publish_mirror", {}).get("skip", False)
-
-
 def generate_benchmark(dst: Any) -> Any:
     """
     Generates benchmark.yml from benchmark.src.yml.
@@ -208,7 +205,8 @@ def generate_benchmark(dst: Any) -> Any:
     Inserts the list of available machines to the drop-down presented to the
     user.
     """
-    available_runners = [r for r in runners.get_runners() if r.available]
+    cfg = config.get_config()
+    available_runners = [r for r in cfg.runners.values() if r.available]
     runner_choices = [*[x.name for x in available_runners], "all", "__really_all"]
 
     dst["on"]["workflow_dispatch"]["inputs"]["machine"]["options"] = runner_choices
@@ -232,7 +230,7 @@ def generate_benchmark(dst: Any) -> Any:
         for flag in flags.FLAGS
     )
 
-    if get_skip_publish_mirror():
+    if cfg.publish_mirror.skip:
         del dst["jobs"]["publish"]
         dst["jobs"]["notify"]["needs"] = ["generate", "determine_base"]
 
@@ -255,22 +253,16 @@ def generate__notify(dst: Any) -> Any:
 
 
 def generate__weekly(dst: Any) -> Any:
-    cfg = config.get_bench_runner_config()
-
-    weekly = cfg.get("weekly", None)
-    if not weekly:
-        weekly = {"default": {"flags": [], "runners": cfg.get("runners", {}).keys()}}
+    cfg = config.get_config()
 
     all_jobs = []
-
-    for name, weekly_cfg in weekly.items():
-        for runner_nickname in weekly_cfg.get("runners", []):
+    for name, weekly_cfg in cfg.weekly.items():
+        for runner_nickname in weekly_cfg.runners:
             runner = runners.get_runner_by_nickname(runner_nickname)
             if runner.nickname == "unknown":
                 raise ValueError(
                     f"Runner {runner_nickname} not found in bench_runner.toml"
                 )
-            weekly_flags = weekly_cfg.get("flags", [])
             job = {
                 "uses": "./.github/workflows/_benchmark.yml",
                 "needs": "determine_head",
@@ -279,7 +271,7 @@ def generate__weekly(dst: Any) -> Any:
                     "ref": "${{ needs.determine_head.outputs.commit }}",
                     "machine": runner.name,
                     "benchmarks": "all_and_excluded",
-                    **flags.flags_to_gha_variables_yml(weekly_flags),
+                    **flags.flags_to_gha_variables_yml(weekly_cfg.flags),
                 },
                 "secrets": "inherit",
             }
