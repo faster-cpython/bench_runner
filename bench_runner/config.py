@@ -46,7 +46,10 @@ class PublishMirror:
 @dataclasses.dataclass
 class Benchmarks:
     # Benchmarks to exclude from plots.
-    excluded_benchmarks: list[str] = dataclasses.field(default_factory=list)
+    excluded_benchmarks: set[str] = dataclasses.field(default_factory=set)
+
+    def __post_init__(self):
+        self.excluded_benchmarks = set(self.excluded_benchmarks)
 
 
 @dataclasses.dataclass

@@ -27,15 +27,6 @@ def apply_suffix(path: PathLike, suffix: str) -> Path:
     return path_.parent / (path_.stem + suffix)
 
 
-@functools.cache
-def get_excluded_benchmarks() -> set[str]:
-    from . import config
-
-    conf = config.get_config()
-    excluded_benchmarks = conf.benchmarks.excluded_benchmarks
-    return set(excluded_benchmarks)
-
-
 def has_any_element(iterable):
     """
     Checks if an iterable (like a generator) has at least one element

@@ -35,7 +35,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 
-from . import util
+from . import config
 from .util import PathLike
 
 ACC_MAXSU = 2
@@ -68,8 +68,9 @@ def load_data(data: Mapping[str, Any]) -> dict[str, NDArray[np.float64]]:
 def create_matrices(
     a: Mapping[str, NDArray[np.float64]], b: Mapping[str, NDArray[np.float64]]
 ) -> tuple[dict[str, NDArray[np.float64]], dict[str, NDArray[np.float64]]]:
+    cfg = config.get_config()
     benchmarks = sorted(list(set(a.keys()) & set(b.keys())))
-    excluded = util.get_excluded_benchmarks()
+    excluded = cfg.benchmarks.excluded_benchmarks
     benchmarks = [bm for bm in benchmarks if bm not in excluded]
     return {bm: a[bm] for bm in benchmarks}, {bm: b[bm] for bm in benchmarks}
 
