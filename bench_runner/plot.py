@@ -496,6 +496,7 @@ def flag_effect_plot(
         ] = r
 
     for subplot, ax in zip(subplots, axs):
+
         ax.set_title(f"Effect of {subplot.name}")
         version = tuple(int(x) for x in subplot.version.split("."))
         assert len(version) == 2, (
@@ -503,6 +504,8 @@ def flag_effect_plot(
         )
 
         for runner in cfg.runners.values():
+            assert runner.plot is not None
+
             if subplot.runners and runner.nickname not in subplot.runners:
                 continue
             runner_is_mapped = runner.nickname in subplot.runner_map
