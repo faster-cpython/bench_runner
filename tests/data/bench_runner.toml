@@ -12,13 +12,14 @@ plot = { name = "Linux", color = "C0" }
 subplots = [
     { base = "3.10.4", version = "3.11" },
     { base = "3.12.0", version = "3.13" },
-    { base = "3.13.0b2", version = "3.14" },
+    { base = "3.13.0b2", version = "3.14", runners = ["linux"] },
     { base = "3.13.0b2", version = "3.14", flags = ["JIT"] }
 ]
 
 [flag_effect_plot]
 subplots = [
     { name = "JIT", version = "3.14", head_flags = ["JIT"] },
+    { name = "NOGIL", version = "3.14", head_flags = ["NOGIL"], runners = ["linux"] },
 ]
 
 [benchmark_longitudinal_plot]

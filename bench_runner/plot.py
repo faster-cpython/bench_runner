@@ -222,6 +222,7 @@ class LongitudinalPlotConfig:
         base: str
         version: str
         flags: list[str] = dataclasses.field(default_factory=list)
+        runners: list[str] = dataclasses.field(default_factory=list)
 
         def __post_init__(self):
             if not util.valid_version(self.base):
@@ -291,23 +292,29 @@ def longitudinal_plot(
         axs = _axs
 
     results = [r for r in results if r.fork == "python"]
+    runners = cfg.runners.values()
 
     for subcfg, ax in zip(all_cfg, axs):
         version = [int(x) for x in subcfg.version.split(".")]
         ver_results = [
             r for r in results if list(r.parsed_version.release[0:2]) == version
         ]
+        if subcfg.runners:
+            cfg_runners = [r for r in runners if r.nickname in subcfg.runners]
+        else:
+            cfg_runners = runners
 
-        subtitle = f"Python {subcfg.version}.x vs. {subcfg.base}"
         if len(subcfg.flags):
-            subtitle += f" ({','.join(subcfg.flags)})"
+            titleflags = f" ({','.join(subcfg.flags)})"
+        else:
+            titleflags = ""
+        subtitle = f"Python {subcfg.version}.x{titleflags} vs. {subcfg.base}"
         ax.set_title(subtitle)
 
         first_runner = True
 
-        for runner in cfg.runners.values():
-            assert runner.plot is not None
-
+        for runner in cfg_runners:
+            assert runner.plot is not None  # typing
             runner_results = [
                 r
                 for r in ver_results
@@ -410,6 +417,7 @@ class FlagEffectPlotConfig:
         head_flags: list[str] = dataclasses.field(default_factory=list)
         base_flags: list[str] = dataclasses.field(default_factory=list)
         runner_map: dict[str, str] = dataclasses.field(default_factory=dict)
+        runners: list[str] = dataclasses.field(default_factory=list)
 
         def __post_init__(self):
             if (
@@ -495,7 +503,8 @@ def flag_effect_plot(
         )
 
         for runner in cfg.runners.values():
-            assert runner.plot is not None
+            if subplot.runners and runner.nickname not in subplot.runners:
+                continue
             runner_is_mapped = runner.nickname in subplot.runner_map
             if subplot.runner_map and not runner_is_mapped:
                 continue

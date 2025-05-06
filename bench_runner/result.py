@@ -34,6 +34,12 @@ from .util import PathLike
 CombinedData = list[tuple[str, np.ndarray | None, float]]
 
 
+@functools.lru_cache(maxsize=100)
+def _load_contents(filename: Path) -> dict[str, Any]:
+    with filename.open("rb") as fd:
+        return json.load(fd)
+
+
 def _clean(string: str) -> str:
     """
     Clean an arbitrary string to be suitable for a filename.
@@ -599,16 +605,15 @@ class Result:
             f"Unknown result type (extra={self.extra} suffix={self.suffix})"
         )
 
-    @functools.cached_property
-    def contents(self) -> dict[str, Any]:
-        with self.filename.open("rb") as fd:
-            return json.load(fd)
-
     @property
+    def contents(self) -> dict[str, Any]:
+        return _load_contents(self.filename)
+
+    @functools.cached_property
     def metadata(self) -> dict[str, Any]:
         return self.contents.get("metadata", {})
 
-    @property
+    @functools.cached_property
     def commit_datetime(self) -> str:
         if self._commit_datetime is not None:
             return self._commit_datetime
@@ -618,7 +623,7 @@ class Result:
     def commit_date(self) -> str:
         return self.commit_datetime[:10]
 
-    @property
+    @functools.cached_property
     def run_datetime(self) -> str:
         return self.contents["benchmarks"][0]["runs"][0]["metadata"]["date"]
 

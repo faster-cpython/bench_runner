@@ -149,6 +149,7 @@ In `bench_runner.toml`, the `longitudinal_plot` table has a `subplots` key which
 - `base`: The base version to compare to. Should be a fully-specified version, e.g. "3.13.0".
 - `version`: The version series to use as a head. Should be a 2-part version, e.g. "3.14"
 - `flags`: (optional) A list of flags to match to for the head versions
+- `runners`: (optional) A list of nicknames of runners to plot. Defaults to all runners.
 
 For example:
 
@@ -157,7 +158,8 @@ For example:
 subplots = [
     { base = "3.10.4", version = "3.11" },
     { base = "3.12.0", version = "3.13" },
-    { base = "3.13.0", version = "3.14" },
+    { base = "3.13.0", version = "3.14", runners = ["linux1", "linux2"] },
+    { base = "3.13.0", version = "3.14", runners = ["windows1", "macos1"] },
     { base = "3.13.0", version = "3.14", flags = ["JIT"] }
 ]
 ```
@@ -172,6 +174,7 @@ In `bench_runner.toml`, the `flag_effect_plot` table has a `subplots` key which 
 - `version`: The version series to compare. Should be a 2-part version, e.g. "3.14"
 - `head_flags`: A list of flags to use as the head.
 - `base_flags`: (optional) A list of flags to use as the base. By default, this is a default build, i.e. no flags.
+- `runners`: (optional) A list of nicknames of runners to plot. Defaults to all runners.
 - `runner_map`: (optional) If you need to map a runner to a base in a
   different runner, you can provide that mapping here. For example, with
   tail-calling, you may want to compare runners configured to use clang
@@ -192,6 +195,7 @@ head_flags = ["JIT"]
 name = "Tail calling interpreter"
 version = "3.14"
 head_flags = ["TAILCALL"]
+runners = ["linux_clang"]
 runner_map = { linux_clang = "linux" }
 ```
 
