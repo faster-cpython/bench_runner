@@ -1,4 +1,5 @@
 import importlib
+import os
 import sys
 
 
@@ -7,6 +8,7 @@ import rich
 
 COMMANDS = {
     "backfill": "Schedule benchmarking a number of commits",
+    "bisect": "Run a bisect to find the commit that caused a regression",
     "compare": "Compare a matrix of specific results",
     "find_failures": "Find the benchmarks that failed in the last weekly run",
     "generate_results": "Create all of the derived artifacts from raw data",
@@ -24,6 +26,15 @@ COMMANDS = {
 }
 
 if __name__ == "__main__":
+    # This lets pytest-cov collect coverage data in a subprocess
+    if "COV_CORE_SOURCE" in os.environ:
+        try:
+            from pytest_cov.embed import init
+
+            init()
+        except Exception:
+            sys.stderr.write("pytest-cov: Failed to setup subprocess coverage.")
+
     command = len(sys.argv) >= 2 and sys.argv[1] or ""
 
     if command not in COMMANDS:
@@ -36,5 +47,5 @@ if __name__ == "__main__":
         sys.exit(1)
 
     sys.argv = [sys.argv[0], *sys.argv[2:]]
-    mod = importlib.import_module(f"bench_runner.scripts.{command}")
+    mod = importlib.import_module(f".{command}", "bench_runner.scripts")
     mod.main()
