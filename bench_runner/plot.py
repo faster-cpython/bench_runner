@@ -311,7 +311,7 @@ def longitudinal_plot(
             runner_results = [
                 r
                 for r in ver_results
-                if r.nickname == runner.nickname and set(r.flags) == set(subcfg.flags)
+                if r.nickname == runner.nickname and r.flags == subcfg.flags
             ]
 
             for r in results:
