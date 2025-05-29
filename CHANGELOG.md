@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 2.0.0
+
 ### Moving more code to Python
 
 Most of the code to orchestrate the benchmarks at a high level has moved from
