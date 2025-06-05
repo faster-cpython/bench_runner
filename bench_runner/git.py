@@ -5,7 +5,6 @@ from __future__ import annotations
 import contextlib
 import datetime
 from pathlib import Path
-import shutil
 import subprocess
 import re
 

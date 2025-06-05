@@ -123,13 +123,13 @@ if sys.platform.startswith("win"):
     else:
 
         def smart_rmtree(path: PathLike) -> None:
-            def onerror(func, path, error):
+            def onerror(func, path, exc_info):
                 # Is the error an access error?
                 if not os.access(path, os.W_OK):
                     os.chmod(path, stat.S_IWUSR)
                     func(path)
                 else:
-                    raise exc[1]
+                    raise exc_info[1]
 
             shutil.rmtree(path, onerror=onerror)
 
