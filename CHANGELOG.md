@@ -1,5 +1,11 @@
 ## Unreleased
 
+### Bugfixes
+
+#### Removing a git repo on Windows fails
+
+One needs to remove the "read only" flags on certain files in the git repo in order to remove it.
+
 ## 2.0.0
 
 ### Moving more code to Python

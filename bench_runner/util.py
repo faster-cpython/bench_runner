@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import stat
 import sys
 from typing import Iterable, Iterator, Literal, TypeAlias, Union
 
@@ -103,6 +104,37 @@ def valid_version(version: str) -> bool:
         return True
     except pkg_version.InvalidVersion:
         return False
+
+
+if sys.platform.startswith("win"):
+    if sys.version_info >= (3, 12):
+
+        def smart_rmtree(path: PathLike) -> None:
+            def onexc(func, path, exc):
+                # Is the error an access error?
+                if not os.access(path, os.W_OK):
+                    os.chmod(path, stat.S_IWUSR)
+                    func(path)
+                else:
+                    raise exc
+
+            shutil.rmtree(path, onexc=onexc)
+
+    else:
+
+        def smart_rmtree(path: PathLike) -> None:
+            def onerror(func, path, exc_info):
+                # Is the error an access error?
+                if not os.access(path, os.W_OK):
+                    os.chmod(path, stat.S_IWUSR)
+                    func(path)
+                else:
+                    raise exc_info[1]
+
+            shutil.rmtree(path, onerror=onerror)
+
+else:
+    smart_rmtree = shutil.rmtree
 
 
 if os.getenv("GITHUB_ACTIONS") == "true":

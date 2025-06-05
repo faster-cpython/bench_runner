@@ -5,7 +5,6 @@ from __future__ import annotations
 import contextlib
 import datetime
 from pathlib import Path
-import shutil
 import subprocess
 import re
 
@@ -14,6 +13,7 @@ import rich
 
 
 from .util import PathLike
+from . import util
 
 
 def get_log(
@@ -147,7 +147,7 @@ def clone(
         if is_hash and (dirname / ".git").is_dir() and get_git_hash(dirname) == branch:
             # This is a git repo, and the hash matches
             return
-        shutil.rmtree(dirname)
+        util.smart_rmtree(dirname)
 
     # Fetching a hash and fetching a branch require different approaches
 
