@@ -40,6 +40,10 @@ def _load_contents(filename: Path) -> dict[str, Any]:
         return json.load(fd)
 
 
+def clear_contents_cache() -> None:
+    _load_contents.cache_clear()
+
+
 def _clean(string: str) -> str:
     """
     Clean an arbitrary string to be suitable for a filename.

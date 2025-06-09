@@ -45,7 +45,7 @@ def parse_result(benchmark_json: PathLike) -> float:
     # The name of the benchmark in the JSON file may be different from the one
     # used to select the benchmark. Therefore, just take the mean of all the
     # benchmarks in the JSON file.
-    result._load_contents.cache_clear()
+    result.clear_contents_cache()
     r = result.Result.from_arbitrary_filename(benchmark_json)
     timing_data = r.get_timing_data()
     return float(np.mean([x.mean() for x in timing_data.values()]))
