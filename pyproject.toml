@@ -19,7 +19,7 @@ dependencies = [
     "pyperf==2.9.0",
     "rich==14.0.0",
     "rich-argparse==1.7.1",
-    "ruamel.yaml==0.18.12",
+    "ruamel.yaml==0.18.14",
     "scour==0.38.2",
     "wheel",
 ]
