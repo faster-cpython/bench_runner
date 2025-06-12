@@ -45,6 +45,7 @@ def parse_result(benchmark_json: PathLike) -> float:
     # The name of the benchmark in the JSON file may be different from the one
     # used to select the benchmark. Therefore, just take the mean of all the
     # benchmarks in the JSON file.
+    result.clear_contents_cache()
     r = result.Result.from_arbitrary_filename(benchmark_json)
     timing_data = r.get_timing_data()
     return float(np.mean([x.mean() for x in timing_data.values()]))
@@ -122,6 +123,12 @@ def _main(
     git.checkout(cpython, bad)
     bad_timing = get_result(benchmark, pgo, flags, cpython=cpython)
     log(f"KNOWN  BAD  ({bad[:7]}): {format_seconds(bad_timing)}")
+
+    if good_timing >= bad_timing:
+        show_log()
+        raise ValueError(
+            f"Good timing ({good_timing}) must be less than bad timing ({bad_timing})."
+        )
 
     try:
         with contextlib.chdir(cpython):
