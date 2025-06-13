@@ -145,7 +145,7 @@ jobs:
     with:
       force: false
     if: ${{ always() }}
-    needs: [head, base, pystats-head, pystats-base]
+    needs: [head-benchmark, base-benchmark, pystats-head, pystats-base]
     secrets: inherit
 
   publish:
