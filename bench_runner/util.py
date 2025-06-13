@@ -176,3 +176,50 @@ else:
             from rich.progress import track
 
             return track(iterable, description=name)
+
+
+def get_windows_build_dir(force_32bit: bool) -> Path:
+    if force_32bit:
+        return Path("PCbuild") / "win32"
+    return Path("PCbuild") / "amd64"
+
+
+def get_exe_path(cpython: Path, flags: list[str], force_32bit: bool) -> Path:
+    match get_simple_platform():
+        case "linux":
+            return cpython / "bin" / "python"
+        case "macos":
+            return cpython / "python.exe"
+        case "windows":
+            # TODO: This is definitely wrong in the new artifact world
+            build_dir = cpython / get_windows_build_dir(force_32bit)
+            if "NOGIL" in flags:
+                exe = next(build_dir.glob("python3.*.exe"))
+            else:
+                exe = build_dir / "python.exe"
+            return exe
+
+
+def run_in_venv(
+    venv: PathLike, module: str, cmd: list[str], sudo: bool = False
+) -> None:
+    venv = Path(venv)
+
+    if get_simple_platform() == "windows":
+        exe = venv / "Scripts" / "python.exe"
+    else:
+        exe = venv / "bin" / "python"
+
+    args = [
+        str(exe),
+        "-m",
+        module,
+        *cmd,
+    ]
+
+    if sudo:
+        ld_library_path = os.environ.get("LD_LIBRARY_PATH", "")
+        args = ["sudo", f"LD_LIBRARY_PATH={ld_library_path}"] + args
+
+    print("Running command:", " ".join(args))
+    subprocess.check_call(args)

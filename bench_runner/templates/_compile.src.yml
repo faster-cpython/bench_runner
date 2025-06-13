@@ -1,0 +1,97 @@
+---
+name: _compile
+
+"on":
+  workflow_call:
+    inputs:
+      fork:
+        description: "Fork of cpython to benchmark"
+        type: string
+      ref:
+        description: "Branch, tag or (full) SHA commit to benchmark"
+        type: string
+      machine:
+        description: "Machine to run on"
+        type: string
+      pgo:
+        description: "Build with PGO"
+        type: boolean
+      force:
+        description: "Rerun and replace results if commit already exists"
+        type: boolean
+
+  workflow_dispatch:
+    inputs:
+      fork:
+        description: "Fork of cpython to benchmark"
+        type: string
+        default: "python"
+      ref:
+        description: "Branch, tag or (full) SHA commit to benchmark"
+        type: string
+        default: "main"
+      machine:
+        description: "Machine to run on"
+        default: "linux-amd64"
+        type: choice
+        options:
+          - linux-amd64
+          - windows-amd64
+          - darwin-arm64
+          - all
+      force:
+        description: "Rerun and replace results if commit already exists"
+        type: boolean
+
+jobs:
+  compile-windows:
+    runs-on: [windows]
+
+    steps:
+      # Tell git to checkout repos with symlinks (required by pyston
+      # benchmarks).
+      # Requires "Developer Mode" switched on in Windows 10/11
+      - name: Enable symlinks for git
+        run: |
+          git config --global core.symlinks true
+      - name: Checkout benchmarking
+        uses: actions/checkout@v4
+      - name: Building Python and running pyperformance
+        run: |
+          py workflow_bootstrap.py compile ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.machine }} "${{ env.flags }}" ${{ inputs.force && '--force' || '' }} ${{ inputs.pgo && '--pgo' || '' }}
+      # TODO
+
+  compile-linux:
+    runs-on: [linux]
+    timeout-minutes: 1440
+
+    steps:
+      - name: Checkout benchmarking
+        uses: actions/checkout@v4
+      - uses: fregante/setup-git-user@v2
+      - name: Setup system Python
+        if: ${{ runner.arch == 'X64' }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Building Python and running pyperformance
+        run: |
+          python workflow_bootstrap.py compile ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.machine }} ${{ env.flags }} ${{ inputs.force && '--force' || '' }} ${{ inputs.pgo && '--pgo' || '' }} --install-to install
+      - name: Upload benchmark artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: |
+            install/
+          overwrite: true
+
+  compile-darwin:
+    runs-on: [macos]
+
+    steps:
+      - name: Checkout benchmarking
+        uses: actions/checkout@v4
+      - name: Building Python and running pyperformance
+        run: |
+          python3 workflow_bootstrap.py compile ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.machine }} ${{ env.flags }} ${{ inputs.force && '--force' || '' }} ${{ inputs.pgo && '--pgo' || '' }}
+      # TODO

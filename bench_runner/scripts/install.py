@@ -137,6 +137,60 @@ def add_flag_env(jobs: dict[str, Any]):
                     step["run"] = step["run"].replace("${{ env.flags }}", flag_value)
 
 
+# TODO: Removed duplicates with generate__benchmark
+def generate__compile(src: Any) -> Any:
+    """
+    Generates _compile.yml from _compile.src.yml.
+    """
+    cfg = config.get_config()
+    available_runners = [r for r in cfg.runners.values() if r.available]
+    runner_choices = [*[x.name for x in available_runners], "all"]
+
+    dst = copy.deepcopy(src)
+
+    dst["jobs"] = {}
+    for runner in available_runners:
+        runner_template = copy.deepcopy(src["jobs"][f"compile-{runner.os}"])
+
+        # Set environment variables for the runner
+        if runner.os == "windows":
+            # Powershell syntax
+            github_env = "$env:GITHUB_ENV"
+        else:
+            # sh syntax
+            github_env = "$GITHUB_ENV"
+        vars = copy.copy(runner.env)
+        vars["BENCHMARK_MACHINE_NICKNAME"] = runner.nickname
+        setup_environment = {
+            "name": "Setup environment",
+            "run": LiteralScalarString(
+                "\n".join(
+                    f'echo "{key}={val}" >> {github_env}' for key, val in vars.items()
+                )
+            ),
+        }
+        runner_template["steps"].insert(0, setup_environment)
+
+        machine_clauses = [
+            f"inputs.machine == '{runner.name}'",
+            "inputs.machine == '__really_all'",
+        ]
+        if runner.include_in_all:
+            machine_clauses.append("inputs.machine == 'all'")
+        runner_template["if"] = f"${{{{ ({' || '.join(machine_clauses)}) }}}}"
+
+        dst["jobs"][f"compile-{runner.name}"] = runner_template
+
+    add_flag_env(dst["jobs"])
+
+    dst["on"]["workflow_dispatch"]["inputs"]["machine"]["options"] = runner_choices
+
+    add_flag_variables(dst["on"]["workflow_dispatch"]["inputs"])
+    add_flag_variables(dst["on"]["workflow_call"]["inputs"])
+
+    return dst
+
+
 def generate__benchmark(src: Any) -> Any:
     """
     Generates _benchmark.yml from _benchmark.src.yml.
@@ -291,6 +345,7 @@ def generate_generic(dst: Any) -> Any:
 GENERATORS = {
     "benchmark.src.yml": generate_benchmark,
     "_benchmark.src.yml": generate__benchmark,
+    "_compile.src.yml": generate__compile,
     "_pystats.src.yml": generate__pystats,
     "_notify.src.yml": generate__notify,
     "_weekly.src.yml": generate__weekly,

@@ -13,8 +13,8 @@ import rich_argparse
 from bench_runner import flags as mflags
 from bench_runner import git
 from bench_runner import result
+from bench_runner.scripts import compile as mcompile
 from bench_runner.scripts import run_benchmarks
-from bench_runner.scripts import workflow
 from bench_runner.util import PathLike, format_seconds
 
 
@@ -66,7 +66,9 @@ def get_result(
         # first time in case the *last* bisect run used pgo.
         subprocess.run(["make", "clean"], cwd=cpython)
 
-    workflow.compile_unix(cpython, mflags.parse_flags(flags), pgo, False, reconfigure)
+    mcompile.compile_unix(
+        cpython, mflags.parse_flags(flags), pgo, False, reconfigure=reconfigure
+    )
     run_benchmarks.run_benchmarks(cpython / "python", benchmark)
     timing = parse_result(run_benchmarks.BENCHMARK_JSON)
 

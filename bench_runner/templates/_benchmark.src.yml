@@ -73,7 +73,7 @@ jobs:
           git gc
       - name: Building Python and running pyperformance
         run: |
-          py workflow_bootstrap.py ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.machine }} ${{ inputs.benchmarks || 'all' }} "${{ env.flags }}" ${{ inputs.force && '--force' || '' }} ${{ inputs.pgo && '--pgo' || '' }} --run_id ${{ github.run_id }}
+          py workflow_bootstrap.py workflow ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.machine }} "${{ env.flags }}" ${{ inputs.benchmarks || 'all' }} ${{ inputs.force && '--force' || '' }} ${{ inputs.pgo && '--pgo' || '' }} --run_id ${{ github.run_id }}
       # Pull again, since another job may have committed results in the meantime
       - name: Pull benchmarking
         run: |
@@ -112,7 +112,7 @@ jobs:
           python-version: "3.11"
       - name: Building Python and running pyperformance
         run: |
-          python workflow_bootstrap.py ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.machine }} ${{ inputs.benchmarks || 'all' }} ${{ env.flags }} ${{ inputs.force && '--force' || '' }} ${{ inputs.pgo && '--pgo' || '' }} ${{ inputs.perf && '--perf' || '' }} --run_id ${{ github.run_id }}
+          python workflow_bootstrap.py workflow ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.machine }} ${{ env.flags }} ${{ inputs.benchmarks || 'all' }} ${{ inputs.force && '--force' || '' }} ${{ inputs.pgo && '--pgo' || '' }} ${{ inputs.perf && '--perf' || '' }} --run_id ${{ github.run_id }}
       # Pull again, since another job may have committed results in the meantime
       - name: Pull benchmarking
         if: ${{ !inputs.perf }}
@@ -154,7 +154,7 @@ jobs:
           git gc
       - name: Building Python and running pyperformance
         run: |
-          python3 workflow_bootstrap.py ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.machine }} ${{ inputs.benchmarks || 'all' }} ${{ env.flags }} ${{ inputs.force && '--force' || '' }} ${{ inputs.pgo && '--pgo' || '' }} --run_id ${{ github.run_id }}
+          python3 workflow_bootstrap.py workflow ${{ inputs.fork }} ${{ inputs.ref }} ${{ inputs.machine }} ${{ env.flags }} ${{ inputs.benchmarks || 'all' }} ${{ inputs.force && '--force' || '' }} ${{ inputs.pgo && '--pgo' || '' }} --run_id ${{ github.run_id }}
       # Pull again, since another job may have committed results in the meantime
       - name: Pull benchmarking
         run: |

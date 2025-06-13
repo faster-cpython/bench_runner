@@ -71,11 +71,22 @@ jobs:
           python -m bench_runner get_merge_base ${{ inputs.benchmark_base }} ${{ inputs.machine }} ${{ inputs.pystats }} ${{ env.flags }} >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
 
-  head:
-    uses: ./.github/workflows/_benchmark.yml
+  head-compile:
+    uses: ./.github/workflows/_compile.yml
     with:
       fork: ${{ inputs.fork }}
       ref: ${{ inputs.ref }}
+      machine: ${{ inputs.machine }}
+      pgo: true
+      force: true
+    secrets: inherit
+
+  head-benchmark:
+    uses: ./.github/workflows/_benchmark.yml
+    needs: head-compile
+    with:
+      fork: python
+      ref: ${{ needs.determine_base.outputs.ref }}
       machine: ${{ inputs.machine }}
       benchmarks: ${{ inputs.benchmarks }}
       pgo: true
@@ -83,10 +94,21 @@ jobs:
       force: true
     secrets: inherit
 
-  base:
-    uses: ./.github/workflows/_benchmark.yml
+  base-compile:
+    uses: ./.github/workflows/_compile.yml
     needs: determine_base
     if: ${{ needs.determine_base.outputs.need_to_run != 'false' }}
+    with:
+      fork: python
+      ref: ${{ needs.determine_base.outputs.ref }}
+      machine: ${{ inputs.machine }}
+      pgo: true
+      force: false
+    secrets: inherit
+
+  base-benchmark:
+    uses: ./.github/workflows/_benchmark.yml
+    needs: base-compile
     with:
       fork: python
       ref: ${{ needs.determine_base.outputs.ref }}

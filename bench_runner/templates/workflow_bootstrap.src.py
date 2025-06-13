@@ -73,7 +73,7 @@ def main():
     if last_arg == -1:
         raise ValueError("Couldn't parse command line")
 
-    run_in_venv(venv, "bench_runner", ["workflow", *sys.argv[last_arg + 1 :]])
+    run_in_venv(venv, "bench_runner", sys.argv[last_arg + 1 :])
 
 
 if __name__ == "__main__":
