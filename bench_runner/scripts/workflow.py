@@ -210,6 +210,10 @@ def compile_windows(
         shutil.copytree(get_windows_build_dir(force_32bit), "libs", dirs_exist_ok=True)
 
 
+def clear_pip_cache(venv: PathLike) -> None:
+    run_in_venv(venv, "pip", ["cache", "purge"])
+
+
 def install_pyperformance(venv: PathLike) -> None:
     run_in_venv(venv, "pip", ["install", "./pyperformance"])
 
@@ -297,6 +301,8 @@ def _main(
         # Print out the version of Python we built just so we can confirm it's the
         # right thing in the logs
         subprocess.check_call([get_exe_path(cpython, flags, force_32bit), "-VV"])
+
+    clear_pip_cache(venv)
 
     with log_group("Installing pyperformance"):
         install_pyperformance(venv)
