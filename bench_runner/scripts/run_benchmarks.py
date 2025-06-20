@@ -145,7 +145,7 @@ def collect_pystats(
     if LOOPS_FILE_ENV_VAR not in os.environ:
         os.environ[LOOPS_FILE_ENV_VAR] = "loops.json"
 
-    extra_args = ["--hook", "pystats", "--warmups", "0"]
+    extra_args = ["--hook", "pystats"]
 
     if flags is None:
         flags = []
