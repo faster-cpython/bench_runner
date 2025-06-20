@@ -2,6 +2,11 @@
 
 ### Bugfixes
 
+#### No warmups on pystats runs
+
+To prevent "missing" some stats collected during warmup runs, they are now
+disabled when collecting pystats.
+
 #### Removing a git repo on Windows fails
 
 One needs to remove the "read only" flags on certain files in the git repo in order to remove it.
