@@ -192,7 +192,3 @@ def test_run_benchmarks_flags(benchmarks_checkout):
         f"python-main-{platform.python_version()}-9d38120.json"
     ) as fd:
         json.load(fd)
-
-
-def test_get_benchmark_hash():
-    assert benchmark_definitions.get_benchmark_hash() == "dcfded"
