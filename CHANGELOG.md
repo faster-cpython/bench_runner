@@ -2,6 +2,11 @@
 
 ### Bugfixes
 
+#### No warmup runs for pystats
+
+When collecting pystats, pyperformance will no longer perform "warmup runs", to
+make sure that the pystats don't have missing information.
+
 #### Removing a git repo on Windows fails
 
 One needs to remove the "read only" flags on certain files in the git repo in order to remove it.
