@@ -2,6 +2,10 @@
 
 ### Bugfixes
 
+#### Use PGO on weekly builds
+
+Since 2.0.0, PGO was not being used on weekly builds. This is now fixed.
+
 #### No warmup runs for pystats
 
 When collecting pystats, pyperformance will no longer perform "warmup runs", to

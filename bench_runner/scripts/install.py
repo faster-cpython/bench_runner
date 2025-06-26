@@ -271,6 +271,7 @@ def generate__weekly(dst: Any) -> Any:
                     "ref": "${{ needs.determine_head.outputs.commit }}",
                     "machine": runner.name,
                     "benchmarks": "all_and_excluded",
+                    "pgo": True,
                     **flags.flags_to_gha_variables_yml(weekly_cfg.flags),
                 },
                 "secrets": "inherit",
