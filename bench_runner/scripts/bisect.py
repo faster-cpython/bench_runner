@@ -228,7 +228,8 @@ def main():
     parser.add_argument(
         "--invert",
         action="store_true",
-        help="Invert the values, i.e. expect the bad value to be lower than the good value.",
+        help="Invert the values, i.e. expect the bad value to be lower than "
+        "the good value.",
     )
 
     args = parser.parse_args()
