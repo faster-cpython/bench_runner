@@ -131,9 +131,9 @@ def run_benchmarks(
 def collect_pystats(
     python: PathLike,
     benchmarks: str,
-    fork: str,
-    ref: str,
-    individual: bool,
+    fork: str | None = None,
+    ref: str | None = None,
+    individual: bool = True,
     flags: Iterable[str] | None = None,
 ) -> None:
     pystats_dir = Path("/tmp/py_stats")
@@ -167,7 +167,7 @@ def collect_pystats(
             except NoBenchmarkError:
                 pass
             else:
-                if individual:
+                if individual and fork is not None and ref is not None:
                     run_summarize_stats(python, fork, ref, benchmark, flags=flags)
 
             for filename in pystats_dir.iterdir():
@@ -181,7 +181,8 @@ def collect_pystats(
         else:
             benchmark_links = []
 
-        run_summarize_stats(python, fork, ref, "all", benchmark_links, flags=flags)
+        if fork is not None and ref is not None:
+            run_summarize_stats(python, fork, ref, "all", benchmark_links, flags=flags)
 
 
 def get_perf_lines(files: Iterable[PathLike]) -> Iterable[str]:

@@ -1,5 +1,6 @@
 import argparse
 import contextlib
+import json
 from pathlib import Path
 import subprocess
 import sys
@@ -12,10 +13,17 @@ import rich_argparse
 
 from bench_runner import flags as mflags
 from bench_runner import git
-from bench_runner import result
+from bench_runner import result as mresult
 from bench_runner.scripts import run_benchmarks
 from bench_runner.scripts import workflow
 from bench_runner.util import PathLike, format_seconds
+
+
+def format_result(result: float | int, pystats: str | None = None) -> str:
+    if pystats is None:
+        return format_seconds(result)
+    else:
+        return f"{result:,}"
 
 
 def _get_result_commandline(
@@ -24,6 +32,8 @@ def _get_result_commandline(
     bad_val: float,
     pgo: bool,
     flags: str,
+    pystats: str | None,
+    invert: bool,
     repo: PathLike,
 ) -> list[str]:
     repo = Path(repo)
@@ -37,16 +47,18 @@ def _get_result_commandline(
         str(bad_val),
         str(pgo),
         str(flags),
+        str(pystats),
+        str(invert),
         str(repo.absolute()),
     ]
 
 
-def parse_result(benchmark_json: PathLike) -> float:
+def parse_timing_result(benchmark_json: PathLike) -> float:
     # The name of the benchmark in the JSON file may be different from the one
     # used to select the benchmark. Therefore, just take the mean of all the
     # benchmarks in the JSON file.
-    result.clear_contents_cache()
-    r = result.Result.from_arbitrary_filename(benchmark_json)
+    mresult.clear_contents_cache()
+    r = mresult.Result.from_arbitrary_filename(benchmark_json)
     timing_data = r.get_timing_data()
     return float(np.mean([x.mean() for x in timing_data.values()]))
 
@@ -55,10 +67,13 @@ def get_result(
     benchmark: str,
     pgo: bool = False,
     flags: str = "",
+    pystats: str | None = None,
     cpython: PathLike = Path("cpython"),
     reconfigure: bool = False,
 ) -> float:
     cpython = Path(cpython)
+    python = cpython / "python"
+    parsed_flags = mflags.parse_flags(flags)
 
     if pgo or reconfigure:
         # Jumping around through commits with PGO can leave stale PGO data
@@ -66,11 +81,20 @@ def get_result(
         # first time in case the *last* bisect run used pgo.
         subprocess.run(["make", "clean"], cwd=cpython)
 
-    workflow.compile_unix(cpython, mflags.parse_flags(flags), pgo, False, reconfigure)
-    run_benchmarks.run_benchmarks(cpython / "python", benchmark)
-    timing = parse_result(run_benchmarks.BENCHMARK_JSON)
+    workflow.compile_unix(cpython, parsed_flags, pgo, pystats is not None, reconfigure)
 
-    return timing
+    if pystats is None:
+        run_benchmarks.run_benchmarks(python, benchmark)
+        return parse_timing_result(run_benchmarks.BENCHMARK_JSON)
+    else:
+        run_benchmarks.collect_pystats(python, benchmark)
+        summarize_stats_path = cpython / "Tools" / "scripts" / "summarize_stats.py"
+        subprocess.check_output(
+            [str(python), str(summarize_stats_path), "--json-output", "pystats.json"]
+        )
+        with open("pystats.json", "r") as f:
+            contents = json.load(f)
+            return int(contents[pystats])
 
 
 def get_log_file() -> Path:
@@ -103,11 +127,14 @@ def _main(
     bad: str,
     pgo: bool = False,
     flags: str = "",
+    pystats: str | None = None,
+    invert: bool = False,
     repo: PathLike = Path("."),
     cpython: PathLike = Path("cpython"),
 ):
     repo = Path(repo).absolute()
     cpython = Path(cpython).absolute()
+    im = -1 if invert else 1
 
     delete_log()
 
@@ -117,17 +144,21 @@ def _main(
         )
 
     git.checkout(cpython, good)
-    good_timing = get_result(benchmark, pgo, flags, cpython=cpython, reconfigure=True)
-    log(f"KNOWN  GOOD ({good[:7]}): {format_seconds(good_timing)}")
+    good_result = get_result(
+        benchmark, pgo, flags, pystats, cpython=cpython, reconfigure=True
+    )
+    log(f"KNOWN  GOOD ({good[:7]}): {format_result(good_result, pystats)}")
 
     git.checkout(cpython, bad)
-    bad_timing = get_result(benchmark, pgo, flags, cpython=cpython)
-    log(f"KNOWN  BAD  ({bad[:7]}): {format_seconds(bad_timing)}")
+    bad_result = get_result(benchmark, pgo, flags, pystats, cpython=cpython)
+    log(f"KNOWN  BAD  ({bad[:7]}): {format_result(bad_result, pystats)}")
 
-    if good_timing >= bad_timing:
+    if im * good_result >= im * bad_result:
         show_log()
         raise ValueError(
-            f"Good timing ({good_timing}) must be less than bad timing ({bad_timing})."
+            f"Good result ({format_result(good_result, pystats)}) "
+            f"must be {'more' if invert else 'less'} than "
+            f"bad result ({format_result(bad_result, pystats)})."
         )
 
     try:
@@ -138,7 +169,14 @@ def _main(
             subprocess.run(
                 ["git", "bisect", "run"]
                 + _get_result_commandline(
-                    benchmark, good_timing, bad_timing, pgo, flags, repo
+                    benchmark,
+                    good_result,
+                    bad_result,
+                    pgo,
+                    flags,
+                    pystats,
+                    invert,
+                    repo,
                 )
             )
     finally:
@@ -182,10 +220,29 @@ def main():
         type=str,
         default="",
     )
+    parser.add_argument(
+        "--pystats",
+        type=str,
+        help="Bisect using pystats. Should be the key in the pystats.json file.",
+    )
+    parser.add_argument(
+        "--invert",
+        action="store_true",
+        help="Invert the values, i.e. expect the bad value to be lower than "
+        "the good value.",
+    )
 
     args = parser.parse_args()
 
-    _main(args.benchmark, args.good, args.bad, args.pgo, args.flags)
+    _main(
+        args.benchmark,
+        args.good,
+        args.bad,
+        args.pgo,
+        args.flags,
+        args.pystats,
+        args.invert,
+    )
 
 
 if __name__ == "__main__":
@@ -197,8 +254,16 @@ if __name__ == "__main__":
     parser.add_argument("bad_val", type=float)
     parser.add_argument("pgo", type=str)
     parser.add_argument("flags", type=str)
+    parser.add_argument("pystats", type=str)
+    parser.add_argument("invert", type=str, choices=["True", "False"])
     parser.add_argument("repo", type=str)
     args = parser.parse_args()
+
+    if args.pystats == "None":
+        args.pystats = None
+
+    invert = args.invert == "True"
+    im = -1 if invert else 1
 
     mid_point = (args.good_val + args.bad_val) / 2.0
 
@@ -207,8 +272,12 @@ if __name__ == "__main__":
 
     try:
         with contextlib.chdir(repo):
-            timing = get_result(
-                args.benchmark, args.pgo == "True", args.flags, cpython=cpython
+            result = get_result(
+                args.benchmark,
+                args.pgo == "True",
+                args.flags,
+                args.pystats,
+                cpython=cpython,
             )
     except Exception as e:
         # If there was any exception, display that exception and traceback and
@@ -218,20 +287,20 @@ if __name__ == "__main__":
 
     # The confidence is 0.0 at the mid-point, 1.0 at the good and bad values,
     # and > 1.0 outside of that.
-    confidence = abs((timing - mid_point) / ((args.bad_val - args.good_val) / 2.0))
+    confidence = abs((result - mid_point) / ((args.bad_val - args.good_val) / 2.0))
 
     with contextlib.chdir(repo):
-        if timing > mid_point:
+        if im * result > im * mid_point:
             log(
                 f"BISECT BAD  ({git.get_git_hash(cpython)[:7]}): "
-                f"{format_seconds(timing)} (confidence {confidence:.02f})"
+                f"{format_result(result, args.pystats)} (confidence {confidence:.02f})"
             )
-            print(f"BAD: {timing} vs. ({args.good_val}, {args.bad_val})")
+            print(f"BAD: {result} vs. ({args.good_val}, {args.bad_val})")
             sys.exit(1)
         else:
             log(
                 f"BISECT GOOD ({git.get_git_hash(cpython)[:7]}): "
-                f"{format_seconds(timing)} (confidence {confidence:.02f})"
+                f"{format_result(result, args.pystats)} (confidence {confidence:.02f})"
             )
-            print(f"GOOD: {timing} vs. ({args.good_val}, {args.bad_val})")
+            print(f"GOOD: {result} vs. ({args.good_val}, {args.bad_val})")
             sys.exit(0)
