@@ -33,7 +33,7 @@ test = [
     "pyright==1.1.402",
     "pytest==8.4.1",
     "pytest-cov==6.2.1",
-    "pytest-xdist==3.7.0",
+    "pytest-xdist==3.8.0",
 ]
 
 [tool.setuptools_scm]
