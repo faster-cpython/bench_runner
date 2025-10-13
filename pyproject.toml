@@ -28,7 +28,7 @@ dynamic = ["version"]
 [project.optional-dependencies]
 test = [
     "black==25.1.0",
-    "filelock==3.18.0",
+    "filelock==3.20.0",
     "flake8==7.3.0",
     "pyright==1.1.402",
     "pytest==8.4.1",
