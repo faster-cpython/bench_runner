@@ -185,9 +185,10 @@ def compile_windows(
     args = ["--%"]  # This is the PowerShell "stop parsing" flag
     if force_32bit:
         args.extend(["-p", "win32"])
-    args.extend(["-c", "Release"])
     if pgo:
         args.append("--pgo")
+    else:
+        args.extend(["-c", "Release"])
     if "JIT" in flags:
         args.append("--experimental-jit")
     if "PYTHON_UOPS" in flags:
