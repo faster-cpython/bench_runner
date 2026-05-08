@@ -90,7 +90,10 @@ def should_run(
         # totally inscrutable.
         print("The checkout of cpython failed.", file=sys.stderr)
         print(f"You specified fork {fork!r} and ref {ref!r}.", file=sys.stderr)
-        print("Are you sure you entered the fork and ref correctly?", file=sys.stderr)
+        print(
+            "Are you sure you entered the fork and ref correctly?",
+            file=sys.stderr,
+        )
         # Fail the rest of the workflow
         sys.exit(1)
 
@@ -111,13 +114,17 @@ def should_run(
                     git.remove(results_dir.parent, filepath)
         should_run = True
     else:
-        should_run = (machine in ("__really_all", "all")) or found_result is None
+        should_run = (
+            machine in ("__really_all", "all")
+        ) or found_result is None
 
     return should_run
 
 
 def checkout_cpython(fork: str, ref: str, cpython: PathLike = Path("cpython")):
-    git.clone(cpython, f"https://github.com/{fork}/cpython.git", branch=ref, depth=50)
+    git.clone(
+        cpython, f"https://github.com/{fork}/cpython.git", branch=ref, depth=50
+    )
 
 
 def checkout_benchmarks():
@@ -208,7 +215,9 @@ def compile_windows(
                 *args,
             ],
         )
-        shutil.copytree(get_windows_build_dir(force_32bit), "libs", dirs_exist_ok=True)
+        shutil.copytree(
+            get_windows_build_dir(force_32bit), "libs", dirs_exist_ok=True
+        )
 
 
 def clear_pip_cache(venv: PathLike) -> None:
@@ -301,7 +310,9 @@ def _main(
 
         # Print out the version of Python we built just so we can confirm it's the
         # right thing in the logs
-        subprocess.check_call([get_exe_path(cpython, flags, force_32bit), "-VV"])
+        subprocess.check_call(
+            [get_exe_path(cpython, flags, force_32bit), "-VV"]
+        )
 
     clear_pip_cache(venv)
 
@@ -382,7 +393,9 @@ def main():
         dest="force_32bit",
         help="Do a 32-bit build (Windows only)",
     )
-    parser.add_argument("--run_id", default=None, type=str, help="The github run id")
+    parser.add_argument(
+        "--run_id", default=None, type=str, help="The github run id"
+    )
     parser.add_argument(
         "--_fast", action="store_true", help="Use fast mode, for testing"
     )

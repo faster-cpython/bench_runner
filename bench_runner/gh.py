@@ -49,7 +49,9 @@ def benchmark(
         raise ValueError(f"machine must be one of {machines}")
 
     if not (benchmark_base is None or isinstance(benchmark_base, bool)):
-        raise TypeError(f"benchmark_base must be bool, got {type(benchmark_base)}")
+        raise TypeError(
+            f"benchmark_base must be bool, got {type(benchmark_base)}"
+        )
 
     if flags is None:
         flags = []

@@ -18,7 +18,13 @@ def generate_dirname(
     else:
         flag_string = []
     return "-".join(
-        ["bm", date[:10].replace("-", ""), version, cpython_hash[:7], *flag_string]
+        [
+            "bm",
+            date[:10].replace("-", ""),
+            version,
+            cpython_hash[:7],
+            *flag_string,
+        ]
     )
 
 
@@ -29,12 +35,17 @@ def _main(
     actor = os.environ.get("GITHUB_ACTOR", "UNKNOWN")
     github_repo = os.environ.get("GITHUB_REPOSITORY", "UNKNOWN")
 
-    lines = ["🤖 This is the friendly benchmarking bot with some new results!", ""]
+    lines = [
+        "🤖 This is the friendly benchmarking bot with some new results!",
+        "",
+    ]
     line = f"@{actor}: [{fork}/{ref}]"
     skip_publish = config.get_config().publish_mirror.skip
 
     if skip_publish:
-        line += f"(https://github.com/{github_repo}/tree/main/results/{dirname})"
+        line += (
+            f"(https://github.com/{github_repo}/tree/main/results/{dirname})"
+        )
     else:
         line += f"(https://github.com/{github_repo}-public/tree/main/results/{dirname})"
     print(f"::notice ::{line}")

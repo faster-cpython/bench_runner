@@ -1,5 +1,19 @@
 ## Unreleased
 
+### Migrate to ruff and add pre-commit
+
+`black` and `flake8` have been replaced with `ruff` (lint + format). A
+`.pre-commit-config.yaml` is now included so contributors can install
+pre-commit hooks to catch lint, format, and `pyright` type errors before
+pushing. CI runs the same checks via `pre-commit run --all-files`.
+
+To set up locally:
+
+```sh
+pip install pre-commit
+pre-commit install
+```
+
 ### Bugfixes
 
 #### Use PGO on weekly builds

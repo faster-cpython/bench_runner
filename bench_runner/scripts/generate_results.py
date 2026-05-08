@@ -27,7 +27,9 @@ from bench_runner import util
 from bench_runner.util import PathLike
 
 
-def _tuple_to_nested_dicts(entries: Iterable[tuple], d: dict | None = None) -> dict:
+def _tuple_to_nested_dicts(
+    entries: Iterable[tuple], d: dict | None = None
+) -> dict:
     def recurse(entry: tuple, d: dict):
         if len(entry) == 2:
             d.setdefault(entry[0], [])
@@ -46,7 +48,9 @@ def _tuple_to_nested_dicts(entries: Iterable[tuple], d: dict | None = None) -> d
     return d
 
 
-def save_generated_results(results: Iterable[Result], force: bool = False) -> None:
+def save_generated_results(
+    results: Iterable[Result], force: bool = False
+) -> None:
     """
     Write out the comparison tables and plots for every result.
 
@@ -77,14 +81,19 @@ def save_generated_results(results: Iterable[Result], force: bool = False) -> No
 
 
 def output_results_index(
-    fd: TextIO, bases: Iterable[str], results: Iterable[Result], filename: PathLike
+    fd: TextIO,
+    bases: Iterable[str],
+    results: Iterable[Result],
+    filename: PathLike,
 ):
     """
     Outputs a results index table.
     """
     bases = [*bases, "base"]
 
-    head = ["date", "fork/ref", "hash/flags"] + [f"vs. {base}:" for base in bases]
+    head = ["date", "fork/ref", "hash/flags"] + [
+        f"vs. {base}:" for base in bases
+    ]
 
     rows = []
     for result in results:
@@ -97,7 +106,11 @@ def output_results_index(
                     entry.append(
                         table.md_link(
                             util.TYPE_TO_ICON[file_type],
-                            str(util.apply_suffix(compare.base_filename, suffix)),
+                            str(
+                                util.apply_suffix(
+                                    compare.base_filename, suffix
+                                )
+                            ),
                             filename,
                         )
                     )
@@ -161,7 +174,9 @@ def summarize_results(
     """
     results = list(results)
     new_results = []
-    earliest = (datetime.date.today() - datetime.timedelta(days=days)).isoformat()
+    earliest = (
+        datetime.date.today() - datetime.timedelta(days=days)
+    ).isoformat()
     for i, result in enumerate(results):
         if i < n_recent or result.run_date >= earliest:
             new_results.append(result)
@@ -241,10 +256,14 @@ def generate_indices(
     results_file = repo_dir / "RESULTS.md"
     if not results_file.is_file():
         results_file = repo_dir / "results" / "README.md"
-    generate_index(results_file, bases, all_results, benchmarking_results, False)
+    generate_index(
+        results_file, bases, all_results, benchmarking_results, False
+    )
 
 
-def find_different_benchmarks(head: Result, ref: Result) -> tuple[list[str], list[str]]:
+def find_different_benchmarks(
+    head: Result, ref: Result
+) -> tuple[list[str], list[str]]:
     head_benchmarks = head.benchmark_names
     base_benchmarks = ref.benchmark_names
     return (
@@ -264,14 +283,21 @@ def get_directory_indices_entries(
         dirpaths.add(dirpath)
         refs[dirpath].add(result.ref)
         entries.append(
-            (dirpath, None, None, f"fork: {unquote(result.fork)}/{unquote(result.ref)}")
+            (
+                dirpath,
+                None,
+                None,
+                f"fork: {unquote(result.fork)}/{unquote(result.ref)}",
+            )
         )
         entries.append((dirpath, None, None, f"version: {result.version}"))
         config = ",".join(mflags.flags_to_human(result.flags))
         entries.append((dirpath, None, None, f"config: {config}"))
         link = table.link_to_hash(result.cpython_hash, result.fork)
         entries.append((dirpath, None, None, f"commit hash: {link}"))
-        entries.append((dirpath, None, None, f"commit date: {result.commit_datetime}"))
+        entries.append(
+            (dirpath, None, None, f"commit date: {result.commit_datetime}")
+        )
         if result.commit_merge_base is not None:
             link = table.link_to_hash(result.commit_merge_base, "python")
             entries.append((dirpath, None, None, f"commit merge base: {link}"))
@@ -280,14 +306,25 @@ def get_directory_indices_entries(
             entries.append((dirpath, result.runner, None, link))
 
         entries.append(
-            (dirpath, result.runner, None, f"cpu model: {result.cpu_model_name}")
+            (
+                dirpath,
+                result.runner,
+                None,
+                f"cpu model: {result.cpu_model_name}",
+            )
         )
-        entries.append((dirpath, result.runner, None, f"platform: {result.platform}"))
+        entries.append(
+            (dirpath, result.runner, None, f"platform: {result.platform}")
+        )
 
         if result.result_info[0] == "raw results":
             for base, compare in result.bases.items():
-                entries.append((dirpath, result.runner, base, compare.long_summary))
-                entries.append((dirpath, result.runner, base, compare.memory_summary))
+                entries.append(
+                    (dirpath, result.runner, base, compare.long_summary)
+                )
+                entries.append(
+                    (dirpath, result.runner, base, compare.memory_summary)
+                )
                 missing_benchmarks, new_benchmarks = find_different_benchmarks(
                     result, compare.ref
                 )
@@ -329,7 +366,8 @@ def get_directory_indices_entries(
                         result.runner,
                         base,
                         table.md_link(
-                            util.TYPE_TO_ICON.get(type, "") + type, result.filename.name
+                            util.TYPE_TO_ICON.get(type, "") + type,
+                            result.filename.name,
                         ),
                     )
                 )
@@ -351,7 +389,9 @@ def generate_directory_indices(results: Iterable[Result]) -> None:
     entries = get_directory_indices_entries(results)
     structure = _tuple_to_nested_dicts(entries)
 
-    for dirpath, dirresults in util.track(structure.items(), "Generating indices"):
+    for dirpath, dirresults in util.track(
+        structure.items(), "Generating indices"
+    ):
         with (dirpath / "README.md").open("w") as fd:
             fd.write("# Results\n\n")
             table.write_md_list(fd, dirresults[None][None])
@@ -372,7 +412,9 @@ def filter_broken_memory_results(results):
     return [r for r in results if r.nickname != "darwin"]
 
 
-def _main(repo_dir: PathLike, force: bool = False, bases: Sequence[str] | None = None):
+def _main(
+    repo_dir: PathLike, force: bool = False, bases: Sequence[str] | None = None
+):
     repo_dir = Path(repo_dir)
     results_dir = repo_dir / "results"
     if bases is None:
@@ -383,11 +425,15 @@ def _main(repo_dir: PathLike, force: bool = False, bases: Sequence[str] | None =
     results = load_all_results(bases, results_dir)
     rich.print(f"Found {len(results)} results")
     save_generated_results(results, force=force)
-    benchmarking_results = [r for r in results if r.result_info[0] == "raw results"]
+    benchmarking_results = [
+        r for r in results if r.result_info[0] == "raw results"
+    ]
     generate_indices(bases, results, benchmarking_results, repo_dir)
     generate_directory_indices(benchmarking_results)
 
-    memory_benchmarking_results = filter_broken_memory_results(benchmarking_results)
+    memory_benchmarking_results = filter_broken_memory_results(
+        benchmarking_results
+    )
 
     for plot_func, args, kwargs in util.track(
         [

@@ -42,7 +42,9 @@ def remove_benchmark(
             json.dump(data, fd, indent=2)
 
 
-def _main(benchmarks: Sequence[str], keep_hash: Sequence[str], dry_run: bool = False):
+def _main(
+    benchmarks: Sequence[str], keep_hash: Sequence[str], dry_run: bool = False
+):
     rich.print(f"Removing benchmarks {', '.join(benchmarks)} from all results")
 
     keep_hash_set = set(keep_hash)
@@ -52,15 +54,21 @@ def _main(benchmarks: Sequence[str], keep_hash: Sequence[str], dry_run: bool = F
         if Path("longitudinal.json").is_file():
             Path("longitudinal.json").unlink()
 
-    for filename in util.track(list(Path("results").glob("**/*")), "Deleting results"):
+    for filename in util.track(
+        list(Path("results").glob("**/*")), "Deleting results"
+    ):
         if filename.is_dir():
             continue
         if filename.name != "README.md":
             res = result.Result.from_filename(filename)
             if res.result_info[0] == "raw results":
-                remove_benchmark(filename, benchmarks_set, keep_hash_set, dry_run)
+                remove_benchmark(
+                    filename, benchmarks_set, keep_hash_set, dry_run
+                )
 
-    rich.print("Regenerating all derived results. This will take quite some time...")
+    rich.print(
+        "Regenerating all derived results. This will take quite some time..."
+    )
 
     if not dry_run:
         generate_results._main(Path(), force=True)
@@ -78,7 +86,9 @@ def main():
         help="Benchmark to remove",
     )
     parser.add_argument(
-        "--keep-hash", action="append", help="The benchmark hash(es) to leave alone"
+        "--keep-hash",
+        action="append",
+        help="The benchmark hash(es) to leave alone",
     )
     parser.add_argument(
         "--dry-run",

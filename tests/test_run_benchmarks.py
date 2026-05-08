@@ -68,7 +68,8 @@ def test_run_benchmarks(benchmarks_checkout, monkeypatch):
     hardcode_benchmark_hash(monkeypatch)
 
     shutil.copyfile(
-        DATA_PATH / "bench_runner.toml", benchmarks_checkout / "bench_runner.toml"
+        DATA_PATH / "bench_runner.toml",
+        benchmarks_checkout / "bench_runner.toml",
     )
 
     venv_dir = benchmarks_checkout / "venv"
@@ -153,7 +154,8 @@ def test_run_benchmarks(benchmarks_checkout, monkeypatch):
 
 def test_run_benchmarks_flags(benchmarks_checkout):
     shutil.copyfile(
-        DATA_PATH / "bench_runner.toml", benchmarks_checkout / "bench_runner.toml"
+        DATA_PATH / "bench_runner.toml",
+        benchmarks_checkout / "bench_runner.toml",
     )
 
     venv_dir = benchmarks_checkout / "venv"

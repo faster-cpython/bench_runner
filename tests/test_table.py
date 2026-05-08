@@ -55,10 +55,12 @@ def test_replace_section(tmp_path):
 def test_md_link():
     assert table.md_link("text", "link") == "[text](link)"
     assert (
-        table.md_link("text", "relative/link", Path("relative/other")) == "[text](link)"
+        table.md_link("text", "relative/link", Path("relative/other"))
+        == "[text](link)"
     )
     assert (
-        table.md_link("text", "relative/link", Path("other")) == "[text](relative/link)"
+        table.md_link("text", "relative/link", Path("other"))
+        == "[text](relative/link)"
     )
 
 

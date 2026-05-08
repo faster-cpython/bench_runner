@@ -19,7 +19,9 @@ def _copy_repo(tmp_path):
     return repo_path
 
 
-def _run_for_bases(bases, repo_path, force=False, has_base=[], check_readmes=True):
+def _run_for_bases(
+    bases, repo_path, force=False, has_base=[], check_readmes=True
+):
     results_path = repo_path / "results"
 
     generate_results._main(repo_path, force=force, bases=bases)
@@ -76,9 +78,9 @@ def test_main(tmp_path, monkeypatch):
     )
     with open(result_with_base) as fd:
         contents = json.load(fd)
-    contents["metadata"][
-        "commit_merge_base"
-    ] = "9d38120e335357a3b294277fd5eff0a10e46e043"
+    contents["metadata"]["commit_merge_base"] = (
+        "9d38120e335357a3b294277fd5eff0a10e46e043"
+    )
     with open(result_with_base, "w") as fd:
         json.dump(contents, fd)
     # End hack
@@ -122,7 +124,9 @@ def test_fork_with_hyphen(tmp_path):
         / "bm-20221119-3.12.0a3+-b0e1f9c"
         / "bm-20221119-linux-x86_64-python-main-3.12.0a3+-b0e1f9c.json"
     )
-    result_new = result.with_name(result.name.replace("python", "with%2dhyphen"))
+    result_new = result.with_name(
+        result.name.replace("python", "with%2dhyphen")
+    )
 
     result.rename(result_new)
 
@@ -139,5 +143,8 @@ def test_fork_with_hyphen(tmp_path):
     assert contents.count("with-hyphen") == 1
     assert contents.count(" with%2dhyphen ") == 0
     assert (
-        contents.count("with%252dhyphen-main-3.12.0a3%2B-b0e1f9c-vs-3.11.0b3.md") == 1
+        contents.count(
+            "with%252dhyphen-main-3.12.0a3%2B-b0e1f9c-vs-3.11.0b3.md"
+        )
+        == 1
     )

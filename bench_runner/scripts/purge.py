@@ -16,7 +16,10 @@ import rich.progress
 import rich_argparse
 
 
-from bench_runner.bases import get_bases, get_minimum_version_for_all_comparisons
+from bench_runner.bases import (
+    get_bases,
+    get_minimum_version_for_all_comparisons,
+)
 from bench_runner.result import load_all_results
 from bench_runner.scripts.generate_results import _main as generate_results
 from bench_runner.util import PathLike
@@ -32,7 +35,10 @@ def dir_size(path: PathLike) -> int:
 
 
 def _main(
-    repo_dir: PathLike, days: int, dry_run: bool, bases: Sequence[str] | None = None
+    repo_dir: PathLike,
+    days: int,
+    dry_run: bool,
+    bases: Sequence[str] | None = None,
 ):
     results_dir = Path(repo_dir) / "results"
     if bases is None:
@@ -45,7 +51,9 @@ def _main(
     keep_dirs = set()
     remove_generated_files = set()
 
-    earliest = (datetime.date.today() - datetime.timedelta(days=days)).isoformat()
+    earliest = (
+        datetime.date.today() - datetime.timedelta(days=days)
+    ).isoformat()
 
     for result in rich.progress.track(
         results, description="Selecting results to remove"
@@ -63,7 +71,9 @@ def _main(
                 and result.parsed_version.release[0:2]
                 < get_minimum_version_for_all_comparisons()
             ):
-                remove_generated_files.update(result.filename.parent.glob("*-vs-*"))
+                remove_generated_files.update(
+                    result.filename.parent.glob("*-vs-*")
+                )
 
     for filename in results_dir.glob("**/*"):
         if m := re.match(".*-vs-(.+?)(-.+)?$", filename.stem):
@@ -85,7 +95,9 @@ def _main(
             if not dry_run:
                 shutil.rmtree(d)
 
-    for f in rich.progress.track(remove_generated_files, "Removing comparison files"):
+    for f in rich.progress.track(
+        remove_generated_files, "Removing comparison files"
+    ):
         if f.is_file():
             rich.print(f"Removing {f}")
             total += f.stat().st_size

@@ -37,7 +37,14 @@ def get_log(
     n_args = [] if n < 1 else ["-n", str(n)]
 
     return subprocess.check_output(
-        ["git", "log", f"--pretty=format:{format}", *n_args, *ref_args, *extra],
+        [
+            "git",
+            "log",
+            f"--pretty=format:{format}",
+            *n_args,
+            *ref_args,
+            *extra,
+        ],
         encoding="utf-8",
         cwd=dirname,
     ).strip()
@@ -144,7 +151,11 @@ def clone(
 
     dirname = Path(dirname)
     if dirname.is_dir():
-        if is_hash and (dirname / ".git").is_dir() and get_git_hash(dirname) == branch:
+        if (
+            is_hash
+            and (dirname / ".git").is_dir()
+            and get_git_hash(dirname) == branch
+        ):
             # This is a git repo, and the hash matches
             return
         util.smart_rmtree(dirname)

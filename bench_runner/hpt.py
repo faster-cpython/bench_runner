@@ -342,6 +342,8 @@ def make_report(ref: PathLike, head: PathLike, alpha=0.1):
     for reli in [0.9, 0.95, 0.99]:
         ret = maxspeedup(reli, better, alpha, mtx_a, mtx_b)
         if ret > 0:
-            result.write(f"- {reli:.0%} likely to have a {effect} of {ret:.2f}x\n")
+            result.write(
+                f"- {reli:.0%} likely to have a {effect} of {ret:.2f}x\n"
+            )
 
     return result.getvalue()
