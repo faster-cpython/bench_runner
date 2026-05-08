@@ -179,7 +179,13 @@ def generate__benchmark(src: Any) -> Any:
         runner_template["runs-on"].append(runner.github_runner_name)
 
         if runner.timeout_minutes is not None:
-            runner_template["timeout-minutes"] = runner.timeout_minutes
+            # Insert right after runs-on for readable YAML, regardless of
+            # whether the per-OS skeleton already had a timeout-minutes key.
+            runner_template.pop("timeout-minutes", None)
+            idx = list(runner_template.keys()).index("runs-on") + 1
+            runner_template.insert(
+                idx, "timeout-minutes", runner.timeout_minutes
+            )
 
         machine_clauses = [
             f"inputs.machine == '{runner.name}'",
