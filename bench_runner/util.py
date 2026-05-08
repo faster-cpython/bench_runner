@@ -33,7 +33,9 @@ def has_any_element(iterable):
     Checks if an iterable (like a generator) has at least one element
     without consuming the original iterable more than necessary.
     """
-    first, iterable = itertools.tee(iterable, 2)  # Create two independent iterators
+    first, iterable = itertools.tee(
+        iterable, 2
+    )  # Create two independent iterators
     try:
         next(first)  # Try to get the first element
         return True  # If successful, the generator is not empty
@@ -58,7 +60,9 @@ def get_brew_prefix(command: str) -> str:
     try:
         prefix = subprocess.check_output(["brew", "--prefix", command])
     except subprocess.CalledProcessError:
-        raise RuntimeError(f"Unable to find brew installation prefix for {command}")
+        raise RuntimeError(
+            f"Unable to find brew installation prefix for {command}"
+        )
     return prefix.decode("utf-8").strip()
 
 

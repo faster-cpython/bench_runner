@@ -142,7 +142,9 @@ def plot_diff(
     names.append("ALL")
     axs.set_yticks(np.arange(len(names)) + 1, names)
     axs.set_ylim(0, len(names) + 1)
-    axs.tick_params(axis="x", bottom=True, top=True, labelbottom=True, labeltop=True)
+    axs.tick_params(
+        axis="x", bottom=True, top=True, labelbottom=True, labeltop=True
+    )
     axs.xaxis.set_major_formatter(formatter)
     xlim = axs.get_xlim()
     if xlim[0] > 0.75 and xlim[1] < 1.25:
@@ -226,7 +228,9 @@ class LongitudinalPlotConfig:
 
         def __post_init__(self):
             if not util.valid_version(self.base):
-                raise RuntimeError(f"Invalid base '{self.base}' in `longitudinal_plot`")
+                raise RuntimeError(
+                    f"Invalid base '{self.base}' in `longitudinal_plot`"
+                )
             if (
                 not util.valid_version(self.version)
                 or len(self.version.split(".")) != 2
@@ -248,9 +252,9 @@ class LongitudinalPlotConfig:
 def longitudinal_plot(
     results: Iterable[result.Result],
     output_filename: PathLike,
-    getter: Callable[
-        [result.BenchmarkComparison], float | None
-    ] = lambda r: r.geometric_mean_float,
+    getter: Callable[[result.BenchmarkComparison], float | None] = lambda r: (
+        r.geometric_mean_float
+    ),
     differences: tuple[str, str] = ("slower", "faster"),
     title="Performance improvement by configuration",
 ):
@@ -297,7 +301,9 @@ def longitudinal_plot(
     for subcfg, ax in zip(all_cfg, axs):
         version = [int(x) for x in subcfg.version.split(".")]
         ver_results = [
-            r for r in results if list(r.parsed_version.release[0:2]) == version
+            r
+            for r in results
+            if list(r.parsed_version.release[0:2]) == version
         ]
         if subcfg.runners:
             cfg_runners = [r for r in runners if r.nickname in subcfg.runners]
@@ -333,14 +339,17 @@ def longitudinal_plot(
                 continue
 
             runner_results.sort(
-                key=lambda x: datetime.datetime.fromisoformat(x.commit_datetime)
+                key=lambda x: datetime.datetime.fromisoformat(
+                    x.commit_datetime
+                )
             )
             dates = [
                 datetime.datetime.fromisoformat(x.commit_datetime)
                 for x in runner_results
             ]
             changes = [
-                get_comparison_value(ref, r, subcfg.base) for r in runner_results
+                get_comparison_value(ref, r, subcfg.base)
+                for r in runner_results
             ]
 
             if any(x is not None for x in changes):
@@ -359,7 +368,9 @@ def longitudinal_plot(
                 annotations = set()
                 for r, date, change in zip(runner_results, dates, changes):
                     micro = get_micro_version(r.version)
-                    if micro not in annotations and not r.version.endswith("+"):
+                    if micro not in annotations and not r.version.endswith(
+                        "+"
+                    ):
                         annotations.add(micro)
                         text = ax.annotate(
                             micro,
@@ -368,7 +379,9 @@ def longitudinal_plot(
                             xytext=(-3, 15),
                             textcoords="offset points",
                             rotation=90,
-                            arrowprops=dict(arrowstyle="-", connectionstyle="arc"),
+                            arrowprops=dict(
+                                arrowstyle="-", connectionstyle="arc"
+                            ),
                         )
                         text.set_color("#888")
                         text.set_size(8)
@@ -442,9 +455,9 @@ class FlagEffectPlotConfig:
 def flag_effect_plot(
     results: Iterable[result.Result],
     output_filename: PathLike,
-    getter: Callable[
-        [result.BenchmarkComparison], float | None
-    ] = lambda r: r.geometric_mean_float,
+    getter: Callable[[result.BenchmarkComparison], float | None] = lambda r: (
+        r.geometric_mean_float
+    ),
     differences: tuple[str, str] = ("slower", "faster"),
     title="Performance improvement by configuration",
 ):
@@ -465,7 +478,9 @@ def flag_effect_plot(
             return data[key]
         else:
             value = getter(
-                result.BenchmarkComparison(ref, r, "default", force_valid=force_valid)
+                result.BenchmarkComparison(
+                    ref, r, "default", force_valid=force_valid
+                )
             )
             data[key] = value
             return value
@@ -496,11 +511,10 @@ def flag_effect_plot(
         ] = r
 
     for subplot, ax in zip(subplots, axs):
-
         ax.set_title(f"Effect of {subplot.name}")
         version = tuple(int(x) for x in subplot.version.split("."))
         assert len(version) == 2, (
-            "Version config in {subplot.name}" " should only be major.minor"
+            "Version config in {subplot.name} should only be major.minor"
         )
 
         for runner in cfg.runners.values():
@@ -573,7 +587,10 @@ class BenchmarkLongitudinalPlotConfig:
             raise RuntimeError(
                 f"Invalid base '{self.base}' in `benchmark_longitudinal_plot`"
             )
-        if not util.valid_version(self.version) or len(self.version.split(".")) != 2:
+        if (
+            not util.valid_version(self.version)
+            or len(self.version.split(".")) != 2
+        ):
             raise RuntimeError(
                 f"Invalid version '{self.version}' in `benchmark_longitudinal_plot`"
             )
@@ -599,7 +616,9 @@ def benchmark_longitudinal_plot(
     else:
         cache = {}
 
-    results = [r for r in results if r.fork == "python" and r.nickname in cfg.runners]
+    results = [
+        r for r in results if r.fork == "python" and r.nickname in cfg.runners
+    ]
 
     base = None
     for r in results:
@@ -638,7 +657,9 @@ def benchmark_longitudinal_plot(
     # Exclude any benchmarks where we don't have enough data to make a
     # meaningful plot
     by_benchmark = {
-        k: v for k, v in by_benchmark.items() if any(len(x) > 2 for x in v.values())
+        k: v
+        for k, v in by_benchmark.items()
+        if any(len(x) > 2 for x in v.values())
     }
 
     fig, axs = plt.subplots(
@@ -650,7 +671,9 @@ def benchmark_longitudinal_plot(
     if len(by_benchmark) == 1:
         axs = [axs]
 
-    plt.suptitle(f"Performance change by benchmark on {cfg.version} vs. {cfg.base}")
+    plt.suptitle(
+        f"Performance change by benchmark on {cfg.version} vs. {cfg.base}"
+    )
 
     first = True
     for (benchmark, runners), ax in zip(sorted(by_benchmark.items()), axs):

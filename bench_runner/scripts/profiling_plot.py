@@ -352,7 +352,9 @@ def handle_benchmark(
 
         scaled_time = self_time * scale
         if scaled_time >= 0.0025:
-            md.write(f"| {scaled_time:.2%} | `{obj}` | `{sym}` | {category} |\n")
+            md.write(
+                f"| {scaled_time:.2%} | `{obj}` | `{sym}` | {category} |\n"
+            )
 
     return total
 
@@ -362,7 +364,9 @@ def plot_bargraph(
     categories: list[tuple[float, str]],
     output_filename: PathLike,
 ):
-    fig, ax = plt.subplots(figsize=(8, len(results) * 0.3), layout="constrained")
+    fig, ax = plt.subplots(
+        figsize=(8, len(results) * 0.3), layout="constrained"
+    )
 
     bottom = np.zeros(len(results))
     names = list(results.keys())[::-1]
@@ -389,7 +393,14 @@ def plot_bargraph(
         bottom += values
 
     values = 1.0 - bottom
-    ax.barh(names, values, 0.5, label="(other functions)", left=bottom, color="#ddd")
+    ax.barh(
+        names,
+        values,
+        0.5,
+        label="(other functions)",
+        left=bottom,
+        color="#ddd",
+    )
 
     ax.set_xlabel("percentage time")
     ax.legend(bbox_to_anchor=(1.05, 1.0), loc="upper left")
@@ -403,7 +414,8 @@ def plot_pie(categories: list[tuple[float, str]], output_filename: PathLike):
     values = [x[0] for x in categories]
     den = sum(values)
     labels = [
-        i < 10 and f"{x[1]} {x[0] / den:.2%}" or "" for i, x in enumerate(categories)
+        i < 10 and f"{x[1]} {x[0] / den:.2%}" or ""
+        for i, x in enumerate(categories)
     ]
     colors = [get_color_and_hatch(cat[1])[0] for cat in categories]
     hatches = [get_color_and_hatch(cat[1])[1] for cat in categories]
@@ -418,7 +430,11 @@ def plot_pie(categories: list[tuple[float, str]], output_filename: PathLike):
     hatches.append("")
 
     ax.pie(
-        values, labels=labels, colors=colors, hatch=hatches, textprops={"fontsize": 6}
+        values,
+        labels=labels,
+        colors=colors,
+        hatch=hatches,
+        textprops={"fontsize": 6},
     )
 
     fig.savefig(output_filename, dpi=200)
@@ -518,7 +534,9 @@ def _main(input_dir: PathLike, output_prefix: PathLike):
                     break
                 md.write(f"| {self_fraction:.2%} | {obj} | {sym} |\n")
 
-    plot_bargraph(results, sorted_categories, output_prefix.with_suffix(".svg"))
+    plot_bargraph(
+        results, sorted_categories, output_prefix.with_suffix(".svg")
+    )
     plot_pie(sorted_categories, output_prefix.with_suffix(".pie.svg"))
 
     handle_tail_call_stats(input_dir, categories, output_prefix)

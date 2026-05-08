@@ -30,7 +30,9 @@ RunnerType: TypeAlias = runners.Runner
 
 
 @functools.cache
-def _get_hash_and_date(cpython: PathLike, ref: str) -> tuple[str, datetime.datetime]:
+def _get_hash_and_date(
+    cpython: PathLike, ref: str
+) -> tuple[str, datetime.datetime]:
     hash, date = git.get_log("%H %cI", cpython, ref).split()
     return hash, datetime.datetime.fromisoformat(date)
 
@@ -82,7 +84,9 @@ def get_latest_with_prefix(
     commits = []
     for tag in tags:
         if tag.startswith(prefix):
-            commits.append(Commit(cpython, tag, f"--latest-with-prefix {prefix}"))
+            commits.append(
+                Commit(cpython, tag, f"--latest-with-prefix {prefix}")
+            )
 
     commits.sort(key=attrgetter("date"))
     if len(commits) > 0:
@@ -127,7 +131,9 @@ def get_weekly_since(cpython: PathLike, start_date: str) -> Iterable[Commit]:
 
 def get_bisect(cpython: PathLike, refs: Sequence[str]) -> Iterable[Commit]:
     if len(refs) != 2:
-        raise ValueError(f"Each --bisect entry must contain 2 refs, got {len(refs)}")
+        raise ValueError(
+            f"Each --bisect entry must contain 2 refs, got {len(refs)}"
+        )
 
     yield Commit(
         cpython,
@@ -138,7 +144,9 @@ def get_bisect(cpython: PathLike, refs: Sequence[str]) -> Iterable[Commit]:
 
 def match_machine(a: str, b: str) -> bool:
     return (
-        (a == "amd64" and b == "x86_64") or (a == "x86_64" and b == "amd64") or (a == b)
+        (a == "amd64" and b == "x86_64")
+        or (a == "x86_64" and b == "amd64")
+        or (a == b)
     )
 
 
@@ -167,8 +175,9 @@ def remove_existing(
         commit.runners = []
         for runner in runners:
             for result in results:
-                if result.nickname == runner.nickname and commit.hash.startswith(
-                    result.cpython_hash
+                if (
+                    result.nickname == runner.nickname
+                    and commit.hash.startswith(result.cpython_hash)
                 ):
                     break
             else:
@@ -213,7 +222,9 @@ def deduplicate_commits(
             yield first_commit
         else:
             yield Commit(
-                cpython, first_commit.ref, ", ".join(x.source for x in commit_set)
+                cpython,
+                first_commit.ref,
+                ", ".join(x.source for x in commit_set),
             )
 
 
@@ -248,7 +259,12 @@ def _main(
     tags = git.get_tags(cpython)
 
     commits = get_commits(
-        cpython, tags, all_with_prefix, latest_with_prefix, weekly_since, bisect
+        cpython,
+        tags,
+        all_with_prefix,
+        latest_with_prefix,
+        weekly_since,
+        bisect,
     )
 
     commits = deduplicate_commits(cpython, commits)
@@ -256,7 +272,9 @@ def _main(
 
     commits = sorted(commits, key=attrgetter("date"))
 
-    rich.print(f"runners: {', '.join(f'[blue]{x.nickname}[/blue]' for x in runners)}")
+    rich.print(
+        f"runners: {', '.join(f'[blue]{x.nickname}[/blue]' for x in runners)}"
+    )
     rich.print()
 
     table = rich.table.Table(title="Benchmark runs")
@@ -284,7 +302,9 @@ def _main(
     if runs == 0:
         return
 
-    if rich.prompt.Confirm.ask("Are you sure you want to run them all?", default=False):
+    if rich.prompt.Confirm.ask(
+        "Are you sure you want to run them all?", default=False
+    ):
         for commit in commits:
             if len(commit.runners) == len(all_runners):
                 gh.benchmark(ref=commit.hash, machine="all")
@@ -350,7 +370,9 @@ def main():
             f"from {', '.join(flag.gha_variable for flag in mflags.FLAGS)}"
         ),
     )
-    parser.add_argument("cpython", type=Path, help="The path to a checkout of CPython")
+    parser.add_argument(
+        "cpython", type=Path, help="The path to a checkout of CPython"
+    )
 
     args = parser.parse_args()
 

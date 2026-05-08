@@ -64,10 +64,14 @@ class Runner:
         return f"{self.os} {self.arch} ({self.nickname})"
 
 
-unknown_runner = Runner("unknown", "unknown", "unknown", "unknown", False, {}, None)
+unknown_runner = Runner(
+    "unknown", "unknown", "unknown", "unknown", False, {}, None
+)
 
 
-def get_runners_by_hostname(cfgpath: PathLike | None = None) -> dict[str, Runner]:
+def get_runners_by_hostname(
+    cfgpath: PathLike | None = None,
+) -> dict[str, Runner]:
     from . import config
 
     return {x.hostname: x for x in config.get_config(cfgpath).runners.values()}
@@ -83,7 +87,9 @@ def get_nickname_for_hostname(
     return get_runner_for_hostname(hostname, cfgpath).nickname
 
 
-def get_runner_by_nickname(nickname: str, cfgpath: PathLike | None = None) -> Runner:
+def get_runner_by_nickname(
+    nickname: str, cfgpath: PathLike | None = None
+) -> Runner:
     from . import config
 
     return config.get_config(cfgpath).runners.get(nickname, unknown_runner)

@@ -75,7 +75,10 @@ def test_should_run_diff_machine_noforce(benchmarks_checkout, monkeypatch):
     )
 
     assert result is True
-    assert len(list((repo / "results" / "bm-20220323-3.10.4-9d38120").iterdir())) == 1
+    assert (
+        len(list((repo / "results" / "bm-20220323-3.10.4-9d38120").iterdir()))
+        == 1
+    )
 
 
 def test_should_run_all_noforce(benchmarks_checkout, monkeypatch):
@@ -94,7 +97,10 @@ def test_should_run_all_noforce(benchmarks_checkout, monkeypatch):
     )
 
     assert result is True
-    assert len(list((repo / "results" / "bm-20220323-3.10.4-9d38120").iterdir())) == 1
+    assert (
+        len(list((repo / "results" / "bm-20220323-3.10.4-9d38120").iterdir()))
+        == 1
+    )
 
 
 def test_should_run_noexists_noforce(benchmarks_checkout, monkeypatch):
@@ -226,7 +232,13 @@ def test_whole_workflow(tmpdir):
             ]
         )
         subprocess.check_call(
-            [str(binary), "-m", "pip", "install", f"{bench_runner_checkout}[test]"]
+            [
+                str(binary),
+                "-m",
+                "pip",
+                "install",
+                f"{bench_runner_checkout}[test]",
+            ]
         )
         subprocess.check_call([str(binary), "-m", "bench_runner", "install"])
         # install --check should never fail immediately after install
@@ -304,7 +316,13 @@ def test_pystats(tmpdir):
             ]
         )
         subprocess.check_call(
-            [str(binary), "-m", "pip", "install", f"{bench_runner_checkout}[test]"]
+            [
+                str(binary),
+                "-m",
+                "pip",
+                "install",
+                f"{bench_runner_checkout}[test]",
+            ]
         )
         subprocess.check_call([str(binary), "-m", "bench_runner", "install"])
         with open("requirements.txt", "w") as fd:
@@ -323,7 +341,9 @@ def test_pystats(tmpdir):
             ]
         )
 
-        deltablue_output = list((repo / "results").glob("**/*-pystats-deltablue.*"))
+        deltablue_output = list(
+            (repo / "results").glob("**/*-pystats-deltablue.*")
+        )
         assert len(deltablue_output) == 2
         all_output = list((repo / "results").glob("**/*-pystats.*"))
         assert len(all_output) == 2

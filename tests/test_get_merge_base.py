@@ -35,7 +35,9 @@ def checkout(tmp_path):
 def test_get_merge_base(capsys, checkout, monkeypatch):
     monkeypatch.chdir(DATA_PATH)
 
-    get_merge_base._main(True, "linux-x86_64-linux", False, [], checkout / "cpython")
+    get_merge_base._main(
+        True, "linux-x86_64-linux", False, [], checkout / "cpython"
+    )
 
     captured = capsys.readouterr()
 

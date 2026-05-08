@@ -10,7 +10,9 @@ import pytest
 
 
 os.environ["PYPERFORMANCE_HASH"] = "f7f36509e2e81e9a20cfeadddd6608f2378ff26c"
-os.environ["PYSTON_BENCHMARKS_HASH"] = "d4868ff7825f3996e0005197643ed56eba4fb567"
+os.environ["PYSTON_BENCHMARKS_HASH"] = (
+    "d4868ff7825f3996e0005197643ed56eba4fb567"
+)
 
 
 DATA_PATH = Path(__file__).parent / "data"
@@ -66,7 +68,9 @@ def _setup_repositories(root):
     venv_python = venv_dir / "bin" / "python"
     venv_dir.parent.mkdir(parents=True, exist_ok=True)
     subprocess.check_call([sys.executable, "-m", "venv", venv_dir], cwd=root)
-    subprocess.check_call([venv_python, "-m", "pip", "install", "setuptools"], cwd=root)
+    subprocess.check_call(
+        [venv_python, "-m", "pip", "install", "setuptools"], cwd=root
+    )
     subprocess.check_call(
         [venv_python, "-m", "pip", "install", root / "pyperformance"], cwd=root
     )

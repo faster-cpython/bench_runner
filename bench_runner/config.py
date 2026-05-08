@@ -65,12 +65,16 @@ class Weekly:
 class Config:
     bases: Bases
     runners: dict[str, mrunners.Runner]
-    publish_mirror: PublishMirror = dataclasses.field(default_factory=PublishMirror)
+    publish_mirror: PublishMirror = dataclasses.field(
+        default_factory=PublishMirror
+    )
     benchmarks: Benchmarks = dataclasses.field(default_factory=Benchmarks)
     notify: Notify = dataclasses.field(default_factory=Notify)
     longitudinal_plot: mplot.LongitudinalPlotConfig | None = None
     flag_effect_plot: mplot.FlagEffectPlotConfig | None = None
-    benchmark_longitudinal_plot: mplot.BenchmarkLongitudinalPlotConfig | None = None
+    benchmark_longitudinal_plot: (
+        mplot.BenchmarkLongitudinalPlotConfig | None
+    ) = None
     weekly: dict[str, Weekly] = dataclasses.field(default_factory=dict)
 
     def __post_init__(self):
@@ -82,7 +86,8 @@ class Config:
             )
         self.runners = {
             name: mrunners.Runner(
-                nickname=name, **runner  # pyright: ignore[reportCallIssue]
+                nickname=name,
+                **runner,  # pyright: ignore[reportCallIssue]
             )
             for name, runner in self.runners.items()
         }
@@ -97,13 +102,19 @@ class Config:
                 **self.longitudinal_plot
             )
         if isinstance(self.flag_effect_plot, dict):
-            self.flag_effect_plot = mplot.FlagEffectPlotConfig(**self.flag_effect_plot)
+            self.flag_effect_plot = mplot.FlagEffectPlotConfig(
+                **self.flag_effect_plot
+            )
         if isinstance(self.benchmark_longitudinal_plot, dict):
-            self.benchmark_longitudinal_plot = mplot.BenchmarkLongitudinalPlotConfig(
-                **self.benchmark_longitudinal_plot
+            self.benchmark_longitudinal_plot = (
+                mplot.BenchmarkLongitudinalPlotConfig(
+                    **self.benchmark_longitudinal_plot
+                )
             )
         if len(self.weekly) == 0:
-            self.weekly = {"default": Weekly(runners=list(self.runners.keys()))}
+            self.weekly = {
+                "default": Weekly(runners=list(self.runners.keys()))
+            }
         else:
             self.weekly = {
                 name: Weekly(**weekly)  # pyright: ignore[reportCallIssue]

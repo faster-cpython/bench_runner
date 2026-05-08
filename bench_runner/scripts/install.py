@@ -41,7 +41,9 @@ def fail_check(dst: PathLike):
     sys.exit(1)
 
 
-def write_and_check(dst: PathLike, writer: Callable[[TextIO], None], check: bool):
+def write_and_check(
+    dst: PathLike, writer: Callable[[TextIO], None], check: bool
+):
     """
     Call `writer` with a file descriptor to write the contents to `dst`.
 
@@ -134,7 +136,9 @@ def add_flag_env(jobs: dict[str, Any]):
             job["env"]["flags"] = flag_value
             for step in job["steps"]:
                 if "run" in step:
-                    step["run"] = step["run"].replace("${{ env.flags }}", flag_value)
+                    step["run"] = step["run"].replace(
+                        "${{ env.flags }}", flag_value
+                    )
 
 
 def generate__benchmark(src: Any) -> Any:
@@ -170,7 +174,8 @@ def generate__benchmark(src: Any) -> Any:
             "name": "Setup environment",
             "run": LiteralScalarString(
                 "\n".join(
-                    f'echo "{key}={val}" >> {github_env}' for key, val in vars.items()
+                    f'echo "{key}={val}" >> {github_env}'
+                    for key, val in vars.items()
                 )
             ),
         }
@@ -190,7 +195,9 @@ def generate__benchmark(src: Any) -> Any:
 
     add_flag_env(dst["jobs"])
 
-    dst["on"]["workflow_dispatch"]["inputs"]["machine"]["options"] = runner_choices
+    dst["on"]["workflow_dispatch"]["inputs"]["machine"]["options"] = (
+        runner_choices
+    )
 
     add_flag_variables(dst["on"]["workflow_dispatch"]["inputs"])
     add_flag_variables(dst["on"]["workflow_call"]["inputs"])
@@ -207,9 +214,15 @@ def generate_benchmark(dst: Any) -> Any:
     """
     cfg = config.get_config()
     available_runners = [r for r in cfg.runners.values() if r.available]
-    runner_choices = [*[x.name for x in available_runners], "all", "__really_all"]
+    runner_choices = [
+        *[x.name for x in available_runners],
+        "all",
+        "__really_all",
+    ]
 
-    dst["on"]["workflow_dispatch"]["inputs"]["machine"]["options"] = runner_choices
+    dst["on"]["workflow_dispatch"]["inputs"]["machine"]["options"] = (
+        runner_choices
+    )
 
     add_flag_variables(dst["on"]["workflow_dispatch"]["inputs"])
     add_flag_env(dst["jobs"])
@@ -220,9 +233,9 @@ def generate_benchmark(dst: Any) -> Any:
             continue
         if "with" in job:
             for flag in flags.FLAGS:
-                job["with"][
-                    flag.gha_variable
-                ] = f"${{{{ inputs.{flag.gha_variable} }}}}"
+                job["with"][flag.gha_variable] = (
+                    f"${{{{ inputs.{flag.gha_variable} }}}}"
+                )
 
     # Include all of the flags in the human-readable workflow "run name"
     dst["run-name"] += " " + " ".join(

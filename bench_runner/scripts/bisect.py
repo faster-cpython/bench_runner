@@ -81,16 +81,25 @@ def get_result(
         # first time in case the *last* bisect run used pgo.
         subprocess.run(["make", "clean"], cwd=cpython)
 
-    workflow.compile_unix(cpython, parsed_flags, pgo, pystats is not None, reconfigure)
+    workflow.compile_unix(
+        cpython, parsed_flags, pgo, pystats is not None, reconfigure
+    )
 
     if pystats is None:
         run_benchmarks.run_benchmarks(python, benchmark)
         return parse_timing_result(run_benchmarks.BENCHMARK_JSON)
     else:
         run_benchmarks.collect_pystats(python, benchmark)
-        summarize_stats_path = cpython / "Tools" / "scripts" / "summarize_stats.py"
+        summarize_stats_path = (
+            cpython / "Tools" / "scripts" / "summarize_stats.py"
+        )
         subprocess.check_output(
-            [str(python), str(summarize_stats_path), "--json-output", "pystats.json"]
+            [
+                str(python),
+                str(summarize_stats_path),
+                "--json-output",
+                "pystats.json",
+            ]
         )
         with open("pystats.json", "r") as f:
             contents = json.load(f)
@@ -140,7 +149,10 @@ def _main(
 
     if not cpython.is_dir():
         git.clone(
-            cpython, "https://github.com/python/cpython.git", branch="main", depth=None
+            cpython,
+            "https://github.com/python/cpython.git",
+            branch="main",
+            depth=None,
         )
 
     git.checkout(cpython, good)
@@ -287,7 +299,9 @@ if __name__ == "__main__":
 
     # The confidence is 0.0 at the mid-point, 1.0 at the good and bad values,
     # and > 1.0 outside of that.
-    confidence = abs((result - mid_point) / ((args.bad_val - args.good_val) / 2.0))
+    confidence = abs(
+        (result - mid_point) / ((args.bad_val - args.good_val) / 2.0)
+    )
 
     with contextlib.chdir(repo):
         if im * result > im * mid_point:

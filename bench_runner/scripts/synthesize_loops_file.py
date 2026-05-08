@@ -242,7 +242,10 @@ def main():
     )
     group = parser.add_mutually_exclusive_group(required=False)
     group.add_argument(
-        "-u", "--update", action="store_true", help="add to existing loops file"
+        "-u",
+        "--update",
+        action="store_true",
+        help="add to existing loops file",
     )
     group.add_argument(
         "-f", "--overwrite", action="store_true", help="replace loops file"
@@ -254,7 +257,9 @@ def main():
         default="max",
         help="how to merge multiple runs",
     )
-    parser.add_argument("results", nargs="+", help="benchmark results to parse")
+    parser.add_argument(
+        "results", nargs="+", help="benchmark results to parse"
+    )
     args = parser.parse_args()
 
     _main(

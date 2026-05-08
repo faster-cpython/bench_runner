@@ -68,7 +68,8 @@ def _get_platform_value(python: PathLike, item: str) -> str:
     Get a value from the platform module of the given Python interpreter.
     """
     output = subprocess.check_output(
-        [python, "-c", f"import platform; print(platform.{item}())"], encoding="utf-8"
+        [python, "-c", f"import platform; print(platform.{item}())"],
+        encoding="utf-8",
     )
     return output.strip().lower()
 
@@ -77,13 +78,19 @@ def _get_architecture(python: PathLike) -> str:
     machine = _get_platform_value(python, "machine")
     bits = eval(_get_platform_value(python, "architecture"))[0]
     if bits == "32bit":
-        return {"x86_64": "x86", "amd64": "x86", "arm64": "arm32"}.get(machine, machine)
+        return {"x86_64": "x86", "amd64": "x86", "arm64": "arm32"}.get(
+            machine, machine
+        )
     return machine
 
 
 class Comparison:
     def __init__(
-        self, ref: "Result", head: "Result", base: str, force_valid: bool = False
+        self,
+        ref: "Result",
+        head: "Result",
+        base: str,
+        force_valid: bool = False,
     ):
         self.ref = ref
         self.head = head
@@ -127,7 +134,9 @@ class BenchmarkComparison(Comparison):
             return None
 
         if self.base_filename.with_suffix(".md").is_file():
-            with self.base_filename.with_suffix(".md").open(encoding="utf-8") as fd:
+            with self.base_filename.with_suffix(".md").open(
+                encoding="utf-8"
+            ) as fd:
                 return fd.read()
         else:
             return self._generate_contents()
@@ -203,9 +212,13 @@ class BenchmarkComparison(Comparison):
                 abs(values - np.mean(values)) < np.multiply(m, np.std(values))
             ]
 
-        def calculate_diffs(ref_values, head_values) -> tuple[np.ndarray | None, float]:
+        def calculate_diffs(
+            ref_values, head_values
+        ) -> tuple[np.ndarray | None, float]:
             if len(ref_values) > 3 and len(head_values) > 3:
-                sig, t_score = pyperf._utils.is_significant(ref_values, head_values)
+                sig, t_score = pyperf._utils.is_significant(
+                    ref_values, head_values
+                )
                 if not sig:
                     return None, 0.0
                 else:
@@ -280,7 +293,7 @@ class BenchmarkComparison(Comparison):
         elif gm > 1.0:
             return f"{gm:.03f}x faster"
         else:
-            return f"{1.0+(1.0-gm):.03f}x slower"
+            return f"{1.0 + (1.0 - gm):.03f}x slower"
 
     @property
     def geometric_mean(self) -> str:
@@ -419,7 +432,10 @@ class PystatsComparison(Comparison):
             contents = subprocess.check_output(
                 [
                     sys.executable,
-                    Path("cpython") / "Tools" / "scripts" / "summarize_stats.py",
+                    Path("cpython")
+                    / "Tools"
+                    / "scripts"
+                    / "summarize_stats.py",
                     self.ref.filename,
                     self.head.filename,
                 ],
@@ -515,7 +531,9 @@ class Result:
             fork="unknown",
             ref=filename.stem,
             version="unknown",
-            cpython_hash=content.get("metadata", {}).get("commit_id", "unknown"),
+            cpython_hash=content.get("metadata", {}).get(
+                "commit_id", "unknown"
+            ),
             extra=[],
             suffix=filename.suffix,
             flags=[],
@@ -560,7 +578,9 @@ class Result:
                 flags = []
             self._filename = (
                 Path("results")
-                / "-".join(["bm", date, self.version, self.cpython_hash, *flags])
+                / "-".join(
+                    ["bm", date, self.version, self.cpython_hash, *flags]
+                )
                 / (
                     "-".join(
                         [
@@ -656,7 +676,9 @@ class Result:
             return self.system == "windows"
         else:
             return (
-                self.metadata.get("platform", "unknown").lower().startswith("windows")
+                self.metadata.get("platform", "unknown")
+                .lower()
+                .startswith("windows")
             )
 
     @property
@@ -679,7 +701,10 @@ class Result:
     def hash_and_flags(self) -> str:
         # A representation for the user that combines the commit hash and other flags
         return " ".join(
-            [self.cpython_hash, *(f"({x})" for x in mflags.flags_to_human(self.flags))]
+            [
+                self.cpython_hash,
+                *(f"({x})" for x in mflags.flags_to_human(self.flags)),
+            ]
         )
 
     @functools.cached_property
@@ -791,7 +816,9 @@ def has_result(
 
 
 def match_to_bases(
-    results: Iterable[Result], bases: Sequence[str] | None, progress: bool = True
+    results: Iterable[Result],
+    bases: Sequence[str] | None,
+    progress: bool = True,
 ):
     def find_match(result, candidates, base, func):
         # Try for an exact match (same benchmark_hash) first,
@@ -863,7 +890,8 @@ def match_to_bases(
                         candidates,
                         "default_base_vs_" + flag,
                         lambda ref: (
-                            _merge_base.startswith(ref.cpython_hash) and ref.flags == []
+                            _merge_base.startswith(ref.cpython_hash)
+                            and ref.flags == []
                         ),
                     )
                     found_base = found_base or found_default_base
