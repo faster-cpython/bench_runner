@@ -178,6 +178,9 @@ def generate__benchmark(src: Any) -> Any:
 
         runner_template["runs-on"].append(runner.github_runner_name)
 
+        if runner.timeout_minutes is not None:
+            runner_template["timeout-minutes"] = runner.timeout_minutes
+
         machine_clauses = [
             f"inputs.machine == '{runner.name}'",
             "inputs.machine == '__really_all'",

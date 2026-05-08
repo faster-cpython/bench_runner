@@ -16,3 +16,11 @@ def test_get_runner_for_hostname(monkeypatch):
     assert runner.os == "linux"
     assert runner.arch == "x86_64"
     assert runner.hostname == "pyperf"
+    assert runner.timeout_minutes == 210
+
+
+def test_runner_timeout_minutes_default():
+    runner = runners.Runner(
+        nickname="x", os="linux", arch="x86_64", hostname="x"
+    )
+    assert runner.timeout_minutes is None

@@ -1,5 +1,19 @@
 ## Unreleased
 
+### Configurable benchmark timeout per runner
+
+Runners can now set a `timeout_minutes` field in `bench_runner.toml` to
+override the maximum runtime for benchmark jobs. If unset, the per-OS default
+in the workflow template applies (Linux: 1440, others: GitHub default).
+
+```toml
+[runners.example]
+os = "linux"
+arch = "x86_64"
+hostname = "example"
+timeout_minutes = 210
+```
+
 ### Bugfixes
 
 #### Use PGO on weekly builds
