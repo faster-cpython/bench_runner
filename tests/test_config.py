@@ -4,7 +4,6 @@ import socket
 
 from bench_runner import runners
 
-
 DATA_PATH = Path(__file__).parent / "data"
 
 
@@ -20,7 +19,5 @@ def test_get_runner_for_hostname(monkeypatch):
 
 
 def test_runner_timeout_minutes_default():
-    runner = runners.Runner(
-        nickname="x", os="linux", arch="x86_64", hostname="x"
-    )
+    runner = runners.Runner(nickname="x", os="linux", arch="x86_64", hostname="x")
     assert runner.timeout_minutes is None

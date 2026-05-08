@@ -23,7 +23,6 @@ from bench_runner import flags
 from bench_runner import runners
 from bench_runner.util import PathLike
 
-
 ROOT_PATH = Path()
 TEMPLATE_PATH = Path(__file__).parents[1] / "templates"
 WORKFLOW_PATH = Path() / ".github" / "workflows"
@@ -183,9 +182,7 @@ def generate__benchmark(src: Any) -> Any:
             # whether the per-OS skeleton already had a timeout-minutes key.
             runner_template.pop("timeout-minutes", None)
             idx = list(runner_template.keys()).index("runs-on") + 1
-            runner_template.insert(
-                idx, "timeout-minutes", runner.timeout_minutes
-            )
+            runner_template.insert(idx, "timeout-minutes", runner.timeout_minutes)
 
         machine_clauses = [
             f"inputs.machine == '{runner.name}'",
