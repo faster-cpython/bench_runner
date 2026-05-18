@@ -67,7 +67,7 @@ jobs:
         run: |
           git config --global core.symlinks true
       - name: Checkout benchmarking
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: git gc
         run: |
           git gc
@@ -83,11 +83,11 @@ jobs:
           # just pulled in in that case.
           git pull -s recursive -X ours --autostash --rebase
       - name: Add data to repo
-        uses: EndBug/add-and-commit@v9
+        uses: EndBug/add-and-commit@290ea2c423ad77ca9c62ae0f5b224379612c0321 #v10.0.0
         with:
           add: results
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.0
         with:
           name: benchmark
           path: |
@@ -100,14 +100,14 @@ jobs:
 
     steps:
       - name: Checkout benchmarking
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: git gc
         run: |
           git gc
-      - uses: fregante/setup-git-user@v2
+      - uses: fregante/setup-git-user@024bc0b8e177d7e77203b48dab6fb45666854b35 # v2.0.2
       - name: Setup system Python
         if: ${{ runner.arch == 'X64' }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.11"
       - name: Building Python and running pyperformance
@@ -124,12 +124,12 @@ jobs:
           git pull -s recursive -X ours --autostash --rebase
       - name: Adding data to repo
         if: ${{ !inputs.perf }}
-        uses: EndBug/add-and-commit@v9
+        uses: EndBug/add-and-commit@290ea2c423ad77ca9c62ae0f5b224379612c0321 #v10.0.0
         with:
           add: results
       - name: Upload benchmark artifacts
         if: ${{ !inputs.perf }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.0
         with:
           name: benchmark
           path: |
@@ -137,7 +137,7 @@ jobs:
           overwrite: true
       - name: Upload perf artifacts
         if: ${{ inputs.perf }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.0
         with:
           name: perf
           path: |
@@ -148,7 +148,7 @@ jobs:
 
     steps:
       - name: Checkout benchmarking
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: git gc
         run: |
           git gc
@@ -164,11 +164,11 @@ jobs:
           # just pulled in in that case.
           git pull -s recursive -X ours --autostash --rebase
       - name: Add data to repo
-        uses: EndBug/add-and-commit@v9
+        uses: EndBug/add-and-commit@290ea2c423ad77ca9c62ae0f5b224379612c0321 #v10.0.0
         with:
           add: results
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.0
         with:
           name: benchmark
           path: |
