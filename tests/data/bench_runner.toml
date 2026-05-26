@@ -7,6 +7,7 @@ os = "linux"
 arch = "x86_64"
 hostname = "pyperf"
 plot = { name = "Linux", color = "C0" }
+timeout_minutes = 210
 
 [longitudinal_plot]
 subplots = [

@@ -46,6 +46,10 @@ class Runner:
     # The number of cores to use to compile CPython. If not provided, `make -j`
     # will be used.
     use_cores: int | None = None
+    # Maximum runtime for benchmark jobs on this runner, in minutes. If unset,
+    # the per-OS default in the workflow template applies (Linux: 1440, others:
+    # GitHub default).
+    timeout_minutes: int | None = None
 
     def __post_init__(self):
         if self.github_runner_name is None:
